@@ -5,6 +5,7 @@ import {
   HeadContent,
   Scripts,
   Link,
+  useRouterState,
 } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
 
@@ -26,6 +27,19 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  const pathname = useRouterState({
+    select: (s) => s.location.pathname,
+  });
+
+  // The homepage is a full-screen waitlist canvas without site chrome.
+  if (pathname === "/") {
+    return (
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
+    );
+  }
+
   return (
     <RootDocument>
       <header className="border-b border-border">

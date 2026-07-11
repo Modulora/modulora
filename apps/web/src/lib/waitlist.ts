@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
+import { eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 
 const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
@@ -74,8 +75,47 @@ function getDb() {
   return drizzle(neon(url), { schema });
 }
 
+export type UsernameCheck =
+  | { state: "available" }
+  | { state: "taken" }
+  | { state: "invalid"; reason: string }
+  | { state: "unknown" };
+
+export const checkUsername = createServerFn({ method: "POST" })
+  .validator((data: { username: string }) => ({
+    username: String(data.username ?? "")
+      .trim()
+      .toLowerCase(),
+  }))
+  .handler(async ({ data }): Promise<UsernameCheck> => {
+    const { username } = data;
+    if (!USERNAME_PATTERN.test(username)) {
+      return {
+        state: "invalid",
+        reason:
+          "2\u201340 characters: lowercase letters, numbers, single hyphens.",
+      };
+    }
+    if (RESERVED.has(username)) {
+      return { state: "invalid", reason: "That username is reserved." };
+    }
+    const db = getDb();
+    if (!db) return { state: "unknown" };
+    try {
+      const existing = await db
+        .select({ id: schema.waitlistEntries.id })
+        .from(schema.waitlistEntries)
+        .where(eq(schema.waitlistEntries.username, username))
+        .limit(1);
+      return existing.length > 0 ? { state: "taken" } : { state: "available" };
+    } catch (error) {
+      console.error("username check failed", error);
+      return { state: "unknown" };
+    }
+  });
+
 export const joinWaitlist = createServerFn({ method: "POST" })
-  .inputValidator((data: { username: string; email: string }) => {
+  .validator((data: { username: string; email: string }) => {
     const username = String(data.username ?? "")
       .trim()
       .toLowerCase();
