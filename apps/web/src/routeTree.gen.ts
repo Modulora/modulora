@@ -9,11 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsernameRoute = UsernameRouteImport.update({
+  id: '/$username',
+  path: '/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +61,20 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$username': typeof UsernameRoute
+  '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
   '/components/': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$username': typeof UsernameRoute
+  '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
   '/components': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -50,6 +82,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$username': typeof UsernameRoute
+  '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
   '/components/': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -57,12 +93,31 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/components/' | '/api/auth/$' | '/components/$namespace/$name'
+    | '/'
+    | '/$username'
+    | '/dashboard'
+    | '/settings'
+    | '/signin'
+    | '/components/'
+    | '/api/auth/$'
+    | '/components/$namespace/$name'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/components' | '/api/auth/$' | '/components/$namespace/$name'
+  to:
+    | '/'
+    | '/$username'
+    | '/dashboard'
+    | '/settings'
+    | '/signin'
+    | '/components'
+    | '/api/auth/$'
+    | '/components/$namespace/$name'
   id:
     | '__root__'
     | '/'
+    | '/$username'
+    | '/dashboard'
+    | '/settings'
+    | '/signin'
     | '/components/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
@@ -70,6 +125,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  UsernameRoute: typeof UsernameRoute
+  DashboardRoute: typeof DashboardRoute
+  SettingsRoute: typeof SettingsRoute
+  SigninRoute: typeof SigninRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
@@ -77,6 +136,34 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$username': {
+      id: '/$username'
+      path: '/$username'
+      fullPath: '/$username'
+      preLoaderRoute: typeof UsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -110,6 +197,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  UsernameRoute: UsernameRoute,
+  DashboardRoute: DashboardRoute,
+  SettingsRoute: SettingsRoute,
+  SigninRoute: SigninRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,

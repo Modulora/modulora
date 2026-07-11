@@ -4,10 +4,14 @@ import {
   createRootRoute,
   HeadContent,
   Scripts,
-  Link,
   useRouterState,
 } from "@tanstack/react-router";
+import { AppShell } from "@/components/app-shell";
+import { fetchCurrentUser } from "@/lib/session";
 import appCss from "../styles.css?url";
+
+/* Routes that render as full-screen canvases without the app shell chrome. */
+const CHROME_FREE = new Set(["/", "/signin"]);
 
 export const Route = createRootRoute({
   head: () => ({
@@ -23,16 +27,18 @@ export const Route = createRootRoute({
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
+  beforeLoad: async () => {
+    const user = await fetchCurrentUser();
+    return { user };
+  },
   component: RootComponent,
 });
 
 function RootComponent() {
-  const pathname = useRouterState({
-    select: (s) => s.location.pathname,
-  });
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = Route.useRouteContext();
 
-  // The homepage is a full-screen waitlist canvas without site chrome.
-  if (pathname === "/") {
+  if (CHROME_FREE.has(pathname)) {
     return (
       <RootDocument>
         <Outlet />
@@ -42,28 +48,9 @@ function RootComponent() {
 
   return (
     <RootDocument>
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link to="/" className="text-lg font-bold tracking-tight">
-            Modulora
-          </Link>
-          <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link to="/components" className="hover:text-foreground">
-              Components
-            </Link>
-            <a
-              href="https://github.com/Modulora"
-              className="hover:text-foreground"
-              rel="noreferrer"
-            >
-              GitHub
-            </a>
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <AppShell user={user}>
         <Outlet />
-      </main>
+      </AppShell>
     </RootDocument>
   );
 }

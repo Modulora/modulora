@@ -3,6 +3,8 @@
  * loaders. Returns the authenticated user (with Modulora profile fields) or
  * null. Never throws when auth is unconfigured.
  */
+import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
@@ -49,3 +51,15 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     xUrl: row.xUrl,
   };
 }
+
+/**
+ * Server function for route loaders / the app shell. Reads the request from
+ * TanStack Start's server context and returns the current user or null.
+ */
+export const fetchCurrentUser = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CurrentUser | null> => {
+    const request = getRequest();
+    if (!request) return null;
+    return getCurrentUser(request);
+  },
+);
