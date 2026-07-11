@@ -1,4 +1,14 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { findItem, type EvidenceRecord } from "../data/catalog";
 
 export const Route = createFileRoute("/components/$namespace/$name")({
@@ -25,30 +35,35 @@ const evidenceLabels: Record<string, string> = {
   revoked: "Revoked",
 };
 
-function EvidenceBadge({ record }: { record: EvidenceRecord }) {
-  const tone =
-    record.status === "passed"
-      ? "border-emerald-800 text-emerald-400"
-      : record.status === "failed"
-        ? "border-red-800 text-red-400"
-        : "border-border text-muted-foreground";
+function evidenceVariant(status: EvidenceRecord["status"]) {
+  if (status === "passed") return "default" as const;
+  if (status === "failed") return "destructive" as const;
+  return "secondary" as const;
+}
+
+function EvidenceCard({ record }: { record: EvidenceRecord }) {
   return (
-    <div className={`rounded-lg border p-3 ${tone}`}>
-      <p className="text-sm font-medium">
-        {evidenceLabels[record.type] ?? record.type}
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        {record.scope ?? record.status} ·{" "}
-        {new Date(record.timestamp).toLocaleDateString("en-US", {
-          dateStyle: "medium",
-        })}
-      </p>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm">
+            {evidenceLabels[record.type] ?? record.type}
+          </CardTitle>
+          <Badge variant={evidenceVariant(record.status)}>{record.status}</Badge>
+        </div>
+        <CardDescription className="text-xs">
+          {record.scope ?? record.issuer} ·{" "}
+          {new Date(record.timestamp).toLocaleDateString("en-US", {
+            dateStyle: "medium",
+          })}
+        </CardDescription>
+      </CardHeader>
       {record.limitations ? (
-        <p className="mt-1 text-xs text-muted-foreground">
+        <CardContent className="text-xs text-muted-foreground">
           {record.limitations}
-        </p>
+        </CardContent>
       ) : null}
-    </div>
+    </Card>
   );
 }
 
@@ -74,46 +89,56 @@ function ComponentDetail() {
       </div>
 
       {isCommercial && item.purchase ? (
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h2 className="font-semibold">Commercial component</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Purchase and fulfillment are handled by the creator. Modulora has
-            verified the destination domain but has not assessed the source.
-          </p>
-          <a
-            href={item.purchase.url}
-            rel="noreferrer"
-            className="mt-4 inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
-          >
-            Purchase on {item.purchase.domain}
-            {item.purchase.priceLabel ? ` — ${item.purchase.priceLabel}` : ""}
-          </a>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Commercial component</CardTitle>
+            <CardDescription>
+              Purchase and fulfillment are handled by the creator. Modulora has
+              verified the destination domain but has not assessed the source.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <a href={item.purchase.url} rel="noreferrer">
+                Purchase on {item.purchase.domain}
+                {item.purchase.priceLabel
+                  ? ` — ${item.purchase.priceLabel}`
+                  : ""}
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h2 className="font-semibold">Install</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Install this release with the Modulora CLI—or send it to your
-            coding agent.
-          </p>
-          <pre className="mt-3 overflow-x-auto rounded-md bg-background p-3 text-sm">
-            <code>{installCommand}</code>
-          </pre>
-          {item.source ? (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Source:{" "}
-              <a
-                href={item.source.repository}
-                rel="noreferrer"
-                className="underline hover:text-foreground"
-              >
-                {item.source.repository.replace("https://", "")}
-              </a>{" "}
-              @ {item.source.commit.slice(0, 12)}
-            </p>
-          ) : null}
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Install</CardTitle>
+            <CardDescription>
+              Install this release with the Modulora CLI—or send it to your
+              coding agent.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <pre className="overflow-x-auto rounded-md bg-background p-3 text-sm">
+              <code>{installCommand}</code>
+            </pre>
+            {item.source ? (
+              <p className="text-xs text-muted-foreground">
+                Source:{" "}
+                <a
+                  href={item.source.repository}
+                  rel="noreferrer"
+                  className="underline hover:text-foreground"
+                >
+                  {item.source.repository.replace("https://", "")}
+                </a>{" "}
+                @ {item.source.commit.slice(0, 12)}
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
       )}
+
+      <Separator />
 
       <div>
         <h2 className="font-semibold">Trust evidence</h2>
@@ -123,7 +148,7 @@ function ComponentDetail() {
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {item.evidence.map((record, i) => (
-            <EvidenceBadge key={i} record={record} />
+            <EvidenceCard key={i} record={record} />
           ))}
         </div>
       </div>

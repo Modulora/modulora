@@ -1,4 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { catalog } from "../data/catalog";
 
 export const Route = createFileRoute("/components/")({ component: Catalog });
@@ -18,24 +26,25 @@ function Catalog() {
             key={`${item.namespace}/${item.name}`}
             to="/components/$namespace/$name"
             params={{ namespace: item.namespace, name: item.name }}
-            className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-muted-foreground/40"
           >
-            <div className="flex items-start justify-between gap-2">
-              <h2 className="font-semibold">{item.title}</h2>
-              <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                {item.sourceModel === "open-source"
-                  ? item.license.kind === "spdx"
-                    ? item.license.spdxExpression
-                    : "Open"
-                  : "Commercial"}
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {item.description}
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground">
-              @{item.namespace} · v{item.version} · {item.category}
-            </p>
+            <Card className="h-full transition-colors hover:border-muted-foreground/40">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle>{item.title}</CardTitle>
+                  <Badge variant="outline">
+                    {item.sourceModel === "open-source"
+                      ? item.license.kind === "spdx"
+                        ? item.license.spdxExpression
+                        : "Open"
+                      : "Commercial"}
+                  </Badge>
+                </div>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+              <CardFooter className="text-xs text-muted-foreground">
+                @{item.namespace} · v{item.version} · {item.category}
+              </CardFooter>
+            </Card>
           </Link>
         ))}
       </div>
