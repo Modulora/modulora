@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 
 const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
@@ -39,6 +39,36 @@ export interface WaitlistResult {
   ok: boolean;
   error?: string;
   username?: string;
+  memberNumber?: number;
+}
+
+async function notifyDiscord(username: string, memberNumber?: number) {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) return;
+  try {
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        embeds: [
+          {
+            title: memberNumber
+              ? `Waitlist member #${memberNumber}`
+              : "New waitlist reservation",
+            description: `**@${username}** just reserved their username.`,
+            color: 0xf5f5f5,
+            timestamp: new Date().toISOString(),
+            footer: { text: "modulora.dev" },
+          },
+        ],
+      }),
+    });
+    if (!res.ok) {
+      console.error("discord notification failed", res.status);
+    }
+  } catch (error) {
+    console.error("discord notification failed", error);
+  }
 }
 
 async function sendWelcomeEmail(email: string, username: string) {
@@ -150,9 +180,21 @@ export const joinWaitlist = createServerFn({ method: "POST" })
       await db
         .insert(schema.waitlistEntries)
         .values({ username, email });
-      // Fire-and-forget: email failures must never block a reservation.
-      await sendWelcomeEmail(email, username);
-      return { ok: true, username };
+      let memberNumber: number | undefined;
+      try {
+        const [row] = await db
+          .select({ total: count() })
+          .from(schema.waitlistEntries);
+        memberNumber = row?.total;
+      } catch {
+        // Member number is cosmetic; never fail the reservation over it.
+      }
+      // Fire-and-forget: notification failures must never block a reservation.
+      await Promise.allSettled([
+        sendWelcomeEmail(email, username),
+        notifyDiscord(username, memberNumber),
+      ]);
+      return { ok: true, username, memberNumber };
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       if (message.includes("waitlist_entries_username_unique")) {
