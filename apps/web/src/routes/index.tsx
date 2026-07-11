@@ -4,10 +4,11 @@
  * Read top-to-bottom. Each `at` value is ms after mount.
  *
  *    0ms   shader background visible (black/gray grain)
- *  200ms   wordmark fades in
+ *  200ms   logo + wordmark lockup fades in
  *  450ms   headline rises, opacity 0 → 1, y 16 → 0
- *  750ms   waitlist card scales 0.96 → 1.0, fades in
- * 1400ms   beui credit fades in at the bottom
+ *  650ms   subline rises (creator-first positioning)
+ *  950ms   waitlist card scales 0.96 → 1.0, fades in
+ * 1600ms   beui credit fades in at the bottom
  * ───────────────────────────────────────────────────────── */
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -16,6 +17,7 @@ import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/logo";
 import { ShaderBackground } from "@/components/motion/shader-background";
 import {
   checkUsername,
@@ -28,8 +30,9 @@ export const Route = createFileRoute("/")({ component: Home });
 const TIMING = {
   wordmark: 200, // wordmark fades in
   headline: 450, // headline rises
-  card: 750, // waitlist card appears
-  credit: 1400, // beui credit fades in
+  subline: 650, // supporting line rises
+  card: 950, // waitlist card appears
+  credit: 1600, // beui credit fades in
 };
 
 /* Shader backdrop — primarily black and gray */
@@ -71,9 +74,9 @@ type FieldStatus =
   | { kind: "invalid"; message: string };
 
 function StatusLine({ status }: { status: FieldStatus }) {
-  if (status.kind === "idle") return <div className="h-4" />;
+  if (status.kind === "idle") return <div className="h-4" aria-hidden />;
   return (
-    <div className="flex h-4 items-center gap-1.5 text-xs">
+    <div className="flex h-4 items-center gap-1.5 text-xs" role="status">
       {status.kind === "checking" ? (
         <>
           <Loader2 className="size-3 animate-spin text-muted-foreground" />
@@ -112,8 +115,9 @@ function Home() {
     const timers = [
       setTimeout(() => setStage(1), TIMING.wordmark),
       setTimeout(() => setStage(2), TIMING.headline),
-      setTimeout(() => setStage(3), TIMING.card),
-      setTimeout(() => setStage(4), TIMING.credit),
+      setTimeout(() => setStage(3), TIMING.subline),
+      setTimeout(() => setStage(4), TIMING.card),
+      setTimeout(() => setStage(5), TIMING.credit),
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -194,13 +198,16 @@ function Home() {
       </div>
 
       <div className="relative z-10 flex min-h-svh flex-col items-center justify-center px-6 py-16">
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: stage >= 1 ? 1 : 0 }}
-          className="text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground"
+          className="flex items-center gap-3"
         >
-          Modulora
-        </motion.p>
+          <Logo className="size-9 text-foreground" />
+          <p className="text-2xl font-extrabold tracking-tight text-foreground">
+            MODULORA
+          </p>
+        </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: HEADLINE.offsetY }}
@@ -209,16 +216,29 @@ function Home() {
             y: stage >= 2 ? 0 : HEADLINE.offsetY,
           }}
           transition={HEADLINE.spring}
-          className="mt-4 max-w-xl text-center text-4xl font-bold tracking-tight sm:text-5xl"
+          className="mt-6 max-w-2xl text-balance text-center text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl"
         >
-          Discover your next great component.
+          Discover your next great&nbsp;component.
         </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: HEADLINE.offsetY }}
+          animate={{
+            opacity: stage >= 3 ? 1 : 0,
+            y: stage >= 3 ? 0 : HEADLINE.offsetY,
+          }}
+          transition={HEADLINE.spring}
+          className="mt-5 max-w-md text-balance text-center text-base leading-relaxed text-muted-foreground sm:text-lg"
+        >
+          A creator-first way to find components from the world's best
+          design&nbsp;engineers.
+        </motion.p>
 
         <motion.div
           initial={{ opacity: 0, scale: CARD.initialScale }}
           animate={{
-            opacity: stage >= 3 ? 1 : 0,
-            scale: stage >= 3 ? 1 : CARD.initialScale,
+            opacity: stage >= 4 ? 1 : 0,
+            scale: stage >= 4 ? 1 : CARD.initialScale,
           }}
           transition={CARD.spring}
           className="mt-10 w-full max-w-sm rounded-xl border border-border/60 bg-card/70 p-6 backdrop-blur-md"
@@ -233,8 +253,8 @@ function Home() {
               </p>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
+            <form onSubmit={onSubmit} className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="username">Reserve your username</Label>
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -257,7 +277,7 @@ function Home() {
                 <StatusLine status={usernameStatus} />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -281,7 +301,7 @@ function Home() {
                 <p className="text-sm text-destructive">{submitError}</p>
               ) : null}
 
-              <Button type="submit" disabled={!canSubmit}>
+              <Button type="submit" className="mt-2" disabled={!canSubmit}>
                 {pending ? "Reserving…" : "Join the waitlist"}
               </Button>
             </form>
@@ -290,7 +310,7 @@ function Home() {
 
         <motion.p
           initial={{ opacity: 0 }}
-          animate={{ opacity: stage >= 4 ? 1 : 0 }}
+          animate={{ opacity: stage >= 5 ? 1 : 0 }}
           className="absolute bottom-6 text-xs text-muted-foreground/70"
         >
           Background by{" "}
