@@ -40,6 +40,34 @@ export interface WaitlistResult {
   username?: string;
 }
 
+async function sendWelcomeEmail(email: string, username: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+  const from = process.env.RESEND_FROM ?? "Modulora <onboarding@resend.dev>";
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: email,
+        template: {
+          id: "welcome-to-modulora",
+          variables: { reservedusername: username },
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("welcome email failed", res.status, await res.text());
+    }
+  } catch (error) {
+    console.error("welcome email failed", error);
+  }
+}
+
 function getDb() {
   const url = process.env.DATABASE_URL;
   if (!url) return null;
@@ -82,6 +110,8 @@ export const joinWaitlist = createServerFn({ method: "POST" })
       await db
         .insert(schema.waitlistEntries)
         .values({ username, email });
+      // Fire-and-forget: email failures must never block a reservation.
+      await sendWelcomeEmail(email, username);
       return { ok: true, username };
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
