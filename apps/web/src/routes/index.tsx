@@ -18,9 +18,7 @@ function Home() {
           <Link to="/components">Explore components</Link>
         </Button>
         <Button asChild size="lg" variant="outline">
-          <a href="https://github.com/Modulora" rel="noreferrer">
-            Publish a component
-          </a>
+          <Link to="/waitlist">Join the waitlist</Link>
         </Button>
       </div>
     </div>

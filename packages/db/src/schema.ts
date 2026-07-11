@@ -114,3 +114,10 @@ export const evidenceRecords = pgTable(
   },
   (t) => [index("evidence_records_version").on(t.componentVersionId)],
 );
+
+export const waitlistEntries = pgTable("waitlist_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
