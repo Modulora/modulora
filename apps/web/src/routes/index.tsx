@@ -1,25 +1,307 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+/* ─────────────────────────────────────────────────────────
+ * ANIMATION STORYBOARD — waitlist homepage
+ *
+ * Read top-to-bottom. Each `at` value is ms after mount.
+ *
+ *    0ms   shader background visible (black/gray grain)
+ *  200ms   wordmark fades in
+ *  450ms   headline rises, opacity 0 → 1, y 16 → 0
+ *  750ms   waitlist card scales 0.96 → 1.0, fades in
+ * 1400ms   beui credit fades in at the bottom
+ * ───────────────────────────────────────────────────────── */
+import { useEffect, useRef, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "motion/react";
+import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ShaderBackground } from "@/components/motion/shader-background";
+import {
+  checkUsername,
+  joinWaitlist,
+  type UsernameCheck,
+} from "../lib/waitlist";
 
 export const Route = createFileRoute("/")({ component: Home });
 
-function Home() {
+const TIMING = {
+  wordmark: 200, // wordmark fades in
+  headline: 450, // headline rises
+  card: 750, // waitlist card appears
+  credit: 1400, // beui credit fades in
+};
+
+/* Shader backdrop — primarily black and gray */
+const BACKDROP = {
+  variant: "grain-gradient" as const,
+  colors: ["#0a0a0a", "#1c1c1c", "#2e2e2e"], // near-black grays
+  colorBack: "#050505", // page base
+  softness: 0.8,
+  intensity: 0.15,
+  noise: 0.35,
+  shape: "corners" as const,
+  speed: 0.4,
+};
+
+/* Headline block */
+const HEADLINE = {
+  offsetY: 16, // px rise distance
+  spring: { type: "spring" as const, stiffness: 260, damping: 28 },
+};
+
+/* Waitlist card */
+const CARD = {
+  initialScale: 0.96, // scale before appearing
+  spring: { type: "spring" as const, stiffness: 260, damping: 26 },
+};
+
+/* Username availability check */
+const USERNAME_CHECK = {
+  debounceMs: 400, // idle time before hitting the server
+  minLength: 2, // don't check below this
+};
+
+const EMAIL_PATTERN = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,24}$/;
+
+type FieldStatus =
+  | { kind: "idle" }
+  | { kind: "checking" }
+  | { kind: "valid"; message: string }
+  | { kind: "invalid"; message: string };
+
+function StatusLine({ status }: { status: FieldStatus }) {
+  if (status.kind === "idle") return <div className="h-4" />;
   return (
-    <div className="flex flex-col items-center gap-6 py-20 text-center">
-      <h1 className="max-w-2xl text-5xl font-bold tracking-tight">
-        Discover your next great component.
-      </h1>
-      <p className="max-w-xl text-lg text-muted-foreground">
-        Browse open and premium components from trusted creators. Install with
-        one command—or let your coding agent handle it.
-      </p>
-      <div className="flex gap-4">
-        <Button asChild size="lg">
-          <Link to="/components">Explore components</Link>
-        </Button>
-        <Button asChild size="lg" variant="outline">
-          <Link to="/waitlist">Join the waitlist</Link>
-        </Button>
+    <div className="flex h-4 items-center gap-1.5 text-xs">
+      {status.kind === "checking" ? (
+        <>
+          <Loader2 className="size-3 animate-spin text-muted-foreground" />
+          <span className="text-muted-foreground">Checking…</span>
+        </>
+      ) : status.kind === "valid" ? (
+        <>
+          <Check className="size-3 text-emerald-400" />
+          <span className="text-emerald-400">{status.message}</span>
+        </>
+      ) : (
+        <>
+          <X className="size-3 text-destructive" />
+          <span className="text-destructive">{status.message}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Home() {
+  const [stage, setStage] = useState(0);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [usernameStatus, setUsernameStatus] = useState<FieldStatus>({
+    kind: "idle",
+  });
+  const [emailStatus, setEmailStatus] = useState<FieldStatus>({ kind: "idle" });
+  const [pending, setPending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [reserved, setReserved] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestSeq = useRef(0);
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setStage(1), TIMING.wordmark),
+      setTimeout(() => setStage(2), TIMING.headline),
+      setTimeout(() => setStage(3), TIMING.card),
+      setTimeout(() => setStage(4), TIMING.credit),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  function onUsernameChange(raw: string) {
+    const value = raw.toLowerCase();
+    setUsername(value);
+    setSubmitError(null);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.length < USERNAME_CHECK.minLength) {
+      setUsernameStatus({ kind: "idle" });
+      return;
+    }
+    setUsernameStatus({ kind: "checking" });
+    const seq = ++requestSeq.current;
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const result: UsernameCheck = await checkUsername({
+          data: { username: value },
+        });
+        if (seq !== requestSeq.current) return; // stale response
+        if (result.state === "available") {
+          setUsernameStatus({
+            kind: "valid",
+            message: `@${value} is available`,
+          });
+        } else if (result.state === "taken") {
+          setUsernameStatus({
+            kind: "invalid",
+            message: `@${value} is already reserved`,
+          });
+        } else if (result.state === "invalid") {
+          setUsernameStatus({ kind: "invalid", message: result.reason });
+        } else {
+          setUsernameStatus({ kind: "idle" });
+        }
+      } catch {
+        if (seq === requestSeq.current) setUsernameStatus({ kind: "idle" });
+      }
+    }, USERNAME_CHECK.debounceMs);
+  }
+
+  function onEmailBlur() {
+    if (!email) {
+      setEmailStatus({ kind: "idle" });
+    } else if (EMAIL_PATTERN.test(email.trim().toLowerCase())) {
+      setEmailStatus({ kind: "valid", message: "Looks good" });
+    } else {
+      setEmailStatus({ kind: "invalid", message: "Enter a valid email" });
+    }
+  }
+
+  const canSubmit =
+    usernameStatus.kind === "valid" &&
+    EMAIL_PATTERN.test(email.trim().toLowerCase()) &&
+    !pending;
+
+  async function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!canSubmit) return;
+    setPending(true);
+    setSubmitError(null);
+    try {
+      const result = await joinWaitlist({ data: { username, email } });
+      if (result.ok && result.username) setReserved(result.username);
+      else setSubmitError(result.error ?? "Something went wrong.");
+    } catch {
+      setSubmitError("Something went wrong. Try again shortly.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="relative min-h-svh overflow-hidden bg-[#050505]">
+      <div className="absolute inset-0">
+        <ShaderBackground {...BACKDROP} />
+      </div>
+
+      <div className="relative z-10 flex min-h-svh flex-col items-center justify-center px-6 py-16">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: stage >= 1 ? 1 : 0 }}
+          className="text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground"
+        >
+          Modulora
+        </motion.p>
+
+        <motion.h1
+          initial={{ opacity: 0, y: HEADLINE.offsetY }}
+          animate={{
+            opacity: stage >= 2 ? 1 : 0,
+            y: stage >= 2 ? 0 : HEADLINE.offsetY,
+          }}
+          transition={HEADLINE.spring}
+          className="mt-4 max-w-xl text-center text-4xl font-bold tracking-tight sm:text-5xl"
+        >
+          Discover your next great component.
+        </motion.h1>
+
+        <motion.div
+          initial={{ opacity: 0, scale: CARD.initialScale }}
+          animate={{
+            opacity: stage >= 3 ? 1 : 0,
+            scale: stage >= 3 ? 1 : CARD.initialScale,
+          }}
+          transition={CARD.spring}
+          className="mt-10 w-full max-w-sm rounded-xl border border-border/60 bg-card/70 p-6 backdrop-blur-md"
+        >
+          {reserved ? (
+            <div className="flex flex-col items-center gap-2 py-4 text-center">
+              <Check className="size-6 text-emerald-400" />
+              <p className="font-semibold">You're on the list.</p>
+              <p className="text-sm text-muted-foreground">
+                <span className="text-foreground">@{reserved}</span> is
+                reserved for you. We'll email you when Modulora opens.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="username">Reserve your username</Label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    @
+                  </span>
+                  <Input
+                    id="username"
+                    name="username"
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={40}
+                    placeholder="northstar"
+                    className="pl-8"
+                    value={username}
+                    onChange={(e) => onUsernameChange(e.target.value)}
+                    aria-invalid={usernameStatus.kind === "invalid"}
+                    required
+                  />
+                </div>
+                <StatusLine status={usernameStatus} />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailStatus({ kind: "idle" });
+                  }}
+                  onBlur={onEmailBlur}
+                  aria-invalid={emailStatus.kind === "invalid"}
+                  required
+                />
+                <StatusLine status={emailStatus} />
+              </div>
+
+              {submitError ? (
+                <p className="text-sm text-destructive">{submitError}</p>
+              ) : null}
+
+              <Button type="submit" disabled={!canSubmit}>
+                {pending ? "Reserving…" : "Join the waitlist"}
+              </Button>
+            </form>
+          )}
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: stage >= 4 ? 1 : 0 }}
+          className="absolute bottom-6 text-xs text-muted-foreground/70"
+        >
+          Background by{" "}
+          <a
+            href="https://beui.dev"
+            rel="noreferrer"
+            className="underline hover:text-foreground"
+          >
+            beui
+          </a>
+        </motion.p>
       </div>
     </div>
   );

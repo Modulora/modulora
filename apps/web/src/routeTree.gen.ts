@@ -9,17 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
-const WaitlistRoute = WaitlistRouteImport.update({
-  id: '/waitlist',
-  path: '/waitlist',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,14 +37,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/waitlist': typeof WaitlistRoute
   '/components/': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/waitlist': typeof WaitlistRoute
   '/components': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -58,7 +50,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/waitlist': typeof WaitlistRoute
   '/components/': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -66,22 +57,12 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/waitlist'
-    | '/components/'
-    | '/api/auth/$'
-    | '/components/$namespace/$name'
+    '/' | '/components/' | '/api/auth/$' | '/components/$namespace/$name'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/waitlist'
-    | '/components'
-    | '/api/auth/$'
-    | '/components/$namespace/$name'
+  to: '/' | '/components' | '/api/auth/$' | '/components/$namespace/$name'
   id:
     | '__root__'
     | '/'
-    | '/waitlist'
     | '/components/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
@@ -89,7 +70,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  WaitlistRoute: typeof WaitlistRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
@@ -97,13 +77,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/waitlist': {
-      id: '/waitlist'
-      path: '/waitlist'
-      fullPath: '/waitlist'
-      preLoaderRoute: typeof WaitlistRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -137,7 +110,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  WaitlistRoute: WaitlistRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,

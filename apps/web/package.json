@@ -14,6 +14,7 @@
   "dependencies": {
     "@modulora/db": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
+    "@paper-design/shaders-react": "^0.0.77",
     "@tanstack/react-router": "^1.132.0",
     "@tanstack/react-start": "^1.132.0",
     "better-auth": "^1.6.23",
@@ -21,6 +22,7 @@
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^0.545.0",
+    "motion": "^12.42.2",
     "pg": "^8.22.0",
     "radix-ui": "^1.6.2",
     "react": "^19.2.0",
