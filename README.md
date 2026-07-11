@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/Modulora/.github/main/assets/brand/social-header.png" alt="Modulora — Discover your next great component" width="100%"></p>
+
 # Modulora
 
 **Discover your next great component.**
@@ -48,6 +50,11 @@ See [`CHECKLIST.md`](./CHECKLIST.md) for the repository bootstrap and first vert
 ## Security
 
 Do not report vulnerabilities in public issues. A private reporting process will be published before executable registry or authentication code ships.
+
+## Build plan
+
+- [`PLAN.md`](./PLAN.md) — self-contained scope, dependencies, milestones, acceptance criteria, security/test gates, and definition of done.
+- [`CHECKLIST.md`](./CHECKLIST.md) — concise progress tracker.
 
 ## License
 
