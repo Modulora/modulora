@@ -4,7 +4,7 @@
 
 - [ ] Complete trademark and domain review.
 - [ ] Finalize AGPL-3.0 core and Apache-2.0 spec/CLI licensing with counsel.
-- [ ] Choose DCO or contributor agreement.
+- [x] Choose DCO or contributor agreement — DCO 1.1, no CLA.
 - [ ] Add CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, and component publishing terms.
 - [ ] Configure CODEOWNERS and protected branch rules.
 - [ ] Enable private vulnerability reporting.
