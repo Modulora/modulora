@@ -131,6 +131,7 @@ Do not optimize page views, raw copied commands, or unverified install pings as 
 - Baseline secret, dependency, license, and static analysis that does not execute creator code.
 - Public shadcn-compatible item endpoint pinned to exact versions.
 - Public evidence API and component version history.
+- Authenticated publishing from both the web editor and the CLI (`modulora login` + `modulora publish`) against one core publish endpoint. Creators choose distribution channels per component (e.g. shadcn-only, opting out of the Modulora CLI channel).
 
 ### Security gate
 
@@ -173,7 +174,7 @@ modulora verify
 - Apache-2.0 CLI and installer engine in separate repository.
 - shadcn-compatible adapter without forking shadcn's schema.
 - Secure npm publishing using protected environments and trusted publishing/OIDC.
-- Read-only MCP and SKILL.md adapters after CLI API stabilizes.
+- Read-only MCP server (`@modulora/mcp` or `modulora mcp`) exposing catalog search, component metadata/registry-item, and install commands to AI agents — public/visible items only, closed-source never leaks source. Ships after the CLI read API stabilizes.
 - Privacy-preserving install telemetry that is opt-in or transparently disclosed.
 
 ### Security gate
