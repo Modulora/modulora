@@ -1,0 +1,10 @@
+* @Modulora/core
+
+/.github/ @Modulora/core @Modulora/security
+/apps/api/ @Modulora/core @Modulora/security
+/apps/jobs/ @Modulora/core @Modulora/security
+/packages/auth/ @Modulora/core @Modulora/security
+/packages/evidence/ @Modulora/core @Modulora/security @Modulora/spec
+/packages/moderation/ @Modulora/core @Modulora/security
+/LICENSE @Modulora/maintainers
+/SECURITY.md @Modulora/security

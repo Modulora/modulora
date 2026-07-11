@@ -58,7 +58,7 @@ The first deploy may bundle web and API into one Worker. Package boundaries rema
 
 ### Deliverables
 
-- Final license/contribution decision before external code contributions.
+- AGPL-3.0-only core and DCO 1.1/no-CLA contribution policy; legal review remains required before platform launch.
 - TanStack Start workspace with Cloudflare Vite integration.
 - shadcn/ui initialized with Modulora design tokens and supplied brand assets.
 - TypeScript strict mode, formatting, lint, tests, dependency policy, and secret scanning.

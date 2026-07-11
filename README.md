@@ -58,4 +58,4 @@ Do not report vulnerabilities in public issues. A private reporting process will
 
 ## License
 
-The repository currently retains its original MIT license while the planned AGPL-3.0/open-core licensing structure receives legal review. Do not accept external code contributions until the contribution and license policy is finalized.
+The public core is licensed under `AGPL-3.0-only`. Contributions use the Developer Certificate of Origin 1.1 with no CLA. See [`LICENSING.md`](./LICENSING.md). Creator components retain their declared per-component licenses.
