@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -13,19 +14,14 @@ function Home() {
         one command—or let your coding agent handle it.
       </p>
       <div className="flex gap-4">
-        <Link
-          to="/components"
-          className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
-        >
-          Explore components
-        </Link>
-        <a
-          href="https://github.com/Modulora"
-          rel="noreferrer"
-          className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium"
-        >
-          Publish a component
-        </a>
+        <Button asChild size="lg">
+          <Link to="/components">Explore components</Link>
+        </Button>
+        <Button asChild size="lg" variant="outline">
+          <a href="https://github.com/Modulora" rel="noreferrer">
+            Publish a component
+          </a>
+        </Button>
       </div>
     </div>
   );

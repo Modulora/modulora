@@ -21,6 +21,7 @@
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^0.545.0",
     "pg": "^8.22.0",
+    "radix-ui": "^1.6.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.3.1"
