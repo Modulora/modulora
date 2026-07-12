@@ -10,9 +10,13 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { Blocks, CalendarDays, Globe } from "lucide-react";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
+
 import { ComponentPreview } from "@/components/component-preview";
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { fetchPublicProfile } from "@/lib/catalog-db";
 import type { CatalogItem } from "@/data/catalog";
 
@@ -68,6 +72,7 @@ function Profile() {
           <p className="text-sm text-muted-foreground">@{profile.username}</p>
           {profile.bio ? <p className="mt-3 max-w-2xl text-sm leading-relaxed">{profile.bio}</p> : null}
 
+          <TooltipProvider delayDuration={150}>
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays className="size-3.5" /> Joined {joined}
@@ -80,17 +85,21 @@ function Profile() {
                 <Globe className="size-3.5" /> {hostOf(profile.websiteUrl)}
               </a>
             ) : null}
-            {profile.githubUrl ? (
-              <a href={profile.githubUrl} target="_blank" rel="noreferrer noopener me" className="inline-flex items-center gap-1.5 hover:text-foreground">
-                <GitHubIcon className="size-3.5" /> GitHub
-              </a>
+            {profile.githubUsername ? (
+              <SocialLink
+                href={`https://github.com/${profile.githubUsername}`}
+                icon={<GitHubIcon className="size-3.5" />}
+                label={profile.githubUsername}
+                verifiedVia="GitHub sign-in"
+              />
+            ) : profile.githubUrl ? (
+              <SocialLink href={profile.githubUrl} icon={<GitHubIcon className="size-3.5" />} label="GitHub" />
             ) : null}
             {profile.xUrl ? (
-              <a href={profile.xUrl} target="_blank" rel="noreferrer noopener me" className="inline-flex items-center gap-1.5 hover:text-foreground">
-                <XIcon className="size-3" /> X
-              </a>
+              <SocialLink href={profile.xUrl} icon={<XIcon className="size-3" />} label="X" />
             ) : null}
           </div>
+          </TooltipProvider>
         </div>
       </motion.header>
 
@@ -121,6 +130,40 @@ function Profile() {
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * A social link. Verified links (proven via OAuth) get a scoped indicator with
+ * the exact basis on hover; self-asserted links render plainly with no claim.
+ */
+function SocialLink({
+  href,
+  icon,
+  label,
+  verifiedVia,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  verifiedVia?: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <a href={href} target="_blank" rel="noreferrer noopener me" className="inline-flex items-center gap-1.5 hover:text-foreground">
+        {icon} {label}
+      </a>
+      {verifiedVia ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" aria-label={`Verified via ${verifiedVia}`} className="text-emerald-500 outline-none">
+              <HugeiconsIcon icon={CheckmarkBadge01Icon} size={13} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Ownership verified via {verifiedVia}.</TooltipContent>
+        </Tooltip>
+      ) : null}
+    </span>
   );
 }
 

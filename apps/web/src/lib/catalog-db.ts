@@ -199,6 +199,7 @@ export interface PublicProfile {
   websiteUrl: string | null;
   githubUrl: string | null;
   xUrl: string | null;
+  githubUsername: string | null;
   joinedAt: string;
 }
 
@@ -240,6 +241,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         websiteUrl: user.websiteUrl,
         githubUrl: user.githubUrl,
         xUrl: user.xUrl,
+        githubUsername: user.githubUsername,
         joinedAt: user.createdAt.toISOString(),
       },
       components: rows.map((row) => toCatalogItem(row.namespace, row.component, row.version)),

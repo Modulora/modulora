@@ -257,8 +257,11 @@ function Settings() {
         </div>
         {connections.github ? (
           <div className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-3">
-            <span className="flex items-center gap-2.5 text-sm"><GitHubIcon className="size-4" /> GitHub</span>
-            <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="size-3.5" /> Connected</span>
+            <span className="flex items-center gap-2.5 text-sm">
+              <GitHubIcon className="size-4" /> GitHub
+              {user.githubUsername ? <span className="text-muted-foreground">@{user.githubUsername}</span> : null}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="size-3.5" /> {user.githubUsername ? "Verified" : "Connected"}</span>
           </div>
         ) : (
           <Button type="button" size="lg" className="w-full gap-2" onClick={() => void linkSocial({ provider: "github", callbackURL: "/settings" })}>

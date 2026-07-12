@@ -81,6 +81,48 @@ async function ensureUniqueHandle(db: Db, handle: string): Promise<string> {
   return `${handle}-${Date.now().toString(36)}`;
 }
 
+/**
+ * When a GitHub account is linked, resolve the verified GitHub login via the
+ * API and store it as a proven identity. A hand-typed github_url that differs
+ * is then shown as unverified. Never throws into the auth flow.
+ */
+async function captureGithubIdentity(
+  db: Db,
+  account: { userId: string; providerId: string; accessToken?: string | null },
+) {
+  if (account.providerId !== "github" || !account.accessToken) return;
+  try {
+    const res = await fetch("https://api.github.com/user", {
+      headers: {
+        authorization: `Bearer ${account.accessToken}`,
+        accept: "application/vnd.github+json",
+        "user-agent": "modulora",
+      },
+    });
+    if (!res.ok) return;
+    const profile = (await res.json()) as { login?: string; html_url?: string };
+    if (!profile.login) return;
+
+    const [current] = await db
+      .select({ githubUrl: schema.users.githubUrl })
+      .from(schema.users)
+      .where(eq(schema.users.id, account.userId))
+      .limit(1);
+
+    await db
+      .update(schema.users)
+      .set({
+        githubUsername: profile.login,
+        // Adopt the verified URL only if the user hasn't set one themselves.
+        githubUrl: current?.githubUrl || profile.html_url || `https://github.com/${profile.login}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.users.id, account.userId));
+  } catch (error) {
+    console.error("github identity capture failed", error);
+  }
+}
+
 function buildAuth(databaseUrl: string, secret: string) {
   const db = drizzle(neon(databaseUrl), { schema });
   const githubClientId = process.env.GITHUB_CLIENT_ID;
@@ -109,6 +151,13 @@ function buildAuth(databaseUrl: string, secret: string) {
         create: {
           after: async (user) => {
             await claimNamespaceForUser(db, user);
+          },
+        },
+      },
+      account: {
+        create: {
+          after: async (account) => {
+            await captureGithubIdentity(db, account);
           },
         },
       },
