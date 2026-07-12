@@ -19,6 +19,8 @@ import {
 import {
   BadgeCheck,
   CalendarDays,
+  Gift,
+  Tag,
   Clock3,
   Filter,
   Grid2X2,
@@ -53,12 +55,14 @@ const EVIDENCE_FILTERS = [
   "secret-scan",
   "source-not-assessed",
 ] as const satisfies readonly EvidenceType[];
+const PRICES = ["free", "paid"] as const;
 const VIEWS = ["featured", "newest", "authors"] as const;
 const LAYOUTS = ["grid", "list"] as const;
 
 const catalogSearchParams = {
   q: parseAsString.withDefault(""),
   category: parseAsString,
+  price: parseAsStringLiteral(PRICES),
   source: parseAsStringLiteral(SOURCE_MODELS),
   license: parseAsStringLiteral(LICENSES),
   evidence: parseAsStringLiteral(EVIDENCE_FILTERS),
@@ -123,7 +127,7 @@ function Catalog() {
   const advancedCount = [search.source, search.license, search.evidence].filter(Boolean).length;
 
   function toggle(
-    key: "category" | "source" | "license" | "evidence",
+    key: "category" | "price" | "source" | "license" | "evidence",
     value: string,
   ) {
     void setSearch({ [key]: search[key] === value ? null : value });
@@ -133,6 +137,7 @@ function Catalog() {
     void setSearch({
       q: null,
       category: null,
+      price: null,
       source: null,
       license: null,
       evidence: null,
@@ -170,6 +175,12 @@ function Catalog() {
             <RailButton icon={Clock3} active={search.view === "newest"} onClick={() => void setSearch({ view: "newest" })}>Newest</RailButton>
             <RailButton icon={Users} active={search.view === "authors"} onClick={() => void setSearch({ view: "authors" })}>Top authors</RailButton>
           </nav>
+
+          <div className="flex flex-col gap-1">
+            <RailHeading>Price</RailHeading>
+            <RailButton icon={Gift} active={search.price === "free"} onClick={() => toggle("price", "free")}>Free</RailButton>
+            <RailButton icon={Tag} active={search.price === "paid"} onClick={() => toggle("price", "paid")}>Paid</RailButton>
+          </div>
 
           <div className="flex flex-col gap-1">
             <RailHeading>Categories</RailHeading>
@@ -278,7 +289,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
           <p className="mt-1 truncate text-xs text-muted-foreground">@{item.namespace} · {item.category}</p>
         </div>
         <Badge variant={item.sourceModel === "open-source" ? "secondary" : "outline"} className="shrink-0">
-          {item.sourceModel === "open-source" ? "Open" : "Commercial"}
+          {item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"}
         </Badge>
       </div>
     </Link>
@@ -315,6 +326,11 @@ function matches(item: CatalogItem, search: CatalogSearch) {
     if (!haystack.includes(search.q.toLowerCase())) return false;
   }
   if (search.category && item.category !== search.category) return false;
+  if (search.price) {
+    const isFree = item.sourceModel === "open-source";
+    if (search.price === "free" && !isFree) return false;
+    if (search.price === "paid" && isFree) return false;
+  }
   if (search.source && item.sourceModel !== search.source) return false;
   if (search.license) {
     const license = item.license.kind === "spdx" ? "open" : item.license.kind;

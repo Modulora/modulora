@@ -85,7 +85,8 @@ function ComponentDetail() {
   const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const [previewKey, setPreviewKey] = useState(0);
   const previewStageRef = useRef<HTMLDivElement>(null);
-  const isClosed = item.sourceModel !== "open-source";
+  // Paid components are fulfilled by the creator; Modulora hosts no source.
+  const isPaid = item.sourceModel !== "open-source";
 
   useEffect(() => {
     const timers = [
@@ -106,7 +107,7 @@ function ComponentDetail() {
     [item],
   );
 
-  const enabledInstallTabs = isClosed
+  const enabledInstallTabs = isPaid
     ? []
     : [
         ...(item.distributionChannels?.includes("shadcn") ? ["shadcn"] : []),
@@ -131,8 +132,8 @@ function ComponentDetail() {
             <h1 className="text-3xl font-bold tracking-tight">{item.title}</h1>
             <p className="mt-2 max-w-3xl text-muted-foreground">{item.description}</p>
           </div>
-          <Badge variant={isClosed ? "outline" : "secondary"}>
-            {isClosed ? "Closed source" : "Open source"}
+          <Badge variant={isPaid ? "outline" : "secondary"}>
+            {isPaid ? item.purchase?.priceLabel ?? "Paid" : "Free"}
           </Badge>
         </div>
       </motion.header>
@@ -148,7 +149,7 @@ function ComponentDetail() {
               <div className="flex h-12 items-center justify-between border-b border-border/60 px-3">
                 <Tabs.List className="flex items-center gap-1">
                   <WorkspaceTab value="preview" icon={PackageCheck}>Preview</WorkspaceTab>
-                  <WorkspaceTab value="code" icon={Code2}>{isClosed ? "Code" : "Raw code"}</WorkspaceTab>
+                  <WorkspaceTab value="code" icon={Code2}>{isPaid ? "Code" : "Raw code"}</WorkspaceTab>
                 </Tabs.List>
                 {workspaceTab === "preview" ? (
                   <PreviewToolbar
@@ -171,7 +172,7 @@ function ComponentDetail() {
                 </div>
               </Tabs.Content>
               <Tabs.Content value="code" className="relative min-h-[32rem] outline-none">
-                {isClosed ? <LockedCode item={item} /> : <SourceCode item={item} />}
+                {isPaid ? <LockedCode item={item} /> : <SourceCode item={item} />}
               </Tabs.Content>
             </Tabs.Root>
           </motion.div>
@@ -181,7 +182,7 @@ function ComponentDetail() {
             animate={{ opacity: stage >= 4 ? 1 : 0, y: stage >= 4 ? 0 : RISE.offsetY }}
             transition={RISE.spring}
           >
-            {isClosed ? (
+            {isPaid ? (
               <CommercialTray item={item} />
             ) : (
               <InstallTray
@@ -288,10 +289,10 @@ function SourceCode({ item }: { item: CatalogItem }) {
 function LockedCode({ item }: { item: CatalogItem }) {
   return (
     <div className="relative h-[36rem] overflow-hidden bg-[#080808]">
-      <pre aria-hidden className="select-none p-5 font-mono text-sm leading-7 text-zinc-500 blur-[5px]">{`export function ${item.title.replace(/\s/g, "")}() {\n  // Closed-source component\n  return <CommercialComponent />\n}\n`.repeat(5)}</pre>
+      <pre aria-hidden className="select-none p-5 font-mono text-sm leading-7 text-zinc-500 blur-[5px]">{`export function ${item.title.replace(/\s/g, "")}() {\n  // Paid component — source delivered on purchase\n  return <PremiumComponent />\n}\n`.repeat(5)}</pre>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/45 text-center backdrop-blur-[2px]">
         <span className="flex size-11 items-center justify-center rounded-full border border-white/15 bg-black/60"><FileLock2 className="size-5" /></span>
-        <div><p className="font-semibold">Source is locked</p><p className="mt-1 max-w-xs text-sm text-muted-foreground">Purchase and fulfillment are handled by the creator. Modulora has not assessed this source.</p></div>
+        <div><p className="font-semibold">Paid component</p><p className="mt-1 max-w-xs text-sm text-muted-foreground">Purchase and fulfillment are handled by the creator. Modulora hosts no source and has not assessed it.</p></div>
         {item.purchase ? <Button asChild><a href={item.purchase.url} rel="noreferrer">View on {item.purchase.domain}<ExternalLink /></a></Button> : null}
       </div>
     </div>
