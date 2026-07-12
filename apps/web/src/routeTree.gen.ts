@@ -32,6 +32,7 @@ import { Route as DashboardPayoutsRouteImport } from './routes/dashboard.payouts
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
+import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
@@ -162,6 +163,11 @@ const DashboardComponentsRoute = DashboardComponentsRouteImport.update({
   path: '/components',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -290,6 +297,7 @@ export interface FileRoutesByTo {
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/admin'
+    | '/dashboard/analytics'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/admin'
+    | '/dashboard/analytics'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -446,6 +457,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/admin'
+    | '/dashboard/analytics'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -657,6 +669,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardComponentsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/analytics': {
+      id: '/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/admin': {
       id: '/dashboard/admin'
       path: '/admin'
@@ -777,6 +796,7 @@ const DashboardSettingsRouteWithChildren =
 
 interface DashboardRouteChildren {
   DashboardAdminRoute: typeof DashboardAdminRoute
+  DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardComponentsRoute: typeof DashboardComponentsRoute
   DashboardEarningsRoute: typeof DashboardEarningsRoute
   DashboardNewRoute: typeof DashboardNewRoute
@@ -791,6 +811,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAdminRoute: DashboardAdminRoute,
+  DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardComponentsRoute: DashboardComponentsRoute,
   DashboardEarningsRoute: DashboardEarningsRoute,
   DashboardNewRoute: DashboardNewRoute,

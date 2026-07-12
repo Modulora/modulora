@@ -133,8 +133,8 @@ function Dashboard() {
           <ActionRow
             icon={BarChart3}
             title="Analytics"
-            description="Views and verified installs, once published."
-            disabled
+            description="Views and verified installs across your components."
+            to="/dashboard/analytics"
           />
           <ActionRow
             icon={UserRound}
@@ -185,7 +185,7 @@ function ActionRow({
   icon: typeof Blocks;
   title: string;
   description: string;
-  to?: "/dashboard/new" | "/$username";
+  to?: "/dashboard/new" | "/$username" | "/dashboard/analytics";
   params?: { username: string };
   disabled?: boolean;
 }) {

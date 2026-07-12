@@ -60,7 +60,10 @@ export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
           <Banknote className="size-4 shrink-0 opacity-70" />
           <span className="flex-1 truncate">Payouts</span>
         </Link>
-        <SidebarRow icon={BarChart3} label="Analytics" muted />
+        <Link to="/dashboard/analytics" className={itemClass}>
+          <BarChart3 className="size-4 shrink-0 opacity-70" />
+          <span className="flex-1 truncate">Analytics</span>
+        </Link>
         {summary.namespace ? (
           <Link to="/$username" params={{ username: summary.namespace }} className={itemClass}>
             <UserRound className="size-4 shrink-0 opacity-70" />

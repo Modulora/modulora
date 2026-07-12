@@ -427,6 +427,24 @@ export const installReceipts = pgTable(
 );
 
 /**
+ * Component page views — one row per detail-page view of an approved public
+ * component. Owner self-views are excluded at write time. Views are
+ * analytics-only and never affect earnings (only verified installs do).
+ */
+export const componentViews = pgTable(
+  "component_views",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    viewerUserId: text("viewer_user_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("component_views_component").on(t.componentId)],
+);
+
+/**
  * Profit-share distribution ledger. A payout run distributes the creator
  * pool (30% of distributable profit) for a period, weighted by verified CLI
  * installs. Each share row is one creator's accounting for that run:

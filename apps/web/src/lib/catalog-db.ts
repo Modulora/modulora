@@ -236,6 +236,19 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       entitled ? files.map((file) => ({ path: file.path, content: file.content ?? "" })) : [],
       evidence,
     );
+    // Record the view: approved + public only, never the owner's own visits.
+    // Analytics-only — views never affect earnings.
+    if (row.component.reviewStatus === "approved" && row.component.visibility === "public" && viewer?.id !== row.ownerUserId) {
+      try {
+        await database.insert(schema.componentViews).values({
+          componentId: row.component.id,
+          viewerUserId: viewer?.id ?? null,
+        });
+      } catch {
+        // A failed view write must never break the page.
+      }
+    }
+
     return { ...item, marketplacePrice, marketplaceLicense, entitled, ownedPurchase };
   });
 
