@@ -62,3 +62,10 @@ The `modulora-media` bucket (avatars, preview assets) is bound in
 npx wrangler r2 bucket create modulora-media
 ```
 - `NODE_ENV` — provided by the runtime.
+
+## Alpha access gate
+
+`ALPHA_ALLOWLIST` — comma-separated emails. When set, only these accounts
+resolve sessions; everyone else is treated as signed out on every platform
+surface (dashboard, publish, buy, review, CLI tokens). Set it in production
+until the alpha opens; leave unset locally. See #29.

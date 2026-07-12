@@ -12,6 +12,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { alphaGateActive } from "@/lib/access";
 import { motion } from "motion/react";
 import { Loader2 } from "lucide-react";
 
@@ -22,7 +24,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/signin")({ component: SignIn });
+const fetchGate = createServerFn({ method: "GET" }).handler(async () => ({
+  gated: alphaGateActive(),
+}));
+
+export const Route = createFileRoute("/signin")({
+  loader: () => fetchGate(),
+  component: SignIn,
+});
 
 const TIMING = {
   card: 120, // card scales + fades in
@@ -48,6 +57,7 @@ const BACKDROP =
   "radial-gradient(120% 90% at 50% 0%, #1c1c1c 0%, #101010 40%, #050505 100%)";
 
 function SignIn() {
+  const { gated } = Route.useLoaderData();
   const [stage, setStage] = useState(0);
 
   useEffect(() => {
@@ -74,6 +84,11 @@ function SignIn() {
         transition={CARD.spring}
         className="w-full max-w-sm rounded-2xl border border-border/60 bg-card/70 p-8 backdrop-blur-md"
       >
+        {gated ? (
+          <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 text-xs leading-relaxed text-amber-500">
+            Modulora is in a limited alpha — sign-in works only for invited accounts. Join the waitlist on the homepage to get access.
+          </div>
+        ) : null}
         <motion.div
           initial={{ opacity: 0, y: RISE.offsetY }}
           animate={{

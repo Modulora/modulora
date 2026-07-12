@@ -9,6 +9,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
+import { isAllowedEmail } from "./access";
 import { getAuth } from "./auth";
 
 export interface CurrentUser {
@@ -37,6 +38,9 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
 
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) return null;
+
+  // Alpha gate: non-allowlisted accounts are signed out everywhere (#29).
+  if (session.user.email && !isAllowedEmail(session.user.email)) return null;
 
   const db = drizzle(neon(databaseUrl), { schema });
   const [row] = await db
