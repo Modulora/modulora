@@ -12,7 +12,7 @@ const JSON_HEADERS = {
   "cache-control": "public, max-age=60",
 };
 
-async function handle({ params }: { params: { _splat?: string } }) {
+async function handle({ params, request }: { params: { _splat?: string }; request: Request }) {
   const splat = params._splat;
   if (!splat) return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: JSON_HEADERS });
 
@@ -21,12 +21,27 @@ async function handle({ params }: { params: { _splat?: string } }) {
     return new Response(JSON.stringify({ error: "Invalid registry path" }), { status: 400, headers: JSON_HEADERS });
   }
 
-  const item = await resolveRegistryItem(parsed);
-  if (!item) {
+  const result = await resolveRegistryItem(parsed, request);
+  if (result.status === "payment-required") {
+    // Paid listing without an entitlement: point at the purchase page. Never cache.
+    return new Response(
+      JSON.stringify({
+        error: "Payment required",
+        message: "This component is sold on Modulora. Buy it, then sign in with `modulora login` to install.",
+        price: result.price,
+        currency: result.currency,
+        purchase_url: `https://modulora.dev/components/@${parsed.namespace}/${parsed.name}`,
+      }),
+      { status: 402, headers: { ...JSON_HEADERS, "cache-control": "no-store" } },
+    );
+  }
+  if (result.status === "not-found") {
     return new Response(JSON.stringify({ error: "Component not found" }), { status: 404, headers: JSON_HEADERS });
   }
 
-  return new Response(JSON.stringify(item, null, 2), { headers: JSON_HEADERS });
+  // Entitlement-gated responses must never hit shared caches; free stays cacheable.
+  const headers = result.gated ? { ...JSON_HEADERS, "cache-control": "private, no-store" } : JSON_HEADERS;
+  return new Response(JSON.stringify(result.item, null, 2), { headers });
 }
 
 export const Route = createFileRoute("/r/$")({

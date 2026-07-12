@@ -11,6 +11,8 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
+import { getCurrentUser } from "./session";
+import { hasEntitlement } from "./marketplace";
 
 export interface ParsedRegistryPath {
   namespace: string;
@@ -62,26 +64,49 @@ interface RegistryItem {
   meta?: { contentSha256: string | null; version: string };
 }
 
+export type RegistryResolution =
+  | { status: "ok"; item: RegistryItem; gated: boolean }
+  | { status: "payment-required"; price: number; currency: string }
+  | { status: "not-found" };
+
 export async function resolveRegistryItem(
   parsed: ParsedRegistryPath,
-): Promise<RegistryItem | null> {
+  request?: Request,
+): Promise<RegistryResolution> {
+  const notFound = { status: "not-found" } as const;
   const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) return null;
+  if (!databaseUrl) return notFound;
   const db = drizzle(neon(databaseUrl), { schema });
 
   const [row] = await db
-    .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name })
+    .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name, ownerUserId: schema.namespaces.ownerUserId })
     .from(schema.components)
     .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
     .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
     .where(and(eq(schema.namespaces.name, parsed.namespace), eq(schema.components.name, parsed.name)))
     .limit(1);
 
-  if (!row) return null;
+  if (!row) return notFound;
   const c = row.component;
   // Only serve components that are public, approved, and open-source.
+  // (external-commercial source is never hosted here.)
   if (c.visibility !== "public" || c.reviewStatus !== "approved" || c.sourceModel !== "open-source") {
-    return null;
+    return notFound;
+  }
+
+  // Marketplace-priced components require an entitlement: the buyer (or the
+  // owner), authenticated via session cookie or a CLI bearer token.
+  const [price] = await db
+    .select({ unitAmount: schema.componentPrices.unitAmount, currency: schema.componentPrices.currency })
+    .from(schema.componentPrices)
+    .where(and(eq(schema.componentPrices.componentId, c.id), eq(schema.componentPrices.active, true)))
+    .limit(1);
+  if (price) {
+    const viewer = request ? await getCurrentUser(request) : null;
+    const entitled = await hasEntitlement(c.id, viewer?.id ?? null, row.ownerUserId ?? null);
+    if (!entitled) {
+      return { status: "payment-required", price: price.unitAmount, currency: price.currency };
+    }
   }
 
   // Resolve the requested version (or the latest).
@@ -94,7 +119,7 @@ export async function resolveRegistryItem(
       .limit(1);
     versionId = v?.id ?? null;
   }
-  if (!versionId) return null;
+  if (!versionId) return notFound;
 
   const files = await db
     .select({ path: schema.componentFiles.path, content: schema.componentFiles.content, role: schema.componentFiles.role })
@@ -103,7 +128,7 @@ export async function resolveRegistryItem(
     .orderBy(schema.componentFiles.orderIndex);
 
   const installFiles = files.filter((f) => f.role === "component");
-  if (installFiles.length === 0) return null;
+  if (installFiles.length === 0) return notFound;
 
   // npm dependencies from the author's package.json (excluding react runtime).
   let dependencies: string[] = [];
@@ -126,7 +151,7 @@ export async function resolveRegistryItem(
     .where(eq(schema.componentVersions.id, versionId))
     .limit(1);
 
-  return {
+  return { status: "ok", gated: Boolean(price), item: {
     $schema: "https://ui.shadcn.com/schema/registry-item.json",
     name: c.name,
     type: c.itemType || "registry:component",
@@ -138,5 +163,5 @@ export async function resolveRegistryItem(
       return { path, content: f.content ?? "", type: fileType(path) };
     }),
     meta: { contentSha256: version?.contentSha256 ?? null, version: version?.version ?? "" },
-  };
+  } };
 }

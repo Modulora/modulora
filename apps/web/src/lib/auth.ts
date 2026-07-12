@@ -11,6 +11,8 @@
  */
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { bearer } from "better-auth/plugins/bearer";
+import { deviceAuthorization } from "better-auth/plugins/device-authorization";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
@@ -174,6 +176,7 @@ function buildAuth(databaseUrl: string, secret: string) {
     session: schema.sessions,
     account: schema.accounts,
     verification: schema.verifications,
+    deviceCode: schema.deviceCodes,
   };
 
   return betterAuth({
@@ -206,6 +209,19 @@ function buildAuth(databaseUrl: string, secret: string) {
         },
       },
     },
+    plugins: [
+      // CLI login: RFC 8628 device flow. The CLI requests a code, the user
+      // approves at /device, the CLI polls for a bearer session token.
+      deviceAuthorization({
+        expiresIn: "10m",
+        interval: "3s",
+        validateClient: (clientId) => clientId === "modulora-cli",
+        // Send users to our approval page, not the raw API path.
+        verificationUri: `${(process.env.BETTER_AUTH_URL ?? "").replace(/\/$/, "")}/device`,
+      }),
+      // Lets Authorization: Bearer <session token> authenticate API requests.
+      bearer(),
+    ],
     advanced: {
       useSecureCookies: process.env.NODE_ENV === "production",
     },
