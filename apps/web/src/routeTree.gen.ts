@@ -27,6 +27,7 @@ import { Route as ReviewIdRouteImport } from './routes/review.$id'
 import { Route as RSplatRouteImport } from './routes/r.$'
 import { Route as ISplatRouteImport } from './routes/i.$'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
+import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-receipt'
@@ -125,6 +126,11 @@ const DashboardNewRoute = DashboardNewRouteImport.update({
   path: '/new',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardEarningsRoute = DashboardEarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardComponentsRoute = DashboardComponentsRouteImport.update({
   id: '/components',
   path: '/components',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
+  '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
+  '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
+  '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/api/install-receipt'
     | '/api/upload-avatar'
     | '/dashboard/components'
+    | '/dashboard/earnings'
     | '/dashboard/new'
     | '/i/$'
     | '/r/$'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/api/install-receipt'
     | '/api/upload-avatar'
     | '/dashboard/components'
+    | '/dashboard/earnings'
     | '/dashboard/new'
     | '/i/$'
     | '/r/$'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/api/install-receipt'
     | '/api/upload-avatar'
     | '/dashboard/components'
+    | '/dashboard/earnings'
     | '/dashboard/new'
     | '/i/$'
     | '/r/$'
@@ -477,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardNewRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/earnings': {
+      id: '/dashboard/earnings'
+      path: '/earnings'
+      fullPath: '/dashboard/earnings'
+      preLoaderRoute: typeof DashboardEarningsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/components': {
       id: '/dashboard/components'
       path: '/components'
@@ -531,6 +550,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardComponentsRoute: typeof DashboardComponentsRoute
+  DashboardEarningsRoute: typeof DashboardEarningsRoute
   DashboardNewRoute: typeof DashboardNewRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardEditNameRoute: typeof DashboardEditNameRoute
@@ -538,6 +558,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardComponentsRoute: DashboardComponentsRoute,
+  DashboardEarningsRoute: DashboardEarningsRoute,
   DashboardNewRoute: DashboardNewRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardEditNameRoute: DashboardEditNameRoute,

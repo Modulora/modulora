@@ -114,8 +114,14 @@ function Dashboard() {
 
         <nav className="flex flex-col gap-1">
           <SidebarHeading>Creator</SidebarHeading>
+          <Link
+            to="/dashboard/earnings"
+            className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent/60 [&.active]:bg-accent"
+          >
+            <Sparkles className="size-4 shrink-0 opacity-70" />
+            <span className="flex-1 truncate">Earnings</span>
+          </Link>
           <SidebarRow icon={BarChart3} label="Analytics" muted />
-          <SidebarRow icon={Sparkles} label="Payouts" badge="Soon" muted />
           {summary.namespace ? (
             <SidebarLink
               icon={UserRound}
