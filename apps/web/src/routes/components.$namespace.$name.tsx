@@ -12,7 +12,6 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Tabs } from "radix-ui";
 import { motion } from "motion/react";
 import {
-  BadgeCheck,
   Check,
   Clipboard,
   Code2,
@@ -51,6 +50,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { highlight, langForPath } from "@/lib/highlight";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
 import { reportComponent, REPORT_REASONS } from "@/lib/report";
 import { fetchCatalogDetail } from "@/lib/catalog-db";
 import { type CatalogItem, type EvidenceRecord } from "../data/catalog";
@@ -96,16 +103,17 @@ const RAIL = {
 };
 
 const EVIDENCE_LABELS: Record<string, string> = {
-  "owner-verified": "Owner verified",
-  "source-linked": "Source linked",
-  "artifact-signed": "Artifact signed",
+  "publisher-identity": "Published by",
+  "content-integrity": "Content integrity",
+  "install-parity": "Install parity",
+  "domain-verified": "Domain verified",
   "secret-scan": "Secret scan",
+  "source-not-assessed": "Source not assessed",
   "dependency-scan": "Dependency scan",
   "license-scan": "License scan",
   "static-analysis": "Static analysis",
   "build-checked": "Build checked",
   "human-reviewed": "Human reviewed",
-  "source-not-assessed": "Source not assessed",
   deprecated: "Deprecated",
   revoked: "Revoked",
 };
@@ -242,11 +250,13 @@ function ComponentDetail() {
           ) : null}
           <FactCard label="License" value={item.license.kind === "spdx" ? item.license.spdxExpression : item.license.kind} icon={FileLock2} />
           <div className="rounded-xl border border-border/60 bg-card/35 p-4">
-            <div className="mb-3 flex items-center gap-2"><ShieldCheck className="size-4" /><h2 className="text-sm font-semibold">Security evidence</h2></div>
-            <p className="mb-3 text-xs leading-relaxed text-muted-foreground">Scoped to this exact release. Evidence is not a guarantee of safety.</p>
-            <div className="flex flex-col divide-y divide-border/60">
-              {item.evidence.map((record, index) => <EvidenceRow key={`${record.type}-${index}`} record={record} />)}
-            </div>
+            <div className="mb-3 flex items-center gap-2"><ShieldCheck className="size-4" /><h2 className="text-sm font-semibold">Provenance &amp; integrity</h2></div>
+            <p className="mb-3 text-xs leading-relaxed text-muted-foreground">Installs copy exactly these files and never run install scripts. Each record below is scoped to this release and independently checkable — not a guarantee the code is safe to run.</p>
+            <TooltipProvider delayDuration={150}>
+              <div className="flex flex-col divide-y divide-border/60">
+                {item.evidence.map((record, index) => <EvidenceRow key={`${record.type}-${index}`} record={record} />)}
+              </div>
+            </TooltipProvider>
           </div>
           {item.source ? (
             <a href={item.source.repository} rel="noreferrer" className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3 text-sm text-muted-foreground hover:text-foreground">
@@ -557,12 +567,32 @@ function FactCard({ label, value, icon: Icon }: { label: string; value: string; 
   return <div className="rounded-xl border border-border/60 bg-card/35 p-4"><div className="flex items-center justify-between text-xs text-muted-foreground"><span>{label}</span><Icon className="size-3.5" /></div><p className="mt-2 text-2xl font-bold tracking-tight">{value}</p></div>;
 }
 
+const VERIFIED_TYPES = new Set(["domain-verified", "content-integrity", "install-parity", "publisher-identity"]);
+
 function EvidenceRow({ record }: { record: EvidenceRecord }) {
   const passed = record.status === "passed";
+  const showBadge = passed && VERIFIED_TYPES.has(record.type);
   return (
     <div className="flex gap-2.5 py-3 first:pt-0 last:pb-0">
       <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${passed ? "bg-emerald-500/10 text-emerald-400" : "bg-secondary text-muted-foreground"}`}>{passed ? <Check className="size-3" /> : <Clipboard className="size-3" />}</span>
-      <div className="min-w-0"><div className="flex items-center gap-1.5"><p className="truncate text-xs font-medium">{EVIDENCE_LABELS[record.type] ?? record.type}</p>{record.type === "owner-verified" ? <BadgeCheck className="size-3 text-muted-foreground" /> : null}</div><p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{record.limitations ?? record.scope ?? record.issuer}</p></div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-xs font-medium">{EVIDENCE_LABELS[record.type] ?? record.type}</p>
+          {showBadge && record.limitations ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="What this proves" className="text-emerald-500 outline-none">
+                  <HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{record.limitations}</TooltipContent>
+            </Tooltip>
+          ) : showBadge ? (
+            <span className="text-emerald-500"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} /></span>
+          ) : null}
+        </div>
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{record.scope ?? record.limitations ?? record.issuer}</p>
+      </div>
     </div>
   );
 }

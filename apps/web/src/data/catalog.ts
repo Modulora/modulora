@@ -12,18 +12,20 @@ export type SourceModel =
   | "hosted-commercial";
 
 export type EvidenceType =
-  | "owner-verified"
-  | "source-linked"
-  | "artifact-signed"
+  | "publisher-identity"
+  | "content-integrity"
+  | "install-parity"
+  | "domain-verified"
   | "secret-scan"
+  | "source-not-assessed"
+  | "deprecated"
+  | "revoked"
+  // reserved for future automated checks:
   | "dependency-scan"
   | "license-scan"
   | "static-analysis"
   | "build-checked"
-  | "human-reviewed"
-  | "source-not-assessed"
-  | "deprecated"
-  | "revoked";
+  | "human-reviewed";
 
 export interface EvidenceRecord {
   type: EvidenceType;
@@ -202,26 +204,31 @@ export function cn(...inputs: ClassValue[]) {
     ],
     evidence: [
       {
-        type: "owner-verified",
+        type: "publisher-identity",
         status: "passed",
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:00Z",
-        scope: "GitHub App installation for northstar-ui/components",
+        scope: "Published by the authenticated account @northstar.",
+        limitations: "Confirms who published this release, not the safety of its code.",
       },
       {
-        type: "artifact-signed",
+        type: "content-integrity",
         status: "passed",
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:05Z",
+        toolVersion: "sha256",
+        scope: "Install delivers exactly these files — digest sha256:demo…",
+        limitations:
+          "The Modulora CLI copies files and never runs install scripts; it verifies this digest before writing.",
       },
       {
         type: "secret-scan",
         status: "passed",
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:10Z",
-        toolVersion: "gitleaks-8.24.0",
+        toolVersion: "modulora-secretscan-0.1",
         limitations:
-          "Pattern-based scan of release files only; cannot prove absence of unknown or obfuscated secrets.",
+          "Pattern-based scan of published files only; cannot prove the absence of unknown or obfuscated secrets.",
       },
     ],
   },
@@ -247,11 +254,12 @@ export function cn(...inputs: ClassValue[]) {
     distributionChannels: [],
     evidence: [
       {
-        type: "owner-verified",
+        type: "domain-verified",
         status: "passed",
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:00Z",
-        scope: "Domain verification for northstar.dev",
+        scope: "DNS TXT record proves control of northstar.dev; the purchase link resolves there.",
+        limitations: "Proves control of the domain, not the safety of the delivered source.",
       },
       {
         type: "source-not-assessed",
@@ -259,7 +267,8 @@ export function cn(...inputs: ClassValue[]) {
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:00Z",
         scope:
-          "Commercial source is not available to Modulora and has not been scanned or reviewed.",
+          "Paid source is fulfilled by the creator and is not available to Modulora.",
+        limitations: "Modulora has not received, scanned, or reviewed this source.",
       },
     ],
   },

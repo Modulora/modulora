@@ -11,9 +11,11 @@ import { and, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { isCategoryId } from "./taxonomy";
+import { verifyShadcnParity } from "./parity";
+import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
+import { contentDigest } from "./digest";
 
 const NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
-const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
 const ALLOWED_EXTENSIONS = new Set(["tsx", "ts", "jsx", "js", "css", "json"]);
 const ALL_CHANNELS = ["shadcn", "modulora-cli", "compatible-cli"] as const;
 const MAX_FILES = 25;
@@ -46,6 +48,22 @@ export interface PublishResult {
   error?: string;
   namespace?: string;
   name?: string;
+  version?: string;
+}
+
+/** Next patch version, or 0.1.0 for a brand-new component. */
+function nextVersion(existing: string[]): string {
+  let best: [number, number, number] | null = null;
+  for (const raw of existing) {
+    const match = raw.match(/^(\d+)\.(\d+)\.(\d+)$/);
+    if (!match) continue;
+    const parsed: [number, number, number] = [Number(match[1]), Number(match[2]), Number(match[3])];
+    if (!best || parsed[0] > best[0] || (parsed[0] === best[0] && (parsed[1] > best[1] || (parsed[1] === best[1] && parsed[2] > best[2])))) {
+      best = parsed;
+    }
+  }
+  if (!best) return "0.1.0";
+  return `${best[0]}.${best[1]}.${best[2] + 1}`;
 }
 
 /** Reject path traversal, absolute paths, and disallowed file types. */
@@ -87,8 +105,8 @@ export const publishComponent = createServerFn({ method: "POST" })
     if (!title || title.length > 80) return { ok: false, error: "Title is required (≤80 chars)." };
     const description = String(data.description ?? "").trim().slice(0, 280);
     if (!isCategoryId(data.category)) return { ok: false, error: "Choose a valid category." };
-    const version = String(data.version ?? "").trim();
-    if (!VERSION_PATTERN.test(version)) return { ok: false, error: "Version must be x.y.z." };
+    // Version is managed by Modulora, not entered by creators: 0.1.0 for a new
+    // component, then an automatic patch bump on each republish.
 
     const files = (data.files ?? []).filter((file) => file.path.trim());
     if (files.length === 0) return { ok: false, error: "Add at least one file." };
@@ -124,6 +142,16 @@ export const publishComponent = createServerFn({ method: "POST" })
     }
     if (channels.includes("compatible-cli") && !otherCliCommand) {
       return { ok: false, error: "Enter the command for other CLIs." };
+    }
+
+    // Install parity: a shadcn command should install the code they uploaded.
+    // Own-registry commands are trusted; external URLs are fetched + compared;
+    // namespace references (no URL) are legitimate but unverifiable. Only a
+    // confirmed mismatch blocks the publish.
+    let parity: Awaited<ReturnType<typeof verifyShadcnParity>> = { status: "unverifiable" };
+    if (!isPaid && channels.includes("shadcn") && files.length > 0) {
+      parity = await verifyShadcnParity(shadcnCommand, files);
+      if (parity.status === "mismatch") return { ok: false, error: parity.error };
     }
 
     // Provenance links (optional). Validate any provided URLs.
@@ -209,20 +237,12 @@ export const publishComponent = createServerFn({ method: "POST" })
       componentId = created!.id;
     }
 
-    // Versions are immutable.
-    const [versionExists] = await db
-      .select({ id: schema.componentVersions.id })
+    // Versions are immutable; compute the next one automatically.
+    const existingVersions = await db
+      .select({ version: schema.componentVersions.version })
       .from(schema.componentVersions)
-      .where(
-        and(
-          eq(schema.componentVersions.componentId, componentId),
-          eq(schema.componentVersions.version, version),
-        ),
-      )
-      .limit(1);
-    if (versionExists) {
-      return { ok: false, error: `Version ${version} already exists. Bump the version.` };
-    }
+      .where(eq(schema.componentVersions.componentId, componentId));
+    const version = nextVersion(existingVersions.map((row) => row.version));
 
     const [createdVersion] = await db
       .insert(schema.componentVersions)
@@ -248,10 +268,86 @@ export const publishComponent = createServerFn({ method: "POST" })
       );
     }
 
+    // Record honest, scoped evidence for this exact release. Every record is
+    // something we can actually prove — no fabricated "signed"/"verified" badges.
+    const evidence: (typeof schema.evidenceRecords.$inferInsert)[] = [
+      {
+        componentVersionId: createdVersion!.id,
+        type: "publisher-identity",
+        status: "passed",
+        issuer: "modulora-platform",
+        scope: `Published by the authenticated account @${user.username}.`,
+        limitations: "Confirms who published this release, not the safety of its code.",
+      },
+    ];
+
+    if (!isPaid && files.length > 0) {
+      const digest = await contentDigest(files);
+      evidence.push({
+        componentVersionId: createdVersion!.id,
+        type: "content-integrity",
+        status: "passed",
+        issuer: "modulora-platform",
+        toolVersion: "sha256",
+        scope: `Install delivers exactly these ${files.length} file(s) — digest sha256:${digest.slice(0, 16)}…`,
+        limitations: "The Modulora CLI copies files and never runs install scripts; it verifies this digest before writing.",
+      });
+      const scan = scanFilesForSecrets(files);
+      evidence.push({
+        componentVersionId: createdVersion!.id,
+        type: "secret-scan",
+        status: scan.clean ? "passed" : "failed",
+        issuer: "modulora-platform",
+        toolVersion: SECRET_SCAN_TOOL,
+        scope: scan.clean ? undefined : scan.findings.slice(0, 5).join("; "),
+        limitations:
+          "Pattern-based scan of published files only; cannot prove the absence of unknown or obfuscated secrets.",
+      });
+      if (channels.includes("shadcn")) {
+        if (parity.status === "trusted" || parity.status === "verified") {
+          evidence.push({
+            componentVersionId: createdVersion!.id,
+            type: "install-parity",
+            status: "passed",
+            issuer: "modulora-platform",
+            scope: parity.scope,
+            limitations: "Verified at publish time; an external registry URL may change afterward.",
+          });
+        } else if (parity.status === "unverifiable") {
+          evidence.push({
+            componentVersionId: createdVersion!.id,
+            type: "install-parity",
+            status: "warning",
+            issuer: "modulora-platform",
+            scope: "The shadcn command installs from a creator-controlled registry Modulora can't fetch.",
+            limitations: "Modulora cannot confirm the installed code matches these files. Use the Modulora registry for a verified guarantee.",
+          });
+        }
+      }
+    } else if (isPaid) {
+      evidence.push({
+        componentVersionId: createdVersion!.id,
+        type: "source-not-assessed",
+        status: "asserted",
+        issuer: "modulora-platform",
+        scope: "Paid source is fulfilled by the creator and is not available to Modulora.",
+        limitations: "Modulora has not received, scanned, or reviewed this source.",
+      });
+    }
+
+    await db.insert(schema.evidenceRecords).values(evidence);
+
     await db
       .update(schema.components)
       .set({ latestVersionId: createdVersion!.id, updatedAt: new Date() })
       .where(eq(schema.components.id, componentId));
 
-    return { ok: true, namespace: user.username, name };
+    if (!isPaid && files.length > 0) {
+      await db
+        .update(schema.componentVersions)
+        .set({ contentSha256: await contentDigest(files) })
+        .where(eq(schema.componentVersions.id, createdVersion!.id));
+    }
+
+    return { ok: true, namespace: user.username, name, version };
   });

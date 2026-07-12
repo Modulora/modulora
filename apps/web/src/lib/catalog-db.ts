@@ -37,6 +37,7 @@ function toCatalogItem(
   component: ComponentRow,
   version: VersionRow | null,
   files: CatalogItem["files"] = [],
+  evidence: CatalogItem["evidence"] = [],
 ): CatalogItem {
   const isPaid = component.sourceModel !== "open-source";
   return {
@@ -64,8 +65,28 @@ function toCatalogItem(
     category: categoryLabel(component.category),
     distributionChannels: component.distributionChannels ?? undefined,
     files: files.length ? files : undefined,
-    evidence: [],
+    evidence,
   };
+}
+
+async function loadEvidence(
+  database: NonNullable<ReturnType<typeof db>>,
+  versionId: string,
+): Promise<CatalogItem["evidence"]> {
+  const rows = await database
+    .select()
+    .from(schema.evidenceRecords)
+    .where(eq(schema.evidenceRecords.componentVersionId, versionId))
+    .orderBy(schema.evidenceRecords.recordedAt);
+  return rows.map((row) => ({
+    type: row.type as CatalogItem["evidence"][number]["type"],
+    status: row.status as CatalogItem["evidence"][number]["status"],
+    issuer: row.issuer,
+    timestamp: row.recordedAt.toISOString(),
+    scope: row.scope ?? undefined,
+    toolVersion: row.toolVersion ?? undefined,
+    limitations: row.limitations ?? undefined,
+  }));
 }
 
 export const fetchCatalog = createServerFn({ method: "GET" }).handler(
@@ -114,12 +135,14 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
           .where(eq(schema.componentFiles.componentVersionId, row.version.id))
           .orderBy(schema.componentFiles.orderIndex)
       : [];
+    const evidence = row.version ? await loadEvidence(database, row.version.id) : [];
 
     return toCatalogItem(
       row.namespace,
       row.component,
       row.version,
       files.map((file) => ({ path: file.path, content: file.content ?? "" })),
+      evidence,
     );
   });
 

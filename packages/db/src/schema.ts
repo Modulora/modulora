@@ -236,18 +236,21 @@ export const evidenceRecords = pgTable(
       .references(() => componentVersions.id, { onDelete: "cascade" }),
     type: text("type", {
       enum: [
-        "owner-verified",
-        "source-linked",
-        "artifact-signed",
+        // Provable, honest evidence types:
+        "publisher-identity",
+        "content-integrity",
+        "install-parity",
+        "domain-verified",
         "secret-scan",
+        "source-not-assessed",
+        "deprecated",
+        "revoked",
+        // Reserved for future automated checks (not yet issued):
         "dependency-scan",
         "license-scan",
         "static-analysis",
         "build-checked",
         "human-reviewed",
-        "source-not-assessed",
-        "deprecated",
-        "revoked",
       ],
     }).notNull(),
     status: text("status", {
@@ -261,6 +264,25 @@ export const evidenceRecords = pgTable(
     recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("evidence_records_version").on(t.componentVersionId)],
+);
+
+/**
+ * Domains a user has proven control of via a DNS TXT record. Used to back the
+ * honest "domain verified" evidence and to gate paid components' purchase URLs.
+ */
+export const verifiedDomains = pgTable(
+  "verified_domains",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerUserId: text("owner_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    domain: text("domain").notNull(),
+    token: text("token").notNull(),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("verified_domains_owner_domain").on(t.ownerUserId, t.domain)],
 );
 
 export const waitlistEntries = pgTable("waitlist_entries", {

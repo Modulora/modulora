@@ -74,7 +74,6 @@ export function ComponentEditor({
   const [nameEdited, setNameEdited] = useState(Boolean(initial?.name));
   const [description, setDescription] = useState(initial?.description ?? "");
   const [category, setCategory] = useState<string>(initial?.category ?? CATEGORIES[0]!.id);
-  const [version, setVersion] = useState(initial?.version ?? "0.1.0");
   const [pricing, setPricing] = useState<"free" | "paid">(initial?.pricing ?? "free");
   const [purchaseUrl, setPurchaseUrl] = useState(initial?.purchaseUrl ?? "");
   const [channels, setChannels] = useState<string[]>(initial?.distributionChannels ?? ["shadcn", "modulora-cli", "compatible-cli"]);
@@ -85,7 +84,7 @@ export function ComponentEditor({
 
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [published, setPublished] = useState<{ namespace: string; name: string } | null>(null);
+  const [published, setPublished] = useState<{ namespace: string; name: string; version: string } | null>(null);
   const seq = useRef(0);
 
   useEffect(() => {
@@ -120,7 +119,7 @@ export function ComponentEditor({
       const next = on ? current.filter((x) => x !== id) : [...current, id];
       if (!on && id === "shadcn" && !shadcnCommand.trim()) {
         const handle = username ?? "you";
-        setShadcnCommand(`npx shadcn@latest add https://modulora.dev/r/@${handle}/${effectiveName || "name"}@${version || "0.1.0"}`);
+        setShadcnCommand(`npx shadcn@latest add https://modulora.dev/r/@${handle}/${effectiveName || "name"}`);
       }
       return next;
     });
@@ -157,7 +156,7 @@ export function ComponentEditor({
         title: title.trim(),
         description: description.trim(),
         category,
-        version: version.trim(),
+        version: "",
         pricing,
         purchaseUrl: purchaseUrl.trim(),
         distributionChannels: channels,
@@ -174,11 +173,11 @@ export function ComponentEditor({
       setError(result.error ?? "Could not publish.");
       return;
     }
-    setPublished({ namespace: result.namespace!, name: result.name! });
+    setPublished({ namespace: result.namespace!, name: result.name!, version: result.version! });
   }
 
   if (published) {
-    return <PublishedCard published={published} version={version} onDone={() => navigate({ to: "/dashboard/components" })} mode={mode} />;
+    return <PublishedCard published={published} onDone={() => navigate({ to: "/dashboard/components" })} mode={mode} />;
   }
 
   return (
@@ -256,16 +255,11 @@ export function ComponentEditor({
           <MetaField label="Description">
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} maxLength={280} placeholder="What it does." className="rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" />
           </MetaField>
-          <div className="grid grid-cols-2 gap-3">
-            <MetaField label="Category">
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
-                {CATEGORIES.map((c) => <option key={c.id} value={c.id} className="bg-popover">{c.label}</option>)}
-              </select>
-            </MetaField>
-            <MetaField label="Version" hint={mode === "edit" ? "bump to update" : undefined}>
-              <Input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="0.1.0" />
-            </MetaField>
-          </div>
+          <MetaField label="Category">
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
+              {CATEGORIES.map((c) => <option key={c.id} value={c.id} className="bg-popover">{c.label}</option>)}
+            </select>
+          </MetaField>
 
           <MetaField label="Pricing">
             <div className="flex rounded-md border border-border/60 p-0.5">
@@ -338,7 +332,8 @@ function Segment({ active, onClick, children }: { active: boolean; onClick: () =
   );
 }
 
-function PublishedCard({ published, version, onDone, mode }: { published: { namespace: string; name: string }; version: string; onDone: () => void; mode: "create" | "edit" }) {
+function PublishedCard({ published, onDone, mode }: { published: { namespace: string; name: string; version: string }; onDone: () => void; mode: "create" | "edit" }) {
+  const { version } = published;
   const command = `npx shadcn@latest add https://modulora.dev/r/@${published.namespace}/${published.name}@${version}`;
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center gap-5 py-16 text-center">

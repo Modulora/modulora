@@ -52,8 +52,8 @@ const SOURCE_MODELS = [
 ] as const satisfies readonly SourceModel[];
 const LICENSES = ["open", "commercial", "custom"] as const;
 const EVIDENCE_FILTERS = [
-  "owner-verified",
-  "artifact-signed",
+  "content-integrity",
+  "domain-verified",
   "secret-scan",
   "source-not-assessed",
 ] as const satisfies readonly EvidenceType[];
@@ -100,8 +100,8 @@ const SOURCE_OPTIONS: { value: (typeof SOURCE_MODELS)[number]; label: string }[]
   { value: "private-team", label: "Private team" },
 ];
 const EVIDENCE_OPTIONS: { value: (typeof EVIDENCE_FILTERS)[number]; label: string }[] = [
-  { value: "owner-verified", label: "Owner verified" },
-  { value: "artifact-signed", label: "Artifact signed" },
+  { value: "content-integrity", label: "Content integrity" },
+  { value: "domain-verified", label: "Domain verified" },
   { value: "secret-scan", label: "Secret scanned" },
 ];
 
@@ -286,7 +286,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <h2 className="truncate text-sm font-medium">{item.title}</h2>
-            {item.evidence.some((record) => record.type === "owner-verified") ? <BadgeCheck className="size-3.5 text-muted-foreground" /> : null}
+            {item.evidence.some((record) => record.type === "content-integrity" || record.type === "domain-verified") ? <BadgeCheck className="size-3.5 text-muted-foreground" /> : null}
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">@{item.namespace} · {item.category}</p>
         </div>
