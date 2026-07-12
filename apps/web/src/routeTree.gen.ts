@@ -9,9 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SandboxTestRouteImport } from './routes/sandbox-test'
+import { Route as PublishingPolicyRouteImport } from './routes/publishing-policy'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
@@ -28,6 +31,11 @@ import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
@@ -41,6 +49,16 @@ const SettingsRoute = SettingsRouteImport.update({
 const SandboxTestRoute = SandboxTestRouteImport.update({
   id: '/sandbox-test',
   path: '/sandbox-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublishingPolicyRoute = PublishingPolicyRouteImport.update({
+  id: '/publishing-policy',
+  path: '/publishing-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -123,9 +141,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/privacy': typeof PrivacyRoute
+  '/publishing-policy': typeof PublishingPolicyRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -142,9 +163,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
+  '/privacy': typeof PrivacyRoute
+  '/publishing-policy': typeof PublishingPolicyRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -163,9 +187,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/privacy': typeof PrivacyRoute
+  '/publishing-policy': typeof PublishingPolicyRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -185,9 +212,12 @@ export interface FileRouteTypes {
     | '/'
     | '/$username'
     | '/dashboard'
+    | '/privacy'
+    | '/publishing-policy'
     | '/sandbox-test'
     | '/settings'
     | '/signin'
+    | '/terms'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/new'
@@ -204,9 +234,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$username'
+    | '/privacy'
+    | '/publishing-policy'
     | '/sandbox-test'
     | '/settings'
     | '/signin'
+    | '/terms'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/new'
@@ -224,9 +257,12 @@ export interface FileRouteTypes {
     | '/'
     | '/$username'
     | '/dashboard'
+    | '/privacy'
+    | '/publishing-policy'
     | '/sandbox-test'
     | '/settings'
     | '/signin'
+    | '/terms'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/new'
@@ -245,9 +281,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   UsernameRoute: typeof UsernameRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
+  PublishingPolicyRoute: typeof PublishingPolicyRoute
   SandboxTestRoute: typeof SandboxTestRoute
   SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
+  TermsRoute: typeof TermsRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   ISplatRoute: typeof ISplatRoute
   RSplatRoute: typeof RSplatRoute
@@ -260,6 +299,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signin': {
       id: '/signin'
       path: '/signin'
@@ -279,6 +325,20 @@ declare module '@tanstack/react-router' {
       path: '/sandbox-test'
       fullPath: '/sandbox-test'
       preLoaderRoute: typeof SandboxTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publishing-policy': {
+      id: '/publishing-policy'
+      path: '/publishing-policy'
+      fullPath: '/publishing-policy'
+      preLoaderRoute: typeof PublishingPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -411,9 +471,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   UsernameRoute: UsernameRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
+  PublishingPolicyRoute: PublishingPolicyRoute,
   SandboxTestRoute: SandboxTestRoute,
   SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
+  TermsRoute: TermsRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   ISplatRoute: ISplatRoute,
   RSplatRoute: RSplatRoute,

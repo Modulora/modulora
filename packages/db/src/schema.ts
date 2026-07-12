@@ -46,6 +46,9 @@ export const users = pgTable("user", {
   githubUsername: text("github_username"),
   // X (Twitter) handle proven via OAuth. Same verified-vs-self-asserted model.
   xUsername: text("x_username"),
+  // Publishing policy acceptance (audit): which version, and when.
+  publishingPolicyVersion: text("publishing_policy_version"),
+  publishingPolicyAcceptedAt: timestamp("publishing_policy_accepted_at", { withTimezone: true }),
   // Curators can approve/reject submitted components for public listing.
   isCurator: boolean("is_curator").notNull().default(false),
   // Shiki theme used for code views (detail page, review) chosen in settings.

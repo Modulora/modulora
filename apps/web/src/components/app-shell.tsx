@@ -147,6 +147,18 @@ export function AppShell({
       <main className="mx-auto w-full max-w-[1600px] flex-1 px-6 py-8">
         {children}
       </main>
+
+      <footer className="border-t border-border/60">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground sm:flex-row">
+          <span>© {new Date().getFullYear()} Modulora</span>
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link to="/publishing-policy" className="transition-colors hover:text-foreground">Publishing policy</Link>
+            <Link to="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>
+            <Link to="/terms" className="transition-colors hover:text-foreground">Terms</Link>
+            <a href="https://github.com/Modulora" target="_blank" rel="noreferrer" className="transition-colors hover:text-foreground">GitHub</a>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 }

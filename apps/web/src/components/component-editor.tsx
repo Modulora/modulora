@@ -112,6 +112,7 @@ export function ComponentEditor({
   const [otherCliCommand, setOtherCliCommand] = useState(initial?.otherCliCommand ?? "");
   const [originalUrl, setOriginalUrl] = useState(initial?.originalUrl ?? "");
   const [inspiredBy, setInspiredBy] = useState<string[]>(initial?.inspiredBy ?? []);
+  const [acceptPolicy, setAcceptPolicy] = useState(false);
 
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -211,6 +212,7 @@ export function ComponentEditor({
         originalUrl: originalUrl.trim(),
         inspiredBy: inspiredBy.map((url) => url.trim()).filter(Boolean),
         files,
+        acceptPolicy,
       },
     });
     if (current !== seq.current) return;
@@ -277,7 +279,7 @@ export function ComponentEditor({
               Continue <ArrowRight className="size-4" />
             </Button>
           ) : (
-            <Button type="button" onClick={onPublish} disabled={publishing} className="gap-2">
+            <Button type="button" onClick={onPublish} disabled={publishing || !acceptPolicy} className="gap-2">
               {publishing ? <Loader2 className="size-4 animate-spin" /> : <Rocket className="size-4" />}
               {mode === "edit" ? "Submit update" : "Submit for review"}
             </Button>
@@ -347,6 +349,8 @@ export function ComponentEditor({
           shadcnCommand={shadcnCommand}
           username={username}
           effectiveName={effectiveName}
+          acceptPolicy={acceptPolicy}
+          setAcceptPolicy={setAcceptPolicy}
         />
       )}
     </div>
@@ -758,6 +762,8 @@ function SubmitStep({
   shadcnCommand,
   username,
   effectiveName,
+  acceptPolicy,
+  setAcceptPolicy,
 }: {
   files: PublishFile[];
   pricing: "free" | "paid";
@@ -765,6 +771,8 @@ function SubmitStep({
   shadcnCommand: string;
   username: string | null;
   effectiveName: string;
+  acceptPolicy: boolean;
+  setAcceptPolicy: (v: boolean) => void;
 }) {
   const installCount = files.filter((f) => roleFor(f.path) === "component").length;
   const demoCount = files.filter((f) => roleFor(f.path) === "demo").length;
@@ -823,6 +831,23 @@ function SubmitStep({
           Submitting places this in the curation queue — it will not be publicly listed until approved.
         </p>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setAcceptPolicy(!acceptPolicy)}
+        className="mt-4 flex w-full items-start gap-2.5 rounded-xl border border-border/60 bg-card/35 p-4 text-left transition-colors hover:bg-card/60"
+      >
+        <span className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border ${acceptPolicy ? "border-foreground bg-foreground text-background" : "border-border"}`}>
+          {acceptPolicy ? <Check className="size-3" /> : null}
+        </span>
+        <span className="text-xs leading-relaxed text-muted-foreground">
+          I have the right to publish this code, it contains no malicious code or secrets, and I agree to the{" "}
+          <a href="/publishing-policy" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-foreground underline underline-offset-2">
+            publishing policy
+          </a>
+          .
+        </span>
+      </button>
     </div>
   );
 }

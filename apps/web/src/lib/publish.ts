@@ -14,6 +14,7 @@ import { isCategoryId } from "./taxonomy";
 import { verifyShadcnParity } from "./parity";
 import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
 import { fireReviewWebhook } from "./review";
+import { POLICY_VERSION } from "./publishing-policy";
 import { roleFor } from "./scaffold";
 import { contentDigest } from "./digest";
 
@@ -43,6 +44,7 @@ export interface PublishInput {
   originalUrl: string;
   inspiredBy: string[];
   files: PublishFile[];
+  acceptPolicy: boolean;
 }
 
 export interface PublishResult {
@@ -95,6 +97,9 @@ export const publishComponent = createServerFn({ method: "POST" })
     const user = await getCurrentUser(request);
     if (!user) return { ok: false, error: "You must be signed in." };
     if (!user.username) return { ok: false, error: "Claim a username first." };
+    if (data.acceptPolicy !== true) {
+      return { ok: false, error: "Accept the publishing policy to submit." };
+    }
 
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) return { ok: false, error: "Database is not configured." };
@@ -384,6 +389,12 @@ export const publishComponent = createServerFn({ method: "POST" })
       paid: isPaid,
       origin,
     });
+
+    // Record policy acceptance for audit (the current version, at submit time).
+    await db
+      .update(schema.users)
+      .set({ publishingPolicyVersion: POLICY_VERSION, publishingPolicyAcceptedAt: new Date(), updatedAt: new Date() })
+      .where(eq(schema.users.id, user.id));
 
     return { ok: true, namespace: user.username, name, version, status: "pending" as const };
   });

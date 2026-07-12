@@ -71,6 +71,13 @@
       "when": 1783863554510,
       "tag": "0009_zippy_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783864017440,
+      "tag": "0010_chilly_sersi",
+      "breakpoints": true
     }
   ]
 }
