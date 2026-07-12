@@ -118,6 +118,11 @@ export const namespaces = pgTable(
  * Components + immutable versions.
  * ───────────────────────────────────────────────────────── */
 
+export type DistributionChannel =
+  | "shadcn"
+  | "modulora-cli"
+  | "compatible-cli";
+
 export const components = pgTable(
   "components",
   {
@@ -138,6 +143,12 @@ export const components = pgTable(
     visibility: text("visibility", { enum: ["public", "unlisted", "private"] })
       .notNull()
       .default("public"),
+    // Creator-controlled distribution. A component may be shadcn-only and
+    // explicitly opt out of Modulora CLI distribution.
+    distributionChannels: jsonb("distribution_channels")
+      .$type<DistributionChannel[]>()
+      .notNull()
+      .default(["shadcn", "modulora-cli", "compatible-cli"]),
     // Latest published version id, for fast reads.
     latestVersionId: uuid("latest_version_id"),
     // Presentation:

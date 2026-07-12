@@ -1,0 +1,1 @@
+ALTER TABLE "components" ADD COLUMN "distribution_channels" jsonb DEFAULT '["shadcn","modulora-cli","compatible-cli"]'::jsonb NOT NULL;
