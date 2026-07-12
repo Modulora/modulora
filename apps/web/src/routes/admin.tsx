@@ -1,6 +1,6 @@
 /**
  * Owner-only platform operations. Unlisted — no links point here — and
- * gated by OWNER_EMAILS: anyone else gets a 404, so the surface doesn't
+ * gated by OWNER_USER_IDS: anyone else gets a 404, so the surface doesn't
  * exist publicly. Curators do not have access; reviewing content and moving
  * money are different powers.
  */
@@ -12,13 +12,13 @@ import { ShieldEllipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getCurrentUser } from "@/lib/session";
-import { isOwnerEmail } from "@/lib/access";
+import { isOwnerUser } from "@/lib/access";
 import { createPayoutRun, listPayoutRuns, type PayoutRunSummary } from "@/lib/distribution";
 
 const fetchAdmin = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
   const user = request ? await getCurrentUser(request) : null;
-  if (!user || !isOwnerEmail(user.email)) return null;
+  if (!user || !isOwnerUser(user.id)) return null;
   return { runs: await listPayoutRuns() };
 });
 

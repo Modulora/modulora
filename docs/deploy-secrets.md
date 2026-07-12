@@ -72,6 +72,9 @@ until the alpha opens; leave unset locally. See #29.
 
 ## Platform owner
 
-`OWNER_EMAILS` — comma-separated emails gating /admin (profit-share
-distribution runs). Separate from curator status: curators review content,
-owners move money. Unset = the admin surface 404s for everyone.
+`OWNER_USER_IDS` — comma-separated user IDs gating /admin (profit-share
+distribution runs). IDs, not emails: emails are assertions (registerable,
+case-collidable, provider-asserted), ids are immutable and ours. Separate
+from curator status: curators review content, owners move money. Unset =
+the admin surface 404s for everyone. Find your id in the `user` table after
+first sign-in.

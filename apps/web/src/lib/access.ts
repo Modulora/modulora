@@ -25,17 +25,21 @@ export function alphaGateActive(): boolean {
 }
 
 /**
- * Platform owner(s) — OWNER_EMAILS env, comma-separated. Gates money
- * operations (profit-share distribution runs). Deliberately stricter and
- * separate from is_curator: curators review content, owners move money.
- * Unset means the admin surface doesn't exist.
+ * Platform owner(s) — OWNER_USER_IDS env, comma-separated user ids. Gates
+ * money operations (profit-share distribution runs). Deliberately stricter
+ * and separate from is_curator: curators review content, owners move money.
+ *
+ * Gated by user ID, not email: emails are assertions (registerable,
+ * case-collidable, changeable, asserted by OAuth providers), while ids are
+ * opaque, immutable, and assigned by our own database. Unset means the
+ * admin surface doesn't exist.
  */
-export function isOwnerEmail(email: string | null | undefined): boolean {
-  const raw = process.env.OWNER_EMAILS?.trim();
-  if (!raw || !email) return false;
+export function isOwnerUser(userId: string | null | undefined): boolean {
+  const raw = process.env.OWNER_USER_IDS?.trim();
+  if (!raw || !userId) return false;
   return raw
     .split(",")
-    .map((entry) => entry.trim().toLowerCase())
+    .map((entry) => entry.trim())
     .filter(Boolean)
-    .includes(email.trim().toLowerCase());
+    .includes(userId);
 }
