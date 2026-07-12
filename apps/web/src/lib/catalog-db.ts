@@ -183,6 +183,37 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
           text: resolveLicenseText(price.licenseTemplate, price.licenseText),
         }
       : null;
+
+    // The viewer's own purchase (buyer side): powers the "You own this" tray.
+    let ownedPurchase: import("./purchases").OwnedComponent | null = null;
+    if (marketplacePrice !== null && viewer) {
+      const [p] = await database
+        .select({
+          id: schema.purchases.id,
+          amount: schema.purchases.amount,
+          createdAt: schema.purchases.createdAt,
+          licenseTemplate: schema.purchases.licenseTemplate,
+          licenseText: schema.purchases.licenseTextSnapshot,
+          licenseAcceptedAt: schema.purchases.licenseAcceptedAt,
+        })
+        .from(schema.purchases)
+        .where(and(eq(schema.purchases.componentId, row.component.id), eq(schema.purchases.buyerUserId, viewer.id), eq(schema.purchases.status, "paid")))
+        .limit(1);
+      if (p) {
+        ownedPurchase = {
+          id: p.id,
+          namespace: row.namespace,
+          name: row.component.name,
+          title: row.component.title,
+          description: row.component.description,
+          amount: p.amount,
+          purchasedAt: p.createdAt.toISOString(),
+          licenseTemplate: p.licenseTemplate,
+          licenseText: p.licenseText,
+          licenseAcceptedAt: p.licenseAcceptedAt?.toISOString() ?? null,
+        };
+      }
+    }
     const entitled =
       marketplacePrice === null
         ? true
@@ -205,7 +236,7 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       entitled ? files.map((file) => ({ path: file.path, content: file.content ?? "" })) : [],
       evidence,
     );
-    return { ...item, marketplacePrice, marketplaceLicense, entitled };
+    return { ...item, marketplacePrice, marketplaceLicense, entitled, ownedPurchase };
   });
 
 /** Curator-only: load a component's full detail by id, regardless of status. */

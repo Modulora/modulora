@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { buyComponent, confirmCheckout } from "@/lib/marketplace";
+import { OwnedTray } from "@/components/owned";
 import { Tabs } from "radix-ui";
 import { motion } from "motion/react";
 import {
@@ -221,6 +222,16 @@ function ComponentDetail() {
               <CommercialTray item={item} />
             ) : locked ? (
               <BuyTray item={item} />
+            ) : item.ownedPurchase ? (
+              <div className="flex flex-col gap-3">
+                <OwnedTray owned={item.ownedPurchase} />
+                <InstallTray
+                  tabs={enabledInstallTabs}
+                  active={installTab}
+                  onActive={setInstallTab}
+                  commands={commands}
+                />
+              </div>
             ) : (
               <InstallTray
                 tabs={enabledInstallTabs}

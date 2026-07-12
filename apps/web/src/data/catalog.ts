@@ -74,6 +74,7 @@ export interface CatalogItem {
   // Marketplace: an active price (minor units) gates the source behind purchase.
   marketplacePrice?: number | null;
   marketplaceLicense?: { name: string; text: string } | null;
+  ownedPurchase?: import("../lib/purchases").OwnedComponent | null;
   // Whether the current viewer may install (owner or paid purchase).
   entitled?: boolean;
 }

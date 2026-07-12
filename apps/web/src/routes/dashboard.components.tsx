@@ -71,7 +71,7 @@ function MyComponents() {
   }, [router]);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div className="flex w-full max-w-3xl flex-col gap-6">
       <motion.div
         initial={{ opacity: 0, y: RISE.offsetY }}
         animate={{ opacity: stage >= 1 ? 1 : 0, y: stage >= 1 ? 0 : RISE.offsetY }}

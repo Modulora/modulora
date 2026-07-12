@@ -14,6 +14,8 @@ export const LICENSE_TEMPLATES = [
     id: "modulora-commercial-v1",
     name: "Modulora Commercial License v1",
     summary: "Use in any number of your own projects, commercial or not. No resale or redistribution of the source as a component/template.",
+    /** Redistribution is forbidden — committing the source to a public repo redistributes it. */
+    publicRepos: "forbidden" as const,
     text: `Modulora Commercial License v1
 
 Upon purchase, the seller grants you (the buyer) a non-exclusive, perpetual,
@@ -36,9 +38,19 @@ records this agreement but is not a party to, and does not enforce, its terms.`,
     id: "custom",
     name: "Custom terms",
     summary: "The seller provides their own license text.",
+    /** We can't interpret custom terms — the buyer must check before publishing. */
+    publicRepos: "unknown" as const,
     text: "",
   },
 ] as const;
+
+export type PublicRepoPolicy = "forbidden" | "unknown" | "allowed";
+
+/** What a purchase's license implies about committing the source publicly. */
+export function publicRepoPolicy(templateId: string | null): PublicRepoPolicy {
+  const t = LICENSE_TEMPLATES.find((tpl) => tpl.id === templateId);
+  return t?.publicRepos ?? "unknown";
+}
 
 export type LicenseTemplateId = (typeof LICENSE_TEMPLATES)[number]["id"];
 

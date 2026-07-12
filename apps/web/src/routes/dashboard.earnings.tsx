@@ -18,7 +18,7 @@ function EarningsPage() {
   if (!earnings) return null;
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10">
+    <div className="w-full max-w-4xl">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Earnings</h1>

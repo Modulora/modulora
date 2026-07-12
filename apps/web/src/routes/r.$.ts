@@ -30,7 +30,7 @@ async function handle({ params, request }: { params: { _splat?: string }; reques
         message: "This component is sold on Modulora. Buy it, then sign in with `modulora login` to install.",
         price: result.price,
         currency: result.currency,
-        purchase_url: `https://modulora.dev/components/@${parsed.namespace}/${parsed.name}`,
+        purchase_url: `https://modulora.dev/components/${parsed.namespace}/${parsed.name}`,
       }),
       { status: 402, headers: { ...JSON_HEADERS, "cache-control": "no-store" } },
     );
