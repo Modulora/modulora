@@ -95,19 +95,21 @@ export const catalog: CatalogItem[] = [
       {
         path: "components/ui/calendar.tsx",
         content: `import * as React from "react"
+import { cn } from "@/lib/utils"
 import { useCalendar } from "./use-calendar"
 import "./calendar.css"
 
 export interface CalendarProps {
   value?: Date
   onChange?: (date: Date) => void
+  className?: string
 }
 
-export function Calendar({ value, onChange }: CalendarProps) {
+export function Calendar({ value, onChange, className }: CalendarProps) {
   const { days, month, year, select, selected } = useCalendar(value)
 
   return (
-    <div className="cal" role="grid" aria-label={\`\${month} \${year}\`}>
+    <div className={cn("cal", className)} role="grid" aria-label={\`\${month} \${year}\`}>
       <header className="cal__head">
         <span>{month} {year}</span>
       </header>
@@ -184,6 +186,16 @@ export function useCalendar(initial?: Date) {
 .cal__day[aria-pressed="true"] {
   background: var(--foreground);
   color: var(--background);
+}
+`,
+      },
+      {
+        path: "lib/utils.ts",
+        content: `import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
 `,
       },

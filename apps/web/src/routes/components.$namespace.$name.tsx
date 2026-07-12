@@ -20,6 +20,7 @@ import {
   ExternalLink,
   FileCode2,
   FileLock2,
+  Folder,
   Maximize2,
   Monitor,
   Moon,
@@ -319,22 +320,12 @@ function SourceFiles({ item, files }: { item: CatalogItem; files: HighlightedFil
         <span className="px-2 pb-1 pt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
           {files.length} file{files.length === 1 ? "" : "s"}
         </span>
-        {files.map((file) => {
-          const name = file.path.split("/").pop() ?? file.path;
-          const isActive = file.path === current.path;
-          return (
-            <button
-              key={file.path}
-              type="button"
-              aria-pressed={isActive}
-              onClick={() => setActive(file.path)}
-              className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${isActive ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
-            >
-              <FileCode2 className="size-3.5 shrink-0 opacity-70" />
-              <span className="truncate">{name}</span>
-            </button>
-          );
-        })}
+        <FileTree
+          nodes={buildFileTree(files.map((file) => file.path))}
+          activePath={current.path}
+          onSelect={setActive}
+          depth={0}
+        />
       </div>
       <div className="relative min-w-0">
         <div className="absolute right-3 top-3 z-10"><CopyButton value={current.raw} /></div>
@@ -345,6 +336,84 @@ function SourceFiles({ item, files }: { item: CatalogItem; files: HighlightedFil
         />
       </div>
     </div>
+  );
+}
+
+interface TreeNode {
+  name: string;
+  path: string;
+  isFile: boolean;
+  children: Map<string, TreeNode>;
+}
+
+function buildFileTree(paths: string[]): TreeNode {
+  const root: TreeNode = { name: "", path: "", isFile: false, children: new Map() };
+  for (const path of paths) {
+    const parts = path.split("/");
+    let node = root;
+    parts.forEach((part, index) => {
+      const isFile = index === parts.length - 1;
+      let child = node.children.get(part);
+      if (!child) {
+        child = {
+          name: part,
+          path: parts.slice(0, index + 1).join("/"),
+          isFile,
+          children: new Map(),
+        };
+        node.children.set(part, child);
+      }
+      node = child;
+    });
+  }
+  return root;
+}
+
+function FileTree({
+  nodes,
+  activePath,
+  onSelect,
+  depth,
+}: {
+  nodes: TreeNode;
+  activePath: string;
+  onSelect: (path: string) => void;
+  depth: number;
+}) {
+  const entries = [...nodes.children.values()].sort((a, b) => {
+    if (a.isFile !== b.isFile) return a.isFile ? 1 : -1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return (
+    <>
+      {entries.map((node) =>
+        node.isFile ? (
+          <button
+            key={node.path}
+            type="button"
+            aria-pressed={node.path === activePath}
+            onClick={() => onSelect(node.path)}
+            style={{ paddingLeft: depth * 12 + 8 }}
+            className={`flex items-center gap-2 rounded-md py-1.5 pr-2 text-left text-xs transition-colors ${node.path === activePath ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
+          >
+            <FileCode2 className="size-3.5 shrink-0 opacity-70" />
+            <span className="truncate">{node.name}</span>
+          </button>
+        ) : (
+          <div key={node.path}>
+            <div
+              style={{ paddingLeft: depth * 12 + 8 }}
+              className="flex items-center gap-2 py-1.5 pr-2 text-xs text-muted-foreground/70"
+            >
+              <Folder className="size-3.5 shrink-0 opacity-70" />
+              <span className="truncate">{node.name}</span>
+            </div>
+            <FileTree nodes={node} activePath={activePath} onSelect={onSelect} depth={depth + 1} />
+          </div>
+        ),
+      )}
+    </>
   );
 }
 
