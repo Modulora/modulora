@@ -1,4 +1,10 @@
 {
   "title": "Documentation",
-  "pages": ["index", "installing", "publishing", "cli"]
+  "pages": [
+    "index",
+    "installing",
+    "publishing",
+    "earning",
+    "cli"
+  ]
 }

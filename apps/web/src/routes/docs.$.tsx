@@ -9,6 +9,7 @@ import { useFumadocsLoader } from "fumadocs-core/source/client";
 import browserCollections from "collections/browser";
 import { docsSource } from "@/lib/docs-source";
 import { DocsArticle, DocsShell } from "@/components/docs-ui";
+import { MarketplaceCalculator, SplitDonut } from "@/components/money";
 
 export const Route = createFileRoute("/docs/$")({
   loader: async ({ params }) => {
@@ -49,7 +50,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
         url={props.url}
         renderLink={props.renderLink}
       >
-        <MDX />
+        <MDX components={{ SplitDonut, MarketplaceCalculator }} />
       </DocsArticle>
     );
   },

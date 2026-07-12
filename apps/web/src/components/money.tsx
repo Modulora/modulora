@@ -2,7 +2,11 @@
  * Money-flow building blocks — presentational only, shared by the Sell dialog
  * and Storybook. Pricing math comes from lib/pricing (client-safe constants).
  */
+import { useState } from "react";
 import { creatorNet, platformFee, MARKETPLACE_FEE_PERCENT } from "@/lib/pricing";
+import { SPLIT } from "@/lib/profit-share";
+import { Donut } from "@/components/donut";
+import { Input } from "@/components/ui/input";
 import { LICENSE_TEMPLATES } from "@/lib/license";
 
 /**
@@ -78,6 +82,68 @@ export function LicensePicker({ template, setTemplate, text, setText }: { templa
       <p className="text-[11px] leading-relaxed text-muted-foreground">
         Buyers must agree to these terms before checkout; we record the agreement on every sale. Modulora doesn&apos;t enforce licenses, but we support you with sale documentation and agreement logs if you need them.
       </p>
+    </div>
+  );
+}
+
+
+/** The 60/30/10 split, as a donut with legend (docs + explainer pages). */
+export function SplitDonut() {
+  const segments = [
+    { label: "Creators", value: SPLIT.creator, color: "#10b981" },
+    { label: "Open-source fund", value: SPLIT.ossFund, color: "#f59e0b" },
+    { label: "Modulora", value: SPLIT.modulora, color: "#52525b" },
+  ];
+  return (
+    <div className="my-6 flex flex-col items-center gap-8 rounded-xl border border-border/60 p-8 sm:flex-row sm:justify-center sm:gap-12">
+      <Donut
+        segments={segments}
+        size={180}
+        center={
+          <>
+            <span className="text-2xl font-bold">100%</span>
+            <span className="mt-0.5 max-w-[7rem] text-center text-[10px] leading-tight text-muted-foreground">of distributable profit</span>
+          </>
+        }
+      />
+      <ul className="flex flex-col gap-3">
+        {segments.map((seg) => (
+          <li key={seg.label} className="flex items-center gap-3">
+            <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: seg.color }} />
+            <span className="text-sm">
+              <span className="font-semibold tabular-nums">{seg.value}%</span>{" "}
+              <span className="text-muted-foreground">{seg.label}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Interactive: what a creator keeps on a direct marketplace sale. */
+export function MarketplaceCalculator() {
+  const [dollars, setDollars] = useState("29");
+  const cents = Math.round((parseFloat(dollars) || 0) * 100);
+  const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+  return (
+    <div className="my-6 rounded-xl border border-border/60 p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <label className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Price $</span>
+          <Input value={dollars} onChange={(e) => setDollars(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" className="h-9 w-28" />
+        </label>
+        <div className="flex flex-1 items-center justify-between gap-6 rounded-lg bg-secondary/30 px-4 py-3 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground">Modulora fee ({MARKETPLACE_FEE_PERCENT}%)</p>
+            <p className="font-medium tabular-nums">{cents > 0 ? `−${money(platformFee(cents))}` : "—"}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">You earn</p>
+            <p className="text-lg font-bold tabular-nums text-emerald-500">{cents > 0 ? money(creatorNet(cents)) : "—"}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
