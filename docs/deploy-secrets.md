@@ -47,4 +47,16 @@ degrades gracefully (submission still succeeds, but no message is posted).
 - `HUGEICONS_TOKEN` — build-time only, used by CI/`.npmrc` to install
   `@hugeicons-pro/*`. Set it as a CI/build environment variable, not a worker
   secret.
+- `VITE_SANDPACK_BUNDLER_URL` — build-time only. Points the live preview at the
+  self-hosted Sandpack bundler. Prod: `https://sandpack.modulora.dev` (deploy
+  the assets worker in `modulora-infra/workers/sandpack`; see Modulora/modulora#44).
+
+## R2 bucket
+
+The `modulora-media` bucket (avatars, preview assets) is bound in
+`apps/web/wrangler.jsonc`. Create it once before deploy:
+
+```bash
+npx wrangler r2 bucket create modulora-media
+```
 - `NODE_ENV` — provided by the runtime.
