@@ -123,10 +123,49 @@ async function captureGithubIdentity(
   }
 }
 
+/**
+ * When an X (Twitter) account is linked, resolve the verified @handle via the
+ * v2 API and store it as a proven identity. Never throws into the auth flow.
+ */
+async function captureXIdentity(
+  db: Db,
+  account: { userId: string; providerId: string; accessToken?: string | null },
+) {
+  if (account.providerId !== "twitter" || !account.accessToken) return;
+  try {
+    const res = await fetch("https://api.twitter.com/2/users/me", {
+      headers: { authorization: `Bearer ${account.accessToken}` },
+    });
+    if (!res.ok) return;
+    const profile = (await res.json()) as { data?: { username?: string } };
+    const username = profile.data?.username;
+    if (!username) return;
+
+    const [current] = await db
+      .select({ xUrl: schema.users.xUrl })
+      .from(schema.users)
+      .where(eq(schema.users.id, account.userId))
+      .limit(1);
+
+    await db
+      .update(schema.users)
+      .set({
+        xUsername: username,
+        xUrl: current?.xUrl || `https://x.com/${username}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.users.id, account.userId));
+  } catch (error) {
+    console.error("x identity capture failed", error);
+  }
+}
+
 function buildAuth(databaseUrl: string, secret: string) {
   const db = drizzle(neon(databaseUrl), { schema });
   const githubClientId = process.env.GITHUB_CLIENT_ID;
   const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
+  const xClientId = process.env.TWITTER_CLIENT_ID;
+  const xClientSecret = process.env.TWITTER_CLIENT_SECRET;
 
   // Better Auth expects singular model names (user/session/account/verification).
   // Our @modulora/db schema uses plural exports, so map them explicitly.
@@ -142,10 +181,14 @@ function buildAuth(databaseUrl: string, secret: string) {
     baseURL: process.env.BETTER_AUTH_URL,
     database: drizzleAdapter(db, { provider: "pg", schema: authSchema }),
     emailAndPassword: { enabled: true },
-    socialProviders:
-      githubClientId && githubClientSecret
+    socialProviders: {
+      ...(githubClientId && githubClientSecret
         ? { github: { clientId: githubClientId, clientSecret: githubClientSecret } }
-        : undefined,
+        : {}),
+      ...(xClientId && xClientSecret
+        ? { twitter: { clientId: xClientId, clientSecret: xClientSecret } }
+        : {}),
+    },
     databaseHooks: {
       user: {
         create: {
@@ -158,6 +201,7 @@ function buildAuth(databaseUrl: string, secret: string) {
         create: {
           after: async (account) => {
             await captureGithubIdentity(db, account);
+            await captureXIdentity(db, account);
           },
         },
       },

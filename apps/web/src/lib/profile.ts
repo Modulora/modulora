@@ -75,13 +75,14 @@ export const checkHandle = createServerFn({ method: "POST" })
 
 export interface Connections {
   github: boolean;
+  twitter: boolean;
   hasPassword: boolean;
 }
 
 export const getConnections = createServerFn({ method: "GET" }).handler(
   async (): Promise<Connections> => {
     const request = getRequest();
-    const empty = { github: false, hasPassword: false };
+    const empty = { github: false, twitter: false, hasPassword: false };
     if (!request) return empty;
     const user = await getCurrentUser(request);
     const databaseUrl = process.env.DATABASE_URL;
@@ -94,6 +95,7 @@ export const getConnections = createServerFn({ method: "GET" }).handler(
       .where(eq(schema.accounts.userId, user.id));
     return {
       github: rows.some((row) => row.providerId === "github"),
+      twitter: rows.some((row) => row.providerId === "twitter"),
       hasPassword: rows.some((row) => row.password != null),
     };
   },

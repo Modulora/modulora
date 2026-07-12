@@ -23,6 +23,7 @@ export interface CurrentUser {
   githubUrl: string | null;
   xUrl: string | null;
   githubUsername: string | null;
+  xUsername: string | null;
   isCurator: boolean;
   editorTheme: string;
 }
@@ -55,6 +56,7 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     githubUrl: row.githubUrl,
     xUrl: row.xUrl,
     githubUsername: row.githubUsername,
+    xUsername: row.xUsername,
     isCurator: row.isCurator,
     editorTheme: row.editorTheme,
   };

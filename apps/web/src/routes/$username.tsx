@@ -110,7 +110,14 @@ function Profile() {
             ) : profile.githubUrl ? (
               <SocialLink href={profile.githubUrl} icon={<GitHubIcon className="size-3.5" />} label="GitHub" />
             ) : null}
-            {profile.xUrl ? (
+            {profile.xUsername ? (
+              <SocialLink
+                href={`https://x.com/${profile.xUsername}`}
+                icon={<XIcon className="size-3" />}
+                label={profile.xUsername}
+                verifiedVia="X sign-in"
+              />
+            ) : profile.xUrl ? (
               <SocialLink href={profile.xUrl} icon={<XIcon className="size-3" />} label={xHandleOf(profile.xUrl)} />
             ) : null}
           </div>

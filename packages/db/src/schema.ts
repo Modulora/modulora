@@ -44,6 +44,8 @@ export const users = pgTable("user", {
   // GitHub login proven via OAuth sign-in (verified identity). Null = not
   // connected; a hand-typed github_url that differs is treated as unverified.
   githubUsername: text("github_username"),
+  // X (Twitter) handle proven via OAuth. Same verified-vs-self-asserted model.
+  xUsername: text("x_username"),
   // Curators can approve/reject submitted components for public listing.
   isCurator: boolean("is_curator").notNull().default(false),
   // Shiki theme used for code views (detail page, review) chosen in settings.

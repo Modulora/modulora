@@ -33,6 +33,8 @@ npx wrangler secret list
 | `DATABASE_URL` | Neon Postgres connection string | yes |
 | `GITHUB_CLIENT_ID` | GitHub OAuth app id | config |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth app secret | yes |
+| `TWITTER_CLIENT_ID` | X (Twitter) OAuth 2.0 client id | config |
+| `TWITTER_CLIENT_SECRET` | X (Twitter) OAuth 2.0 client secret | yes |
 | `RESEND_API_KEY` | Resend transactional email key | yes |
 | `RESEND_FROM` | From address (`mail.modulora.dev`) | config |
 | `DISCORD_WEBHOOK_URL` | Waitlist **reservations** channel | yes |

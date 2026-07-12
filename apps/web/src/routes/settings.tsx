@@ -10,7 +10,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { BadgeCheck, Check, Copy, Globe, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
-import { GitHubIcon } from "@/components/brand-icons";
+import { GitHubIcon, XIcon } from "@/components/brand-icons";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -268,6 +268,19 @@ function Settings() {
         ) : (
           <Button type="button" size="lg" className="w-full gap-2" onClick={() => void linkSocial({ provider: "github", callbackURL: "/settings" })}>
             <GitHubIcon className="size-4" /> Connect to GitHub
+          </Button>
+        )}
+        {connections.twitter ? (
+          <div className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-3">
+            <span className="flex items-center gap-2.5 text-sm">
+              <XIcon className="size-3.5" /> X
+              {user.xUsername ? <span className="text-muted-foreground">@{user.xUsername}</span> : null}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="size-3.5" /> {user.xUsername ? "Verified" : "Connected"}</span>
+          </div>
+        ) : (
+          <Button type="button" size="lg" variant="outline" className="w-full gap-2" onClick={() => void linkSocial({ provider: "twitter", callbackURL: "/settings" })}>
+            <XIcon className="size-3.5" /> Connect to X
           </Button>
         )}
       </motion.div>

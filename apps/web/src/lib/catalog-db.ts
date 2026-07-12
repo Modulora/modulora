@@ -201,6 +201,7 @@ export interface PublicProfile {
   githubUrl: string | null;
   xUrl: string | null;
   githubUsername: string | null;
+  xUsername: string | null;
   websiteVerified: boolean;
   joinedAt: string;
 }
@@ -256,6 +257,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         githubUrl: user.githubUrl,
         xUrl: user.xUrl,
         githubUsername: user.githubUsername,
+        xUsername: user.xUsername,
         websiteVerified,
         joinedAt: user.createdAt.toISOString(),
       },
