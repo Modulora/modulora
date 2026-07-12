@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PROFIT_SHARE_MODEL, PROFIT_SHARE_VERSION, SPLIT } from "@/lib/profit-share";
 import { Donut } from "@/components/donut";
+import { Input } from "@/components/ui/input";
+import { creatorNet, platformFee, MARKETPLACE_FEE_PERCENT } from "@/lib/pricing";
 
 const SPLIT_SEGMENTS = [
   { label: "Creators", value: SPLIT.creator, color: "#10b981" },
@@ -42,6 +45,8 @@ function ProfitShare() {
         </ul>
       </div>
 
+      <MarketplaceCalculator />
+
       <div className="mt-10 flex flex-col gap-8">
         {PROFIT_SHARE_MODEL.map((section, i) => (
           <section key={section.title}>
@@ -65,6 +70,37 @@ function ProfitShare() {
         Ready to earn? <Link to="/settings" className="text-foreground underline underline-offset-2">Set up payouts</Link>{" "}
         and read the <Link to="/terms" className="text-foreground underline underline-offset-2">Terms</Link>.
       </p>
+    </div>
+  );
+}
+
+/** Interactive: what a creator keeps on a direct marketplace sale. */
+function MarketplaceCalculator() {
+  const [dollars, setDollars] = useState("29");
+  const cents = Math.round((parseFloat(dollars) || 0) * 100);
+  const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+  return (
+    <div className="mt-8 rounded-xl border border-border/60 p-6">
+      <h2 className="text-sm font-semibold">What you keep on a sale</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Direct marketplace sales: you keep {100 - MARKETPLACE_FEE_PERCENT}% of the price. Modulora&apos;s {MARKETPLACE_FEE_PERCENT}% covers our fee and payment processing.
+      </p>
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <label className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Price $</span>
+          <Input value={dollars} onChange={(e) => setDollars(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" className="h-9 w-28" />
+        </label>
+        <div className="flex flex-1 items-center justify-between gap-6 rounded-lg bg-secondary/30 px-4 py-3 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground">Modulora fee ({MARKETPLACE_FEE_PERCENT}%)</p>
+            <p className="font-medium tabular-nums">{cents > 0 ? `−${money(platformFee(cents))}` : "—"}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">You earn</p>
+            <p className="text-lg font-bold tabular-nums text-emerald-500">{cents > 0 ? money(creatorNet(cents)) : "—"}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
