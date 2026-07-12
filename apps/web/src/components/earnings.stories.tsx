@@ -15,6 +15,7 @@ const mock: EarningsData = {
   netAmount: 9540,
   verifiedInstalls: 231,
   profitShareDistributed: 0,
+  profitSharePending: 1240,
   sales: [
     { id: "1", componentTitle: "Live Counter", componentName: "live-counter", buyerUsername: "devon", amount: 2900, feeAmount: 290, currency: "usd", createdAt: new Date(now - 3600e3).toISOString() },
     { id: "2", componentTitle: "Command Palette", componentName: "command-palette", buyerUsername: "aria", amount: 4900, feeAmount: 490, currency: "usd", createdAt: new Date(now - 26 * 3600e3).toISOString() },
@@ -35,7 +36,7 @@ export const WithSales: Story = {
 
 export const WithDistributions: Story = {
   render: () => {
-    const distributed = { ...mock, profitShareDistributed: 12750 };
+    const distributed = { ...mock, profitShareDistributed: 12750, profitSharePending: 310 };
     return (
       <div className="flex w-[56rem] flex-col gap-6">
         <EarningsSummary data={distributed} />

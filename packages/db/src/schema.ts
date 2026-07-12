@@ -426,6 +426,46 @@ export const installReceipts = pgTable(
   ],
 );
 
+/**
+ * Profit-share distribution ledger. A payout run distributes the creator
+ * pool (30% of distributable profit) for a period, weighted by verified CLI
+ * installs. Each share row is one creator's accounting for that run:
+ * accrued (this run) + carried (from earlier runs) → paid via Stripe
+ * transfer when the total clears the threshold, otherwise carried forward.
+ */
+export const payoutRuns = pgTable("payout_runs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+  periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+  distributableAmount: integer("distributable_amount").notNull(), // cents, input
+  creatorPoolAmount: integer("creator_pool_amount").notNull(), // 30% of distributable
+  totalVerifiedInstalls: integer("total_verified_installs").notNull().default(0),
+  status: text("status", { enum: ["completed"] }).notNull().default("completed"),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const payoutRunShares = pgTable(
+  "payout_run_shares",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    runId: uuid("run_id")
+      .notNull()
+      .references(() => payoutRuns.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    verifiedInstalls: integer("verified_installs").notNull().default(0),
+    accruedAmount: integer("accrued_amount").notNull().default(0), // this run's share
+    carriedAmount: integer("carried_amount").notNull().default(0), // balance carried in
+    paidAmount: integer("paid_amount").notNull().default(0), // transferred this run
+    stripeTransferId: text("stripe_transfer_id"),
+    status: text("status", { enum: ["paid", "carried", "failed"] }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("payout_run_shares_user").on(t.userId), index("payout_run_shares_run").on(t.runId)],
+);
+
 export const promotions = pgTable(
   "promotions",
   {

@@ -53,8 +53,12 @@ export function ProfitSharePanel({ data, learnMore }: { data: EarningsData; lear
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
         {data.profitShareDistributed > 0
           ? <>Distributed to you so far: <span className="font-medium text-emerald-500">{money(data.profitShareDistributed)}</span>.</>
-          : "Distributions haven't started yet — installs are being counted now, and your accrued attribution applies when the first distribution runs."}{" "}
-        Distributions pay out once your accrued share reaches {`$${(PAYOUT_THRESHOLD_CENTS / 100).toFixed(0)}`}; smaller balances roll over.
+          : "No distributions have been paid to you yet."}{" "}
+        {data.profitSharePending > 0 ? (
+          <>Accrued and waiting: <span className="font-medium text-foreground">{money(data.profitSharePending)}</span> — pays out on a distribution run once it reaches {`$${(PAYOUT_THRESHOLD_CENTS / 100).toFixed(0)}`}.</>
+        ) : (
+          <>Distributions pay out once your accrued share reaches {`$${(PAYOUT_THRESHOLD_CENTS / 100).toFixed(0)}`}; smaller balances roll over.</>
+        )}
         {learnMore ? <> {learnMore}</> : null}
       </p>
     </div>

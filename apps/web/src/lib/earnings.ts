@@ -7,7 +7,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql as dsql } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 
@@ -32,11 +32,12 @@ export interface EarningsData {
   /** Verified CLI installs of this creator's components (profit-share signal). */
   verifiedInstalls: number;
   /**
-   * Profit share distributed to this creator to date, in cents. Sums the
-   * distribution ledger once runs exist (#32); 0 until the first run — shown
-   * honestly, never estimated.
+   * Profit share distributed to this creator to date, in cents — the sum of
+   * paid ledger rows. Never estimated.
    */
   profitShareDistributed: number;
+  /** Accrued but not yet paid (below threshold / awaiting a run), in cents. */
+  profitSharePending: number;
 }
 
 export const fetchEarnings = createServerFn({ method: "GET" }).handler(
@@ -76,6 +77,15 @@ export const fetchEarnings = createServerFn({ method: "GET" }).handler(
       .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
       .where(and(eq(schema.namespaces.ownerUserId, user.id), eq(schema.installReceipts.verified, true)));
 
+    // Profit-share ledger: distributed = sum(paid); pending = accrued − paid.
+    const [ledger] = await db
+      .select({
+        accrued: dsql<number>`coalesce(sum(${schema.payoutRunShares.accruedAmount}), 0)::int`,
+        paid: dsql<number>`coalesce(sum(${schema.payoutRunShares.paidAmount}), 0)::int`,
+      })
+      .from(schema.payoutRunShares)
+      .where(eq(schema.payoutRunShares.userId, user.id));
+
     return {
       payoutsEnabled: user.payoutsEnabled ?? false,
       totalSales: rows.length,
@@ -83,8 +93,8 @@ export const fetchEarnings = createServerFn({ method: "GET" }).handler(
       feeAmount: fees,
       netAmount: gross - fees,
       verifiedInstalls: installs.length,
-      // No distribution ledger yet (#32): nothing has been distributed.
-      profitShareDistributed: 0,
+      profitShareDistributed: ledger?.paid ?? 0,
+      profitSharePending: Math.max(0, (ledger?.accrued ?? 0) - (ledger?.paid ?? 0)),
       sales: rows.map((r) => ({
         id: r.id,
         componentTitle: r.componentTitle,
