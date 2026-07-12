@@ -66,9 +66,9 @@ export function AppShell({
 }) {
   const [stage, setStage] = useState(0);
 
-  const navLinks = user?.isCurator
-    ? [...NAV_LINKS, { label: "Review", to: "/dashboard/review" as const }]
-    : NAV_LINKS;
+  // Review lives in the dashboard sidebar (Curation section) — the top nav
+  // stays the same for everyone.
+  const navLinks = NAV_LINKS;
 
   useEffect(() => {
     setStage(0);
