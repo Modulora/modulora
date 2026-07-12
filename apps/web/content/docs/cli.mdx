@@ -45,3 +45,23 @@ origin; `MODULORA_TOKEN` overrides for CI. Needed for purchased components.
 ## Exit codes
 
 `0` success · `1` failure (including digest mismatch) · `130` user aborted.
+
+## `modulora mcp`
+
+A read-only [MCP](https://modelcontextprotocol.io) server over stdio, for AI
+agents and editors:
+
+```json
+{
+  "mcpServers": {
+    "modulora": { "command": "npx", "args": ["modulora", "mcp"] }
+  }
+}
+```
+
+Tools: `search_components` (public catalog), `get_component` (registry item +
+published digest; paid components return price + purchase URL, never source),
+`get_install_command` (verified CLI path + shadcn fallback).
+
+Read-only by design — any write goes through the same `modulora add`
+plan/approval path a human uses.
