@@ -23,6 +23,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /* ─────────────────────────────────────────────────────────
  * Better Auth core tables (default names + fields for v1.6).
@@ -49,6 +50,10 @@ export const users = pgTable("user", {
   // Publishing policy acceptance (audit): which version, and when.
   publishingPolicyVersion: text("publishing_policy_version"),
   publishingPolicyAcceptedAt: timestamp("publishing_policy_accepted_at", { withTimezone: true }),
+  // Stripe Connect payout account (creator earnings). Enabled = onboarding
+  // complete and charges/payouts active.
+  stripeAccountId: text("stripe_account_id"),
+  payoutsEnabled: boolean("payouts_enabled").notNull().default(false),
   // Curators can approve/reject submitted components for public listing.
   isCurator: boolean("is_curator").notNull().default(false),
   // Shiki theme used for code views (detail page, review) chosen in settings.
@@ -309,6 +314,85 @@ export const verifiedDomains = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("verified_domains_owner_domain").on(t.ownerUserId, t.domain)],
+);
+
+/**
+ * Marketplace price for a component sold on Modulora (we host the source and
+ * gate it behind purchase). A component has at most one active price; the
+ * external-redirect model keeps using components.purchaseUrl instead.
+ */
+export const componentPrices = pgTable(
+  "component_prices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    unitAmount: integer("unit_amount").notNull(), // minor units (cents)
+    currency: text("currency").notNull().default("usd"),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("component_prices_active").on(t.componentId).where(sql`${t.active}`)],
+);
+
+/**
+ * A completed purchase = a buyer's entitlement to install a paid component.
+ * Records the money split (gross, Modulora fee) for payout accounting (#32).
+ */
+export const purchases = pgTable(
+  "purchases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    buyerUserId: text("buyer_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    sellerUserId: text("seller_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "set null" }),
+    amount: integer("amount").notNull(),
+    feeAmount: integer("fee_amount").notNull().default(0),
+    currency: text("currency").notNull().default("usd"),
+    status: text("status", { enum: ["pending", "paid", "refunded"] }).notNull().default("pending"),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("purchases_buyer_component").on(t.buyerUserId, t.componentId).where(sql`${t.status} = 'paid'`),
+    index("purchases_component").on(t.componentId),
+    index("purchases_seller").on(t.sellerUserId),
+  ],
+);
+
+/**
+ * Paid promotion: a creator buys clearly-labeled featured placement for a
+ * component over a time window. Never mixed with organic rank or trust.
+ */
+export const promotions = pgTable(
+  "promotions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    ownerUserId: text("owner_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    slot: text("slot", { enum: ["featured"] }).notNull().default("featured"),
+    amount: integer("amount").notNull(),
+    currency: text("currency").notNull().default("usd"),
+    status: text("status", { enum: ["pending", "active", "expired", "canceled"] }).notNull().default("pending"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("promotions_active").on(t.slot, t.status, t.endsAt)],
 );
 
 export const waitlistEntries = pgTable("waitlist_entries", {
