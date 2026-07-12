@@ -1,11 +1,21 @@
 /**
- * The earning journey checklist — shown on the dashboard Overview until a
- * creator has completed the path: publish → get approved → connect payouts →
- * set a price. Driven by real state, never fake progress. Presentational
- * (Storybook-safe); the current step's action is a real link.
+ * The earning journey — shown on the dashboard Overview until a creator has
+ * completed the path: publish → get approved → connect payouts → set a
+ * price. Driven by real state, never fake progress. Rendered as a horizontal
+ * stepper (reui c-stepper-11 pattern: bar indicators + titles) with the
+ * active step's description and a real action link below. Presentational
+ * (Storybook-safe).
  */
 import type { ReactNode } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import {
+  Stepper,
+  StepperIndicator,
+  StepperItem,
+  StepperNav,
+  StepperTitle,
+  StepperTrigger,
+} from "@/components/reui/stepper";
 import type { StudioSummary } from "@/lib/studio";
 
 export interface JourneyStepDef {
@@ -19,8 +29,8 @@ export interface JourneyStepDef {
 export const JOURNEY_STEPS: JourneyStepDef[] = [
   {
     key: "published",
-    title: "Publish your first component",
-    description: "Build it in the editor with a live preview, then submit for review.",
+    title: "Publish",
+    description: "Build your first component in the editor with a live preview, then submit it for review.",
     href: "/dashboard/new",
     action: "New component",
   },
@@ -34,13 +44,13 @@ export const JOURNEY_STEPS: JourneyStepDef[] = [
   {
     key: "payouts",
     title: "Connect payouts",
-    description: "One Stripe account for both streams — takes about two minutes.",
+    description: "One Stripe account for both earning streams — takes about two minutes.",
     href: "/dashboard/payouts",
     action: "Set up payouts",
   },
   {
     key: "priced",
-    title: "Sell something",
+    title: "Sell",
     description: "Set a price on a component. You keep 90% of every sale.",
     href: "/dashboard/components",
     action: "Set a price",
@@ -62,12 +72,17 @@ export function JourneyChecklist({
   const link =
     renderLink ??
     ((href: string, children: ReactNode) => (
-      <a href={href} className="inline-flex items-center gap-1 text-xs font-medium text-foreground hover:underline">
+      <a
+        href={href}
+        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border/60 px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-accent/60"
+      >
         {children}
       </a>
     ));
   const doneCount = JOURNEY_STEPS.filter((step) => journey[step.key]).length;
-  const activeIndex = JOURNEY_STEPS.findIndex((step) => !journey[step.key]);
+  const firstIncomplete = JOURNEY_STEPS.findIndex((step) => !journey[step.key]);
+  const activeIndex = firstIncomplete === -1 ? JOURNEY_STEPS.length - 1 : firstIncomplete;
+  const active = JOURNEY_STEPS[activeIndex]!;
 
   return (
     <div className="rounded-xl border border-border/60 bg-card/40 p-5">
@@ -75,44 +90,34 @@ export function JourneyChecklist({
         <h2 className="text-sm font-semibold">Start earning on Modulora</h2>
         <span className="text-xs tabular-nums text-muted-foreground">{doneCount}/{JOURNEY_STEPS.length}</span>
       </div>
-      <ol className="mt-4 flex flex-col gap-1">
-        {JOURNEY_STEPS.map((step, i) => {
-          const done = journey[step.key];
-          const active = i === activeIndex;
-          return (
-            <li
-              key={step.key}
-              className={`flex items-start gap-3 rounded-lg px-3 py-2.5 ${active ? "bg-secondary/40" : ""}`}
-            >
-              <span
-                className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] tabular-nums ${
-                  done
-                    ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-500"
-                    : active
-                      ? "border-foreground/40 text-foreground"
-                      : "border-border/60 text-muted-foreground/60"
-                }`}
-              >
-                {done ? <Check className="size-3" /> : i + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className={`text-sm ${done ? "text-muted-foreground line-through decoration-border" : active ? "font-medium" : "text-muted-foreground"}`}>
+
+      <Stepper value={activeIndex + 1} className="mt-5 w-full">
+        <StepperNav className="gap-3">
+          {JOURNEY_STEPS.map((step, index) => (
+            <StepperItem key={step.key} step={index + 1} className="relative flex-1 items-start">
+              {/* Status display, not navigation — journey state comes from data. */}
+              <StepperTrigger className="pointer-events-none flex grow flex-col items-start justify-center gap-2" tabIndex={-1}>
+                <StepperIndicator className="h-1 w-full rounded-full bg-border data-[state=active]:bg-foreground data-[state=completed]:bg-emerald-500">
+                  <span className="sr-only">{index + 1}</span>
+                </StepperIndicator>
+                <StepperTitle className="text-start text-xs font-medium group-data-[state=inactive]/step:text-muted-foreground/60">
                   {step.title}
-                </p>
-                {active ? <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{step.description}</p> : null}
-              </div>
-              {active
-                ? link(
-                    step.href,
-                    <>
-                      {step.action} <ArrowRight className="size-3" />
-                    </>,
-                  )
-                : null}
-            </li>
-          );
-        })}
-      </ol>
+                </StepperTitle>
+              </StepperTrigger>
+            </StepperItem>
+          ))}
+        </StepperNav>
+      </Stepper>
+
+      <div className="mt-4 flex items-center justify-between gap-4 rounded-lg bg-secondary/40 px-3.5 py-3">
+        <p className="text-xs leading-relaxed text-muted-foreground">{active.description}</p>
+        {link(
+          active.href,
+          <>
+            {active.action} <ArrowRight className="size-3" />
+          </>,
+        )}
+      </div>
     </div>
   );
 }
