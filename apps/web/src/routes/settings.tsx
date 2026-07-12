@@ -35,6 +35,8 @@ import {
 } from "@/lib/profile";
 import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
 import { addDomain, listDomains, removeDomain, verifyDomain, type DomainRecord } from "@/lib/domains";
+import { getPayoutDashboardLink, getPayoutStatus, refreshPayoutStatus, startPayoutOnboarding, type PayoutStatus } from "@/lib/payouts";
+import { Banknote } from "lucide-react";
 import { CodeThemePicker } from "@/components/code-theme-picker";
 import { changePassword, linkSocial, signOut } from "@/lib/auth-client";
 
@@ -47,7 +49,8 @@ export const Route = createFileRoute("/settings")({
     if (!user) throw redirect({ to: "/signin" });
     const connections = await getConnections();
     const domains = await listDomains();
-    return { user, connections, domains };
+    const payouts = await getPayoutStatus();
+    return { user, connections, domains, payouts };
   },
   component: Settings,
 });
@@ -59,7 +62,7 @@ const RISE = {
 };
 
 function Settings() {
-  const { user, connections, domains } = Route.useLoaderData();
+  const { user, connections, domains, payouts } = Route.useLoaderData();
   const router = useRouter();
   const navigate = useNavigate();
   const [stage, setStage] = useState(0);
@@ -294,6 +297,15 @@ function Settings() {
         <DomainsSection initial={domains} />
       </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: RISE.offsetY }}
+        animate={{ opacity: stage >= 3 ? 1 : 0, y: stage >= 3 ? 0 : RISE.offsetY }}
+        transition={RISE.spring}
+        className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/35 p-6"
+      >
+        <PayoutsSection initial={payouts} />
+      </motion.div>
+
       {connections.hasPassword ? (
         <motion.div
           initial={{ opacity: 0, y: RISE.offsetY }}
@@ -321,6 +333,68 @@ function Settings() {
         <DeleteAccountSection identifier={user.username ?? user.email} />
       </motion.div>
     </div>
+  );
+}
+
+function PayoutsSection({ initial }: { initial: PayoutStatus }) {
+  const [status, setStatus] = useState<PayoutStatus>(initial);
+  const [busy, setBusy] = useState(false);
+
+  // Returning from Stripe onboarding: re-check and persist the account status.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payouts") === "done" || params.get("payouts") === "refresh") {
+      void refreshPayoutStatus().then(setStatus);
+      window.history.replaceState(null, "", "/settings");
+    }
+  }, []);
+
+  async function onSetup() {
+    setBusy(true);
+    const res = await startPayoutOnboarding();
+    setBusy(false);
+    if (res.ok && res.url) window.location.href = res.url;
+  }
+  async function onManage() {
+    setBusy(true);
+    const res = await getPayoutDashboardLink();
+    setBusy(false);
+    if (res.ok && res.url) window.open(res.url, "_blank", "noopener");
+  }
+
+  return (
+    <>
+      <div>
+        <h2 className="text-sm font-semibold">Payouts</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Connect a Stripe account to sell paid components and receive earnings. Stripe handles verification, banking, and tax.
+        </p>
+      </div>
+
+      {!status.configured ? (
+        <p className="text-xs text-muted-foreground">Payments aren&apos;t enabled on this environment yet.</p>
+      ) : status.payoutsEnabled ? (
+        <div className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-3">
+          <span className="flex items-center gap-2.5 text-sm"><Banknote className="size-4 text-muted-foreground" /> Payouts active</span>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-xs text-emerald-500"><Check className="size-3.5" /> Verified</span>
+            <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onManage}>Manage</Button>
+          </div>
+        </div>
+      ) : status.connected ? (
+        <div className="flex items-center justify-between rounded-lg border border-amber-500/40 px-4 py-3">
+          <span className="flex items-center gap-2.5 text-sm"><Banknote className="size-4 text-amber-500" /> Onboarding incomplete</span>
+          <Button type="button" size="sm" disabled={busy} onClick={onSetup}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : null} Finish setup
+          </Button>
+        </div>
+      ) : (
+        <Button type="button" size="lg" className="w-full gap-2" disabled={busy} onClick={onSetup}>
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Banknote className="size-4" />} Set up payouts
+        </Button>
+      )}
+    </>
   );
 }
 

@@ -24,6 +24,8 @@ export interface CurrentUser {
   xUrl: string | null;
   githubUsername: string | null;
   xUsername: string | null;
+  stripeAccountId: string | null;
+  payoutsEnabled: boolean;
   isCurator: boolean;
   editorTheme: string;
 }
@@ -57,6 +59,8 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     xUrl: row.xUrl,
     githubUsername: row.githubUsername,
     xUsername: row.xUsername,
+    stripeAccountId: row.stripeAccountId,
+    payoutsEnabled: row.payoutsEnabled,
     isCurator: row.isCurator,
     editorTheme: row.editorTheme,
   };
