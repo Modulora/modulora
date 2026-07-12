@@ -3,13 +3,14 @@
  * so it stays put while users navigate between dashboard pages.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { motion } from "motion/react";
 import {
+  Banknote,
   BarChart3,
   Blocks,
   KeyRound,
   Library,
   Plus,
+  Settings,
   Sparkles,
   TerminalSquare,
   UserRound,
@@ -17,22 +18,16 @@ import {
 } from "lucide-react";
 import type { StudioSummary } from "@/lib/studio";
 
-const SIDEBAR = {
-  offsetX: -10,
-  spring: { type: "spring" as const, stiffness: 320, damping: 30 },
-};
-
 const itemClass =
   "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent/60 [&.active]:bg-accent";
 
 export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
+  // No entrance animation: this is persistent chrome — it survives navigation
+  // between dashboard pages, and animating it on load reads as flicker, not
+  // information. (Mount-time motion also proved unreliable after SSR
+  // hydration here — the sidebar could stick at opacity 0.)
   return (
-    <motion.aside
-      initial={{ opacity: 0, x: SIDEBAR.offsetX }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={SIDEBAR.spring}
-      className="flex flex-col gap-6"
-    >
+    <aside className="flex flex-col gap-6">
       <NewButton />
 
       <nav className="flex flex-col gap-1">
@@ -59,6 +54,10 @@ export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
           <Sparkles className="size-4 shrink-0 opacity-70" />
           <span className="flex-1 truncate">Earnings</span>
         </Link>
+        <Link to="/dashboard/payouts" className={itemClass}>
+          <Banknote className="size-4 shrink-0 opacity-70" />
+          <span className="flex-1 truncate">Payouts</span>
+        </Link>
         <SidebarRow icon={BarChart3} label="Analytics" muted />
         {summary.namespace ? (
           <Link to="/$username" params={{ username: summary.namespace }} className={itemClass}>
@@ -75,7 +74,15 @@ export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
         <SidebarRow icon={KeyRound} label="API key" muted />
         <SidebarRow icon={TerminalSquare} label="Modulora CLI" muted />
       </nav>
-    </motion.aside>
+
+      <nav className="flex flex-col gap-1">
+        <SidebarHeading>Account</SidebarHeading>
+        <Link to="/dashboard/settings" className={itemClass}>
+          <Settings className="size-4 shrink-0 opacity-70" />
+          <span className="flex-1 truncate">Settings</span>
+        </Link>
+      </nav>
+    </aside>
   );
 }
 

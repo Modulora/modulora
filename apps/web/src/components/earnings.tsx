@@ -5,6 +5,7 @@
 import type { ReactNode } from "react";
 import { Banknote, PieChart, ShieldCheck, ShoppingBag } from "lucide-react";
 import type { EarningsData, EarningsSale } from "@/lib/earnings";
+import { PAYOUT_THRESHOLD_CENTS } from "@/lib/profit-share";
 
 export function money(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
@@ -52,7 +53,8 @@ export function ProfitSharePanel({ data, learnMore }: { data: EarningsData; lear
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
         {data.profitShareDistributed > 0
           ? <>Distributed to you so far: <span className="font-medium text-emerald-500">{money(data.profitShareDistributed)}</span>.</>
-          : "Distributions haven't started yet — installs are being counted now, and your accrued attribution applies when the first distribution runs."}
+          : "Distributions haven't started yet — installs are being counted now, and your accrued attribution applies when the first distribution runs."}{" "}
+        Distributions pay out once your accrued share reaches {`$${(PAYOUT_THRESHOLD_CENTS / 100).toFixed(0)}`}; smaller balances roll over.
         {learnMore ? <> {learnMore}</> : null}
       </p>
     </div>

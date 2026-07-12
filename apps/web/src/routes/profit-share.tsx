@@ -67,7 +67,7 @@ function ProfitShare() {
       </div>
 
       <p className="mt-10 text-sm text-muted-foreground">
-        Ready to earn? <Link to="/settings" className="text-foreground underline underline-offset-2">Set up payouts</Link>{" "}
+        Ready to earn? <Link to="/dashboard/payouts" className="text-foreground underline underline-offset-2">Set up payouts</Link>{" "}
         and read the <Link to="/terms" className="text-foreground underline underline-offset-2">Terms</Link>.
       </p>
     </div>

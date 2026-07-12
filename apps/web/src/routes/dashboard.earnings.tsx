@@ -29,11 +29,11 @@ function EarningsPage() {
         </div>
         {!earnings.payoutsEnabled ? (
           <Button asChild size="sm">
-            <Link to="/settings" hash="payouts">Set up payouts</Link>
+            <Link to="/dashboard/payouts">Set up payouts</Link>
           </Button>
         ) : (
           <Button asChild size="sm" variant="outline">
-            <Link to="/settings" hash="payouts" className="gap-1.5">
+            <Link to="/dashboard/payouts" className="gap-1.5">
               Payout settings <ArrowUpRight className="size-3.5" />
             </Link>
           </Button>

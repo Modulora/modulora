@@ -222,7 +222,7 @@ function UserMenu({ user }: { user: CurrentUser }) {
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuItem asChild>
-          <Link to="/settings">
+          <Link to="/dashboard/settings">
             <Settings />
             Settings
           </Link>

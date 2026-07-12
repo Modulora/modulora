@@ -54,7 +54,7 @@ export const getPayoutStatus = createServerFn({ method: "GET" }).handler(
 
 /**
  * Create the Express account if needed and return a Stripe onboarding link.
- * The client redirects the creator to Stripe, who returns to /settings.
+ * The client redirects the creator to Stripe, who returns to /dashboard/payouts.
  */
 export const startPayoutOnboarding = createServerFn({ method: "POST" }).handler(
   async (): Promise<{ ok: boolean; url?: string; error?: string }> => {
@@ -84,8 +84,8 @@ export const startPayoutOnboarding = createServerFn({ method: "POST" }).handler(
     const origin = originOf();
     const link = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${origin}/settings?payouts=refresh`,
-      return_url: `${origin}/settings?payouts=done`,
+      refresh_url: `${origin}/dashboard/payouts?payouts=refresh`,
+      return_url: `${origin}/dashboard/payouts?payouts=done`,
       type: "account_onboarding",
     });
     return { ok: true, url: link.url };

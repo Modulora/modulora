@@ -8,6 +8,14 @@ export const PROFIT_SHARE_VERSION = "2026-07-12";
 /** The headline split of distributable profit. */
 export const SPLIT = { creator: 30, ossFund: 10, modulora: 60 } as const;
 
+/**
+ * Minimum accrued profit share before a distribution pays out, in cents.
+ * Marketplace sales settle per-sale through Stripe automatically — this
+ * threshold applies only to profit-share distributions, so transfer fees
+ * don't eat micro-payouts. Balances below it roll over to the next run.
+ */
+export const PAYOUT_THRESHOLD_CENTS = 2500;
+
 export interface ExplainerSection {
   title: string;
   body: string[];
