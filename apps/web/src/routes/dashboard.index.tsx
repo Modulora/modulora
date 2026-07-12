@@ -149,7 +149,7 @@ function Dashboard() {
                 , <span className="text-foreground">{displayName}</span>
               </>
             ) : null}
-            . Your registry at a glance.
+            . Your work at a glance.
           </p>
         </motion.div>
 

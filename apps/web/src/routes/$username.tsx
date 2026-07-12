@@ -41,6 +41,18 @@ function hostOf(url: string | null): string | null {
   }
 }
 
+/** Pull an @handle out of an x.com/twitter.com URL (or a bare handle). */
+function xHandleOf(url: string): string {
+  const raw = url.trim().replace(/^@/, "");
+  try {
+    const segment = new URL(raw.includes("://") ? raw : `https://${raw}`).pathname.split("/").filter(Boolean)[0];
+    if (segment) return segment;
+  } catch {
+    // fall through
+  }
+  return raw;
+}
+
 function Profile() {
   const { profile, components } = Route.useLoaderData();
   const [stage, setStage] = useState(0);
@@ -96,7 +108,7 @@ function Profile() {
               <SocialLink href={profile.githubUrl} icon={<GitHubIcon className="size-3.5" />} label="GitHub" />
             ) : null}
             {profile.xUrl ? (
-              <SocialLink href={profile.xUrl} icon={<XIcon className="size-3" />} label="X" />
+              <SocialLink href={profile.xUrl} icon={<XIcon className="size-3" />} label={xHandleOf(profile.xUrl)} />
             ) : null}
           </div>
           </TooltipProvider>
