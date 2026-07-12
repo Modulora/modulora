@@ -18,7 +18,9 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
 import { Route as ISplatRouteImport } from './routes/i.$'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
+import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
+import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -67,10 +69,20 @@ const DashboardNewRoute = DashboardNewRouteImport.update({
   path: '/new',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardComponentsRoute = DashboardComponentsRouteImport.update({
+  id: '/components',
+  path: '/components',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
   id: '/api/upload-avatar',
   path: '/api/upload-avatar',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardEditNameRoute = DashboardEditNameRouteImport.update({
+  id: '/edit/$name',
+  path: '/edit/$name',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const ComponentsNamespaceNameRoute = ComponentsNamespaceNameRouteImport.update({
   id: '/components/$namespace/$name',
@@ -90,12 +102,14 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
+  '/dashboard/edit/$name': typeof DashboardEditNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,12 +117,14 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
   '/components': typeof ComponentsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
+  '/dashboard/edit/$name': typeof DashboardEditNameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,12 +134,14 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
+  '/dashboard/edit/$name': typeof DashboardEditNameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,12 +152,14 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signin'
     | '/api/upload-avatar'
+    | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
     | '/components/'
     | '/dashboard/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
+    | '/dashboard/edit/$name'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -147,12 +167,14 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signin'
     | '/api/upload-avatar'
+    | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
     | '/components'
     | '/dashboard'
     | '/api/auth/$'
     | '/components/$namespace/$name'
+    | '/dashboard/edit/$name'
   id:
     | '__root__'
     | '/'
@@ -161,12 +183,14 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signin'
     | '/api/upload-avatar'
+    | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
     | '/components/'
     | '/dashboard/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
+    | '/dashboard/edit/$name'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -247,12 +271,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardNewRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/components': {
+      id: '/dashboard/components'
+      path: '/components'
+      fullPath: '/dashboard/components'
+      preLoaderRoute: typeof DashboardComponentsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/upload-avatar': {
       id: '/api/upload-avatar'
       path: '/api/upload-avatar'
       fullPath: '/api/upload-avatar'
       preLoaderRoute: typeof ApiUploadAvatarRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/edit/$name': {
+      id: '/dashboard/edit/$name'
+      path: '/edit/$name'
+      fullPath: '/dashboard/edit/$name'
+      preLoaderRoute: typeof DashboardEditNameRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/components/$namespace/$name': {
       id: '/components/$namespace/$name'
@@ -272,13 +310,17 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardComponentsRoute: typeof DashboardComponentsRoute
   DashboardNewRoute: typeof DashboardNewRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardEditNameRoute: typeof DashboardEditNameRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardComponentsRoute: DashboardComponentsRoute,
   DashboardNewRoute: DashboardNewRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardEditNameRoute: DashboardEditNameRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

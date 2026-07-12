@@ -165,6 +165,66 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
   },
 );
 
+export interface EditableComponent {
+  name: string;
+  title: string;
+  description: string;
+  category: string;
+  version: string;
+  pricing: "free" | "paid";
+  purchaseUrl: string;
+  distributionChannels: string[];
+  shadcnCommand: string;
+  otherCliCommand: string;
+  originalUrl: string;
+  inspiredBy: string[];
+  files: { path: string; content: string }[];
+}
+
+export const fetchComponentForEdit = createServerFn({ method: "GET" })
+  .validator((data: { name: string }) => ({ name: String(data.name ?? "").trim().toLowerCase() }))
+  .handler(async ({ data }): Promise<EditableComponent | null> => {
+    const request = getRequest();
+    if (!request) return null;
+    const user = await getCurrentUser(request);
+    const database = db();
+    if (!user?.username || !database) return null;
+
+    const [row] = await database
+      .select({ component: schema.components, version: schema.componentVersions })
+      .from(schema.components)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+      .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
+      .where(and(eq(schema.namespaces.name, user.username), eq(schema.components.name, data.name)))
+      .limit(1);
+    if (!row) return null;
+
+    const files = row.version
+      ? await database
+          .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
+          .from(schema.componentFiles)
+          .where(eq(schema.componentFiles.componentVersionId, row.version.id))
+          .orderBy(schema.componentFiles.orderIndex)
+      : [];
+
+    const isPaid = row.component.sourceModel !== "open-source";
+    return {
+      name: row.component.name,
+      title: row.component.title,
+      description: row.component.description,
+      category: row.component.category,
+      version: row.version?.version ?? "0.1.0",
+      pricing: isPaid ? "paid" : "free",
+      purchaseUrl: row.component.purchaseUrl ?? "",
+      distributionChannels: row.component.distributionChannels ?? [],
+      shadcnCommand: row.component.shadcnCommand ?? "",
+      otherCliCommand: row.component.otherCliCommand ?? "",
+      originalUrl: row.component.originalUrl ?? "",
+      inspiredBy: row.component.inspiredBy ?? [],
+      files: files.map((file) => ({ path: file.path, content: file.content ?? "" })),
+    };
+  });
+
 export const deleteMyComponent = createServerFn({ method: "POST" })
   .validator((data: { name: string }) => ({ name: String(data.name ?? "").trim().toLowerCase() }))
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {

@@ -99,14 +99,15 @@ function Dashboard() {
 
         <nav className="flex flex-col gap-1">
           <SidebarHeading>Content</SidebarHeading>
-          {CONTENT_TYPES.map((type) => (
-            <SidebarRow
-              key={type.label}
-              icon={type.icon}
-              label={type.label}
-              count={summary.counts[type.key]}
-            />
-          ))}
+          <Link
+            to="/dashboard/components"
+            className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent/60 [&.active]:bg-accent"
+          >
+            <Blocks className="size-4 shrink-0 opacity-70" />
+            <span className="flex-1 truncate">Components</span>
+            <span className="text-xs tabular-nums text-muted-foreground">{summary.counts.components}</span>
+          </Link>
+          <SidebarRow icon={Library} label="Libraries" count={summary.counts.libraries} muted />
         </nav>
 
         <nav className="flex flex-col gap-1">
