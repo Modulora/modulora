@@ -9,7 +9,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
-import { isAllowedEmail } from "./access";
+import { alphaGateActive, isAllowedEmail } from "./access";
 import { getAuth } from "./auth";
 
 export interface CurrentUser {
@@ -79,5 +79,14 @@ export const fetchCurrentUser = createServerFn({ method: "GET" }).handler(
     const request = getRequest();
     if (!request) return null;
     return getCurrentUser(request);
+  },
+);
+
+/** Root context: the user plus whether the alpha gate is active. */
+export const fetchSessionContext = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ user: CurrentUser | null; gated: boolean }> => {
+    const request = getRequest();
+    const user = request ? await getCurrentUser(request) : null;
+    return { user, gated: alphaGateActive() };
   },
 );

@@ -11,6 +11,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "@/lib/session";
+import { alphaGateActive } from "@/lib/access";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 const bad = (status: number, error: string) =>
@@ -19,6 +20,7 @@ const bad = (status: number, error: string) =>
 async function handle({ request }: { request: Request }) {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) return bad(503, "Receipts unavailable");
+  if (alphaGateActive() && !(await getCurrentUser(request))) return bad(401, "Authentication required during the alpha");
   let body: { namespace?: string; name?: string; version?: string; digest?: string; client?: string };
   try {
     body = (await request.json()) as typeof body;

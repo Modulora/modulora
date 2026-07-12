@@ -7,6 +7,8 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, desc, eq, ilike, or, sql as dsql } from "drizzle-orm";
 import { schema } from "@modulora/db";
+import { alphaGateActive } from "@/lib/access";
+import { getCurrentUser } from "@/lib/session";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -15,6 +17,12 @@ const JSON_HEADERS = {
 };
 
 async function handle({ request }: { request: Request }) {
+  if (alphaGateActive() && !(await getCurrentUser(request))) {
+    return new Response(JSON.stringify({ error: "Authentication required during the alpha." }), {
+      status: 401,
+      headers: { ...JSON_HEADERS, "cache-control": "no-store" },
+    });
+  }
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     return new Response(JSON.stringify({ results: [] }), { headers: JSON_HEADERS });

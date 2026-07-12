@@ -65,10 +65,12 @@ npx wrangler r2 bucket create modulora-media
 
 ## Alpha access gate
 
-`ALPHA_ALLOWLIST` — comma-separated emails. When set, only these accounts
-resolve sessions; everyone else is treated as signed out on every platform
-surface (dashboard, publish, buy, review, CLI tokens). Set it in production
-until the alpha opens; leave unset locally. See #29.
+`ALPHA_ALLOWLIST` — comma-separated emails. When set, the entire product
+requires a signed-in allowlisted account: every app route redirects to
+/signin except the landing page, sign-in, and legal pages, and the public
+APIs (/r/ registry, /api/search, install receipts) return 401 without an
+authenticated session or CLI bearer token. Non-allowlisted accounts resolve
+as signed out everywhere. Set it in production until the alpha opens. See #29.
 
 ## Platform owner
 

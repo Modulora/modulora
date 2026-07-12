@@ -5,6 +5,8 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { parseRegistryPath, resolveRegistryItem } from "@/lib/registry";
+import { alphaGateActive } from "@/lib/access";
+import { getCurrentUser } from "@/lib/session";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -13,6 +15,14 @@ const JSON_HEADERS = {
 };
 
 async function handle({ params, request }: { params: { _splat?: string }; request: Request }) {
+  // Closed alpha: registry access requires an authenticated (allowlisted)
+  // account — session cookie or CLI bearer token. No gate once launched.
+  if (alphaGateActive() && !(await getCurrentUser(request))) {
+    return new Response(JSON.stringify({ error: "Authentication required during the alpha. Run `modulora login`." }), {
+      status: 401,
+      headers: { ...JSON_HEADERS, "cache-control": "no-store" },
+    });
+  }
   const splat = params._splat;
   if (!splat) return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: JSON_HEADERS });
 

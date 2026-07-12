@@ -3,12 +3,13 @@ import {
   Outlet,
   createRootRoute,
   HeadContent,
+  redirect,
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { AppShell } from "@/components/app-shell";
-import { fetchCurrentUser } from "@/lib/session";
+import { fetchSessionContext } from "@/lib/session";
 import appCss from "../styles.css?url";
 
 /* Routes that render as full-screen canvases without the app shell chrome. */
@@ -28,9 +29,18 @@ export const Route = createRootRoute({
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
-  beforeLoad: async () => {
-    const user = await fetchCurrentUser();
-    return { user };
+  beforeLoad: async ({ location }) => {
+    const { user, gated } = await fetchSessionContext();
+    // Alpha: the whole product requires a signed-in (allowlisted) account.
+    // Only the landing page, sign-in, and legal pages stay public.
+    const PUBLIC = ["/", "/signin", "/privacy", "/terms", "/publishing-policy"];
+    const isPublic = PUBLIC.some((path) =>
+      path === "/" ? location.pathname === "/" : location.pathname === path || location.pathname.startsWith(`${path}/`),
+    );
+    if (gated && !user && !isPublic) {
+      throw redirect({ to: "/signin" });
+    }
+    return { user, gated };
   },
   component: RootComponent,
 });
