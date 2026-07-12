@@ -8,7 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gt } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { catalog as demoCatalog, findItem, type CatalogItem } from "../data/catalog";
 import { categoryLabel } from "./taxonomy";
@@ -105,6 +105,32 @@ export const fetchCatalog = createServerFn({ method: "GET" }).handler(
 
     const dbItems = rows.map((row) => toCatalogItem(row.namespace, row.component, row.version));
     return [...dbItems, ...demoCatalog];
+  },
+);
+
+/** Components with an active paid promotion (clearly labeled on browse). */
+export const fetchFeatured = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CatalogItem[]> => {
+    const database = db();
+    if (!database) return [];
+    const now = new Date();
+    const rows = await database
+      .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name })
+      .from(schema.promotions)
+      .innerJoin(schema.components, eq(schema.components.id, schema.promotions.componentId))
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+      .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
+      .where(
+        and(
+          eq(schema.promotions.status, "active"),
+          gt(schema.promotions.endsAt, now),
+          eq(schema.components.visibility, "public"),
+          eq(schema.components.reviewStatus, "approved"),
+        ),
+      )
+      .orderBy(desc(schema.promotions.startsAt))
+      .limit(6);
+    return rows.map((row) => toCatalogItem(row.namespace, row.component, row.version));
   },
 );
 

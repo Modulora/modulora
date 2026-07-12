@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { Blocks, ExternalLink, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Blocks, ExternalLink, Loader2, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { deleteMyComponent, fetchMyComponents, type MyComponent } from "@/lib/catalog-db";
+import { confirmCheckout, startPromotion } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/dashboard/components")({
   beforeLoad: ({ context }) => {
@@ -42,7 +43,9 @@ const RISE = {
 function MyComponents() {
   const { components } = Route.useLoaderData();
   const { user } = Route.useRouteContext();
+  const router = useRouter();
   const [stage, setStage] = useState(0);
+  const [promoted, setPromoted] = useState(false);
 
   useEffect(() => {
     const timers = [
@@ -51,6 +54,18 @@ function MyComponents() {
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
+
+  // Confirm a returning promotion Checkout, then clean the URL.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sid = new URLSearchParams(window.location.search).get("promo");
+    if (!sid) return;
+    void confirmCheckout({ data: { sessionId: sid } }).then(() => {
+      setPromoted(true);
+      window.history.replaceState(null, "", "/dashboard/components");
+      void router.invalidate();
+    });
+  }, [router]);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -68,6 +83,12 @@ function MyComponents() {
           <Link to="/dashboard/new"><Plus className="size-4" /> New component</Link>
         </Button>
       </motion.div>
+
+      {promoted ? (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-2.5 text-sm text-emerald-500">
+          Promotion active — your component is now featured on browse.
+        </div>
+      ) : null}
 
       {components.length === 0 ? (
         <motion.div
@@ -118,12 +139,21 @@ function ComponentRow({ component, username }: { component: MyComponent; usernam
   const [pending, setPending] = useState(false);
   const matches = confirm.trim().toLowerCase() === component.name.toLowerCase();
 
+  const [promoting, setPromoting] = useState(false);
+
   async function onDelete() {
     setPending(true);
     await deleteMyComponent({ data: { name: component.name } });
     await router.invalidate();
     setPending(false);
     setOpen(false);
+  }
+
+  async function onPromote() {
+    setPromoting(true);
+    const res = await startPromotion({ data: { name: component.name } });
+    if (res.ok && res.url) window.location.href = res.url;
+    else setPromoting(false);
   }
 
   return (
@@ -148,6 +178,11 @@ function ComponentRow({ component, username }: { component: MyComponent; usernam
         <Button asChild variant="ghost" size="sm" className="gap-1.5">
           <Link to="/dashboard/edit/$name" params={{ name: component.name }}><Pencil className="size-3.5" /> Edit</Link>
         </Button>
+        {component.reviewStatus === "approved" ? (
+          <Button variant="ghost" size="sm" className="gap-1.5" disabled={promoting} onClick={onPromote}>
+            {promoting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />} Promote
+          </Button>
+        ) : null}
         <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setConfirm(""); }}>
           <DialogTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></Button>

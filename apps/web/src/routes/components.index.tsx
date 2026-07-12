@@ -37,7 +37,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ComponentPreview } from "@/components/component-preview";
 import { Input } from "@/components/ui/input";
-import { fetchCatalog } from "@/lib/catalog-db";
+import { fetchCatalog, fetchFeatured } from "@/lib/catalog-db";
 import {
   type CatalogItem,
   type EvidenceType,
@@ -78,7 +78,7 @@ export const Route = createFileRoute("/components/")({
   validateSearch: createStandardSchemaV1(catalogSearchParams, {
     partialOutput: true,
   }),
-  loader: () => fetchCatalog(),
+  loader: async () => ({ catalog: await fetchCatalog(), featured: await fetchFeatured() }),
   component: Catalog,
 });
 
@@ -106,7 +106,7 @@ const EVIDENCE_OPTIONS: { value: (typeof EVIDENCE_FILTERS)[number]; label: strin
 ];
 
 function Catalog() {
-  const catalog = Route.useLoaderData();
+  const { catalog, featured } = Route.useLoaderData();
   const categories = useMemo(
     () => [...new Set(catalog.map((item) => item.category))].sort(),
     [catalog],
@@ -249,6 +249,27 @@ function Catalog() {
           </div>
         </motion.div>
 
+        {featured.length > 0 && !hasActiveSearch(search) ? (
+          <motion.div
+            initial={{ opacity: 0, y: RISE.offsetY }}
+            animate={{ opacity: stage >= 3 ? 1 : 0, y: stage >= 3 ? 0 : RISE.offsetY }}
+            transition={RISE.spring}
+            className="mb-8"
+          >
+            <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+              <Sparkles className="size-3.5" /> Featured
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {featured.map((item) => (
+                <div key={`f-${item.namespace}/${item.name}`} className="relative">
+                  <span className="absolute right-3 top-3 z-10 rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur">Promoted</span>
+                  <GalleryItem item={item} list={false} />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        ) : null}
+
         {items.length ? (
           <div className={search.layout === "grid" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3"}>
             {items.map((item, index) => (
@@ -320,6 +341,19 @@ function SmallFilter({ active, onClick, children }: { active: boolean; onClick: 
 
 function LayoutButton({ label, active, onClick, children }: { label: string; active: boolean; onClick: () => void; children: ReactNode }) {
   return <button type="button" aria-label={label} aria-pressed={active} onClick={onClick} className={`flex size-7 items-center justify-center rounded [&_svg]:size-3.5 ${active ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}>{children}</button>;
+}
+
+/** Any query/filter active — we hide the Featured row in filtered views. */
+function hasActiveSearch(search: CatalogSearch): boolean {
+  return Boolean(
+    search.q.trim() ||
+      search.category ||
+      search.price ||
+      search.source ||
+      search.license ||
+      search.evidence ||
+      (search.view && search.view !== "newest"),
+  );
 }
 
 function matches(item: CatalogItem, search: CatalogSearch) {

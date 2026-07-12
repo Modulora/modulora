@@ -29,6 +29,7 @@ import { Route as DashboardComponentsRouteImport } from './routes/dashboard.comp
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const TermsRoute = TermsRouteImport.update({
@@ -131,6 +132,11 @@ const ComponentsNamespaceNameRoute = ComponentsNamespaceNameRouteImport.update({
   path: '/components/$namespace/$name',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/review/': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
 }
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/review': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
 }
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/review/': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
 }
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/review/'
     | '/api/auth/$'
+    | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
   fileRoutesByTo: FileRoutesByTo
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/review'
     | '/api/auth/$'
+    | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
   id:
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/review/'
     | '/api/auth/$'
+    | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
   fileRoutesById: FileRoutesById
@@ -294,6 +306,7 @@ export interface RootRouteChildren {
   ComponentsIndexRoute: typeof ComponentsIndexRoute
   ReviewIndexRoute: typeof ReviewIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
 }
 
@@ -439,6 +452,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComponentsNamespaceNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -484,6 +504,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComponentsIndexRoute: ComponentsIndexRoute,
   ReviewIndexRoute: ReviewIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,
 }
 export const routeTree = rootRouteImport
