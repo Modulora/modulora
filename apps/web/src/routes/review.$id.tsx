@@ -90,7 +90,7 @@ function ReviewDetail() {
         <div className="min-w-0 space-y-5">
           <div>
             <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>@{item.namespace}</span>
+              <span>{item.namespace}</span>
               <span>·</span>
               <span>{item.category}</span>
               <span>·</span>

@@ -1,11 +1,14 @@
+import type { CSSProperties } from "react";
+
 /** Modulora mark — canonical source: Modulora/.github/assets/brand/logo.svg */
-export function Logo({ className }: { className?: string }) {
+export function Logo({ className, style }: { className?: string; style?: CSSProperties }) {
   return (
     <svg
       viewBox="0 0 546 548"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      style={style}
       role="img"
       aria-label="Modulora"
     >

@@ -165,7 +165,8 @@ function SignInButton() {
 function UserMenu({ user }: { user: CurrentUser }) {
   const router = useRouter();
   const navigate = useNavigate();
-  const handle = user.username ? `@${user.username}` : user.name;
+  // Prefer the person's name once set; fall back to the plain username.
+  const handle = user.name?.trim() ? user.name : (user.username ?? "Account");
 
   async function handleSignOut() {
     await signOut();

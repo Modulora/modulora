@@ -88,7 +88,7 @@ function ReviewQueue() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{item.title}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    @{item.namespace} · {item.category} · {item.paid ? "Paid" : "Free"}
+                    {item.namespace} · {item.category} · {item.paid ? "Paid" : "Free"}
                   </p>
                 </div>
                 <span className="flex items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">

@@ -68,3 +68,9 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Preview loading: Modulora logo breathing in/out. */
+@keyframes logo-breathe {
+  0%, 100% { opacity: 0.12; }
+  50% { opacity: 0.85; }
+}

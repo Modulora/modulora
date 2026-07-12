@@ -288,7 +288,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
             <h2 className="truncate text-sm font-medium">{item.title}</h2>
             {item.evidence.some((record) => record.type === "content-integrity" || record.type === "domain-verified") ? <BadgeCheck className="size-3.5 text-muted-foreground" /> : null}
           </div>
-          <p className="mt-1 truncate text-xs text-muted-foreground">@{item.namespace} · {item.category}</p>
+          <p className="mt-1 truncate text-xs text-muted-foreground">{item.namespace} · {item.category}</p>
         </div>
         <Badge variant={item.sourceModel === "open-source" ? "secondary" : "outline"} className="shrink-0">
           {item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"}

@@ -74,6 +74,8 @@ const CONTENT_TYPES: ContentType[] = [
 
 function Dashboard() {
   const summary = Route.useLoaderData();
+  const { user } = Route.useRouteContext();
+  const displayName = user?.name?.trim() ? user.name : summary.namespace;
   const [stage, setStage] = useState(0);
 
   useEffect(() => {
@@ -142,9 +144,9 @@ function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
           <p className="mt-1 text-muted-foreground">
             Welcome back
-            {summary.namespace ? (
+            {displayName ? (
               <>
-                , <span className="text-foreground">@{summary.namespace}</span>
+                , <span className="text-foreground">{displayName}</span>
               </>
             ) : null}
             . Here's your studio at a glance.

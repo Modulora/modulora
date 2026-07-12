@@ -19,7 +19,8 @@
  *   package.json                 → customSetup.dependencies
  */
 import { useEffect, useMemo, useState } from "react";
-import { SandpackProvider, SandpackPreview } from "@codesandbox/sandpack-react";
+import { SandpackProvider, SandpackPreview, useSandpack } from "@codesandbox/sandpack-react";
+import { Logo } from "@/components/logo";
 
 const TAILWIND_V4_CDN = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4";
 
@@ -110,6 +111,31 @@ export {};
 `;
 }
 
+/** Breathing Modulora logo shown until the sandbox finishes its first bundle. */
+function LoadingCover({ theme }: { theme: "light" | "dark" }) {
+  const { listen } = useSandpack();
+  const [done, setDone] = useState(false);
+  useEffect(
+    () =>
+      listen((message) => {
+        if (message.type === "done") setDone(true);
+      }),
+    [listen],
+  );
+  if (done) return null;
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+      style={{ background: theme === "dark" ? "#181818" : "#ffffff" }}
+    >
+      <Logo
+        className="size-9"
+        style={{ color: theme === "dark" ? "#fafafa" : "#0a0a0a", animation: "logo-breathe 1.6s ease-in-out infinite" }}
+      />
+    </div>
+  );
+}
+
 export function ComponentSandbox({
   files,
   selectedDemo,
@@ -157,34 +183,46 @@ export function ComponentSandbox({
 
   if (!mounted) {
     return (
-      <div className={`flex h-full items-center justify-center text-sm text-muted-foreground ${className ?? ""}`}>
-        Loading preview…
+      <div
+        className={`flex h-full items-center justify-center ${className ?? ""}`}
+        style={{ background: theme === "dark" ? "#181818" : "#ffffff" }}
+      >
+        <Logo
+          className="size-9"
+          style={{ color: theme === "dark" ? "#fafafa" : "#0a0a0a", animation: "logo-breathe 1.6s ease-in-out infinite" }}
+        />
       </div>
     );
   }
 
   return (
-    <SandpackProvider
-      key={theme + selectedDemo}
-      template="react-ts"
-      theme={theme === "dark" ? "dark" : "light"}
-      files={sandpackFiles}
-      customSetup={{ dependencies }}
-      options={{
-        externalResources: [TAILWIND_V4_CDN],
-        initMode: "immediate",
-        recompileMode: "delayed",
-        recompileDelay: 400,
-        ...(BUNDLER_URL ? { bundlerURL: BUNDLER_URL } : {}),
-      }}
-      className={className}
+    <div
+      className={`h-full w-full [&_.sp-preview-container]:h-full! [&_.sp-preview-iframe]:h-full! [&_.sp-preview]:h-full! [&_.sp-wrapper]:h-full! ${className ?? ""}`}
     >
-      <SandpackPreview
-        showOpenInCodeSandbox={false}
-        showRefreshButton={false}
-        showSandpackErrorOverlay
-        style={{ height: "100%", minHeight: "24rem" }}
-      />
-    </SandpackProvider>
+      <SandpackProvider
+        key={theme + selectedDemo}
+        template="react-ts"
+        theme={theme === "dark" ? "dark" : "light"}
+        files={sandpackFiles}
+        customSetup={{ dependencies }}
+        options={{
+          externalResources: [TAILWIND_V4_CDN],
+          initMode: "immediate",
+          recompileMode: "delayed",
+          recompileDelay: 400,
+          ...(BUNDLER_URL ? { bundlerURL: BUNDLER_URL } : {}),
+        }}
+      >
+        <div className="relative h-full">
+          <LoadingCover theme={theme} />
+          <SandpackPreview
+            showOpenInCodeSandbox={false}
+            showRefreshButton={false}
+            showSandpackErrorOverlay
+            style={{ height: "100%" }}
+          />
+        </div>
+      </SandpackProvider>
+    </div>
   );
 }

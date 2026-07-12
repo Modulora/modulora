@@ -178,7 +178,7 @@ function ComponentDetail() {
         className="flex flex-col gap-2"
       >
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/$username" params={{ username: item.namespace }} className="hover:text-foreground">@{item.namespace}</Link>
+          <Link to="/$username" params={{ username: item.namespace }} className="hover:text-foreground">{item.namespace}</Link>
           <span>·</span><span>v{item.version}</span><span>·</span><span>React</span>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -215,8 +215,9 @@ function ComponentDetail() {
             initial={{ opacity: 0, scale: WORKSPACE.initialScale }}
             animate={{ opacity: stage >= 3 ? 1 : 0, scale: stage >= 3 ? 1 : WORKSPACE.initialScale }}
             transition={WORKSPACE.spring}
+            className="flex min-h-0 flex-1 flex-col"
           >
-            <Tabs.Root value={workspaceTab} onValueChange={setWorkspaceTab} className="overflow-hidden rounded-xl border border-border/60 bg-[#0d0d0d]">
+            <Tabs.Root value={workspaceTab} onValueChange={setWorkspaceTab} className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-[#0d0d0d]">
               <div className="flex h-12 items-center justify-between border-b border-border/60 px-3">
                 <Tabs.List className="flex items-center gap-1">
                   <WorkspaceTab value="preview" icon={PackageCheck}>Preview</WorkspaceTab>
@@ -251,8 +252,8 @@ function ComponentDetail() {
                   <span className="text-xs text-muted-foreground">{item.category}</span>
                 )}
               </div>
-              <Tabs.Content value="preview" className="outline-none">
-                <div ref={previewStageRef} className={`flex h-[36rem] items-center justify-center overflow-auto bg-[#181818] p-4 ${previewTheme === "dark" ? "[color-scheme:dark]" : "[color-scheme:light]"}`}>
+              <Tabs.Content value="preview" className="flex-1 outline-none data-[state=inactive]:hidden">
+                <div ref={previewStageRef} className={`flex h-full min-h-[24rem] items-center justify-center overflow-auto bg-[#181818] ${previewTheme === "dark" ? "[color-scheme:dark]" : "[color-scheme:light]"}`}>
                   <div className={`h-full w-full transition-[max-width] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] ${viewport === "mobile" ? "max-w-[390px]" : viewport === "tablet" ? "max-w-[768px]" : "max-w-none"}`}>
                     {demos.length > 0 && activeDemo ? (
                       <ComponentSandbox
@@ -279,7 +280,7 @@ function ComponentDetail() {
           initial={{ opacity: 0, x: RAIL.offsetX }}
           animate={{ opacity: stage >= 3 ? 1 : 0, x: stage >= 3 ? 0 : RAIL.offsetX }}
           transition={RAIL.spring}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-3 self-start"
         >
           {typeof item.installCount === "number" ? (
             <FactCard label="Verified CLI installs" value={item.installCount.toLocaleString()} icon={Terminal} />
@@ -344,7 +345,7 @@ function SourceFiles({ item, files }: { item: CatalogItem; files: HighlightedFil
       <div className="relative min-w-0">
         <div className="absolute right-3 top-3 z-10"><CopyButton value={current.raw} /></div>
         <div
-          className="h-[36rem] overflow-auto p-5 text-sm leading-7 [&_pre]:!bg-transparent [&_pre]:font-mono"
+          className="h-full overflow-auto p-5 text-sm leading-7 [&_pre]:!bg-transparent [&_pre]:font-mono"
           // Shiki output is generated from trusted, server-highlighted source.
           dangerouslySetInnerHTML={{ __html: current.html }}
         />
