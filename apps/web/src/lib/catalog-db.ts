@@ -14,6 +14,7 @@ import { catalog as demoCatalog, findItem, type CatalogItem } from "../data/cata
 import { categoryLabel } from "./taxonomy";
 import { getCurrentUser } from "./session";
 import { normalizeDomain } from "./domains";
+import { hasEntitlement } from "./marketplace";
 
 function db() {
   const url = process.env.DATABASE_URL;
@@ -147,7 +148,7 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
     if (!database) return null;
 
     const [row] = await database
-      .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name })
+      .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name, ownerUserId: schema.namespaces.ownerUserId })
       .from(schema.components)
       .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
       .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
@@ -155,13 +156,26 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       .limit(1);
     if (!row) return null;
 
+    const request = getRequest();
+    const viewer = request ? await getCurrentUser(request) : null;
+
     // Un-approved components are visible only to their owner or a curator.
     if (row.component.reviewStatus !== "approved") {
-      const request = getRequest();
-      const viewer = request ? await getCurrentUser(request) : null;
       const isOwner = viewer?.username && viewer.username === row.namespace;
       if (!isOwner && !viewer?.isCurator) return null;
     }
+
+    // Marketplace pricing: an active price gates the source behind purchase.
+    const [price] = await database
+      .select({ unitAmount: schema.componentPrices.unitAmount })
+      .from(schema.componentPrices)
+      .where(and(eq(schema.componentPrices.componentId, row.component.id), eq(schema.componentPrices.active, true)))
+      .limit(1);
+    const marketplacePrice = price?.unitAmount ?? null;
+    const entitled =
+      marketplacePrice === null
+        ? true
+        : await hasEntitlement(row.component.id, viewer?.id ?? null, row.ownerUserId ?? null);
 
     const files = row.version
       ? await database
@@ -172,13 +186,15 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       : [];
     const evidence = row.version ? await loadEvidence(database, row.version.id) : [];
 
-    return toCatalogItem(
+    const item = toCatalogItem(
       row.namespace,
       row.component,
       row.version,
-      files.map((file) => ({ path: file.path, content: file.content ?? "" })),
+      // Never send paid source to a viewer who hasn't purchased it.
+      entitled ? files.map((file) => ({ path: file.path, content: file.content ?? "" })) : [],
       evidence,
     );
+    return { ...item, marketplacePrice, entitled };
   });
 
 /** Curator-only: load a component's full detail by id, regardless of status. */
@@ -299,6 +315,7 @@ export interface MyComponent {
   sourceModel: string;
   reviewStatus: "pending" | "approved" | "rejected";
   reviewReason: string | null;
+  marketplacePrice: number | null;
   updatedAt: string;
 }
 
@@ -318,9 +335,10 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
     if (!ns) return [];
 
     const rows = await database
-      .select({ component: schema.components, version: schema.componentVersions })
+      .select({ component: schema.components, version: schema.componentVersions, price: schema.componentPrices.unitAmount })
       .from(schema.components)
       .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
+      .leftJoin(schema.componentPrices, and(eq(schema.componentPrices.componentId, schema.components.id), eq(schema.componentPrices.active, true)))
       .where(eq(schema.components.namespaceId, ns.id))
       .orderBy(desc(schema.components.updatedAt));
 
@@ -332,6 +350,7 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
       sourceModel: row.component.sourceModel,
       reviewStatus: row.component.reviewStatus,
       reviewReason: row.component.reviewReason,
+      marketplacePrice: row.price ?? null,
       updatedAt: row.component.updatedAt.toISOString(),
     }));
   },

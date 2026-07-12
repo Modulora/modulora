@@ -8,7 +8,8 @@
  *  340ms   install tray rises
  * ───────────────────────────────────────────────────────── */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
+import { buyComponent, confirmCheckout } from "@/lib/marketplace";
 import { Tabs } from "radix-ui";
 import { motion } from "motion/react";
 import {
@@ -143,6 +144,21 @@ function ComponentDetail() {
   const [activeDemo, setActiveDemo] = useState<string>(demos[0]?.path ?? "");
   // Paid components are fulfilled by the creator; Modulora hosts no source.
   const isPaid = item.sourceModel !== "open-source";
+  // Marketplace-priced: an open component sold on Modulora, source gated behind
+  // purchase until the viewer owns it.
+  const locked = item.marketplacePrice != null && item.entitled === false;
+  const router = useRouter();
+
+  // Confirm a returning purchase Checkout, then reload with the entitlement.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sid = new URLSearchParams(window.location.search).get("purchase");
+    if (!sid) return;
+    void confirmCheckout({ data: { sessionId: sid } }).then(() => {
+      window.history.replaceState(null, "", window.location.pathname);
+      void router.invalidate();
+    });
+  }, [router]);
 
   useEffect(() => {
     const timers = [
@@ -188,8 +204,8 @@ function ComponentDetail() {
             <h1 className="text-3xl font-bold tracking-tight">{item.title}</h1>
             <p className="mt-2 max-w-3xl text-muted-foreground">{item.description}</p>
           </div>
-          <Badge variant={isPaid ? "outline" : "secondary"}>
-            {isPaid ? item.purchase?.priceLabel ?? "Paid" : "Free"}
+          <Badge variant={isPaid || locked ? "outline" : "secondary"}>
+            {isPaid ? item.purchase?.priceLabel ?? "Paid" : item.marketplacePrice != null ? formatPrice(item.marketplacePrice) : "Free"}
           </Badge>
         </div>
       </motion.header>
@@ -203,6 +219,8 @@ function ComponentDetail() {
           >
             {isPaid ? (
               <CommercialTray item={item} />
+            ) : locked ? (
+              <BuyTray item={item} />
             ) : (
               <InstallTray
                 tabs={enabledInstallTabs}
@@ -271,7 +289,7 @@ function ComponentDetail() {
                 </div>
               </Tabs.Content>
               <Tabs.Content value="code" className="relative outline-none">
-                {isPaid ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} themeId={viewerTheme} />}
+                {isPaid || locked ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} themeId={viewerTheme} />}
               </Tabs.Content>
             </Tabs.Root>
           </motion.div>
@@ -431,14 +449,57 @@ function FileTree({
   );
 }
 
+function formatPrice(cents: number): string {
+  const dollars = cents / 100;
+  return `$${Number.isInteger(dollars) ? dollars : dollars.toFixed(2)}`;
+}
+
+function BuyButton({ item, children }: { item: CatalogItem; children: ReactNode }) {
+  const [busy, setBusy] = useState(false);
+  async function onBuy() {
+    setBusy(true);
+    const res = await buyComponent({ data: { namespace: item.namespace, name: item.name } });
+    if (res.ok && res.url) window.location.href = res.url;
+    else setBusy(false);
+  }
+  return (
+    <Button onClick={onBuy} disabled={busy} className="gap-2">
+      {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+      {children}
+    </Button>
+  );
+}
+
+function BuyTray({ item }: { item: CatalogItem }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4">
+      <div>
+        <p className="text-sm font-medium">Buy to install</p>
+        <p className="mt-1 text-xs text-muted-foreground">One-time purchase unlocks the source and install for your account.</p>
+      </div>
+      <BuyButton item={item}>Buy {formatPrice(item.marketplacePrice ?? 0)}</BuyButton>
+    </div>
+  );
+}
+
 function LockedCode({ item }: { item: CatalogItem }) {
+  const marketplace = item.marketplacePrice != null;
   return (
     <div className="relative h-[38rem] overflow-hidden bg-[#080808]">
-      <pre aria-hidden className="select-none p-5 font-mono text-sm leading-7 text-zinc-500 blur-[5px]">{`export function ${item.title.replace(/\s/g, "")}() {\n  // Paid component — source delivered on purchase\n  return <PremiumComponent />\n}\n`.repeat(5)}</pre>
+      <pre aria-hidden className="select-none p-5 font-mono text-sm leading-7 text-zinc-500 blur-[5px]">{`export function ${item.title.replace(/\s/g, "")}() {\n  // ${marketplace ? "Source unlocks after purchase" : "Paid component — delivered on purchase"}\n  return <PremiumComponent />\n}\n`.repeat(5)}</pre>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/45 text-center backdrop-blur-[2px]">
         <span className="flex size-11 items-center justify-center rounded-full border border-white/15 bg-black/60"><FileLock2 className="size-5" /></span>
-        <div><p className="font-semibold">Paid component</p><p className="mt-1 max-w-xs text-sm text-muted-foreground">Purchase and fulfillment are handled by the creator. Modulora hosts no source and has not assessed it.</p></div>
-        {item.purchase ? <Button asChild><a href={item.purchase.url} rel="noreferrer">View on {item.purchase.domain}<ExternalLink /></a></Button> : null}
+        {marketplace ? (
+          <>
+            <div><p className="font-semibold">Purchase to view the source</p><p className="mt-1 max-w-xs text-sm text-muted-foreground">This component is sold on Modulora. Buying unlocks the source and install for your account.</p></div>
+            <BuyButton item={item}>Buy {formatPrice(item.marketplacePrice ?? 0)}</BuyButton>
+          </>
+        ) : (
+          <>
+            <div><p className="font-semibold">Paid component</p><p className="mt-1 max-w-xs text-sm text-muted-foreground">Purchase and fulfillment are handled by the creator. Modulora hosts no source and has not assessed it.</p></div>
+            {item.purchase ? <Button asChild><a href={item.purchase.url} rel="noreferrer">View on {item.purchase.domain}<ExternalLink /></a></Button> : null}
+          </>
+        )}
       </div>
     </div>
   );

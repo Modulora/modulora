@@ -71,6 +71,10 @@ export interface CatalogItem {
   installCount?: number;
   files?: ComponentFile[];
   evidence: EvidenceRecord[];
+  // Marketplace: an active price (minor units) gates the source behind purchase.
+  marketplacePrice?: number | null;
+  // Whether the current viewer may install (owner or paid purchase).
+  entitled?: boolean;
 }
 
 export const catalog: CatalogItem[] = [

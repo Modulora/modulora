@@ -20,7 +20,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { deleteMyComponent, fetchMyComponents, type MyComponent } from "@/lib/catalog-db";
-import { confirmCheckout, startPromotion } from "@/lib/marketplace";
+import { confirmCheckout, setComponentPrice, startPromotion } from "@/lib/marketplace";
+import { Input } from "@/components/ui/input";
+import { Tag } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/components")({
   beforeLoad: ({ context }) => {
@@ -113,7 +115,7 @@ function MyComponents() {
               animate={{ opacity: stage >= 2 ? 1 : 0, y: stage >= 2 ? 0 : RISE.offsetY }}
               transition={{ ...RISE.spring, delay: index * RISE.stagger }}
             >
-              <ComponentRow component={component} username={user?.username ?? ""} />
+              <ComponentRow component={component} username={user?.username ?? ""} payoutsEnabled={Boolean(user?.payoutsEnabled)} />
             </motion.div>
           ))}
         </div>
@@ -132,7 +134,68 @@ function ReviewBadge({ status }: { status: MyComponent["reviewStatus"] }) {
   return <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${cls}`}>{label}</span>;
 }
 
-function ComponentRow({ component, username }: { component: MyComponent; username: string }) {
+function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; payoutsEnabled: boolean }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [dollars, setDollars] = useState(component.marketplacePrice != null ? String(component.marketplacePrice / 100) : "");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save(amount: number | null) {
+    setPending(true);
+    setError(null);
+    const res = await setComponentPrice({ data: { name: component.name, amount } });
+    setPending(false);
+    if (!res.ok) {
+      setError(res.error ?? "Could not save.");
+      return;
+    }
+    await router.invalidate();
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="gap-1.5">
+          <Tag className="size-3.5" />
+          {component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : "Sell"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Sell {component.title}</DialogTitle>
+          <DialogDescription>
+            Set a one-time price. Buyers pay through Modulora and get the source + install; you receive your share (minus the marketplace fee) in your connected account.
+          </DialogDescription>
+        </DialogHeader>
+        {!payoutsEnabled ? (
+          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-500">
+            Set up payouts in settings before selling components.
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">$</span>
+              <Input value={dollars} onChange={(e) => setDollars(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="29" className="h-9" inputMode="decimal" />
+            </div>
+            {error ? <p className="text-xs text-destructive">{error}</p> : null}
+            <div className="flex gap-2">
+              <Button type="button" className="flex-1" disabled={pending || !dollars} onClick={() => save(Math.round(parseFloat(dollars) * 100))}>
+                {pending ? <Loader2 className="size-4 animate-spin" /> : null} Save price
+              </Button>
+              {component.marketplacePrice != null ? (
+                <Button type="button" variant="outline" disabled={pending} onClick={() => save(null)}>Make free</Button>
+              ) : null}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ComponentRow({ component, username, payoutsEnabled }: { component: MyComponent; username: string; payoutsEnabled: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState("");
@@ -179,9 +242,12 @@ function ComponentRow({ component, username }: { component: MyComponent; usernam
           <Link to="/dashboard/edit/$name" params={{ name: component.name }}><Pencil className="size-3.5" /> Edit</Link>
         </Button>
         {component.reviewStatus === "approved" ? (
-          <Button variant="ghost" size="sm" className="gap-1.5" disabled={promoting} onClick={onPromote}>
-            {promoting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />} Promote
-          </Button>
+          <>
+            <PriceDialog component={component} payoutsEnabled={payoutsEnabled} />
+            <Button variant="ghost" size="sm" className="gap-1.5" disabled={promoting} onClick={onPromote}>
+              {promoting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />} Promote
+            </Button>
+          </>
         ) : null}
         <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setConfirm(""); }}>
           <DialogTrigger asChild>
