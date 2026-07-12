@@ -53,3 +53,18 @@ body {
   color: var(--foreground);
   font-family: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 }
+
+::selection {
+  background: oklch(0.82 0 0 / 0.24);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

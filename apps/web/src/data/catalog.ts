@@ -35,6 +35,11 @@ export interface EvidenceRecord {
   limitations?: string;
 }
 
+export type DistributionChannel =
+  | "shadcn"
+  | "modulora-cli"
+  | "compatible-cli";
+
 export interface CatalogItem {
   schemaVersion: "0";
   namespace: string;
@@ -54,6 +59,8 @@ export interface CatalogItem {
   title: string;
   description: string;
   category: string;
+  distributionChannels?: DistributionChannel[];
+  installCount?: number;
   evidence: EvidenceRecord[];
 }
 
@@ -76,6 +83,7 @@ export const catalog: CatalogItem[] = [
     description:
       "An accessible date picker with range selection, keyboard navigation, and timezone-safe defaults.",
     category: "Date & Time",
+    distributionChannels: ["shadcn", "modulora-cli", "compatible-cli"],
     evidence: [
       {
         type: "owner-verified",
@@ -120,6 +128,7 @@ export const catalog: CatalogItem[] = [
     description:
       "A virtualized data table with filtering, grouping, and spreadsheet-style editing. Purchased and fulfilled by the creator.",
     category: "Data Display",
+    distributionChannels: [],
     evidence: [
       {
         type: "owner-verified",
