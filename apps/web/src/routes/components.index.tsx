@@ -25,6 +25,7 @@ import {
   Filter,
   Grid2X2,
   List,
+  Plus,
   Search,
   Sparkles,
   Table2,
@@ -33,6 +34,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ComponentPreview } from "@/components/component-preview";
 import { Input } from "@/components/ui/input";
 import {
@@ -236,6 +238,9 @@ function Catalog() {
               <LayoutButton label="Grid" active={search.layout === "grid"} onClick={() => void setSearch({ layout: "grid" })}><Grid2X2 /></LayoutButton>
               <LayoutButton label="List" active={search.layout === "list"} onClick={() => void setSearch({ layout: "list" })}><List /></LayoutButton>
             </div>
+            <Button asChild size="sm" className="gap-1.5">
+              <Link to="/dashboard/new"><Plus className="size-4" /> Add yours</Link>
+            </Button>
           </div>
         </motion.div>
 

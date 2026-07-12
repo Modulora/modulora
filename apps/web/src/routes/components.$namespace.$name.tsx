@@ -20,7 +20,9 @@ import {
   ExternalLink,
   FileCode2,
   FileLock2,
+  Flag,
   Folder,
+  Loader2,
   Maximize2,
   Monitor,
   Moon,
@@ -39,7 +41,17 @@ import { ShadcnIcon } from "@/components/brand-icons";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { highlight, langForPath } from "@/lib/highlight";
+import { reportComponent, REPORT_REASONS } from "@/lib/report";
 import { findItem, type CatalogItem, type EvidenceRecord } from "../data/catalog";
 
 interface HighlightedFile {
@@ -240,6 +252,7 @@ function ComponentDetail() {
               Source repository <ExternalLink className="size-3.5" />
             </a>
           ) : null}
+          <ReportComponent namespace={item.namespace} name={item.name} />
         </motion.aside>
       </div>
     </div>
@@ -468,6 +481,68 @@ function CommercialTray({ item }: { item: CatalogItem }) {
       <div><p className="text-sm font-medium">Available from the creator</p><p className="mt-1 text-xs text-muted-foreground">No source or install artifact is distributed by Modulora.</p></div>
       {item.purchase ? <Button asChild><a href={item.purchase.url} rel="noreferrer">{item.purchase.priceLabel ?? "View component"}<ExternalLink /></a></Button> : null}
     </div>
+  );
+}
+
+function ReportComponent({ namespace, name }: { namespace: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<string>(REPORT_REASONS[0]!.id);
+  const [details, setDetails] = useState("");
+  const [pending, setPending] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit() {
+    setPending(true);
+    setError(null);
+    const result = await reportComponent({ data: { namespace, name, reason, details } });
+    setPending(false);
+    if (!result.ok) {
+      setError(result.error ?? "Could not submit.");
+      return;
+    }
+    setDone(true);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) { setDone(false); setError(null); setDetails(""); } }}>
+      <DialogTrigger asChild>
+        <button type="button" className="flex items-center justify-center gap-2 rounded-xl border border-border/60 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive">
+          <Flag className="size-3.5" /> Report
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        {done ? (
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <span className="flex size-11 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400"><Check className="size-5" /></span>
+            <div><p className="font-semibold">Report submitted</p><p className="mt-1 text-sm text-muted-foreground">Thanks — our team will review it.</p></div>
+          </div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Report this component</DialogTitle>
+              <DialogDescription>Flag @{namespace}/{name} for stolen source, license abuse, or another issue.</DialogDescription>
+            </DialogHeader>
+            <div className="mt-5 flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="report-reason">Reason</Label>
+                <select id="report-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                  {REPORT_REASONS.map((r) => <option key={r.id} value={r.id} className="bg-popover">{r.label}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="report-details">Details <span className="text-muted-foreground">(optional)</span></Label>
+                <textarea id="report-details" value={details} onChange={(e) => setDetails(e.target.value)} rows={3} maxLength={1000} placeholder="Links, original source, context…" className="rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" />
+              </div>
+              {error ? <p className="text-xs text-destructive">{error}</p> : null}
+              <Button type="button" variant="destructive" onClick={onSubmit} disabled={pending}>
+                {pending ? <Loader2 className="size-4 animate-spin" /> : null} Submit report
+              </Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
