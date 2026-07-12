@@ -150,6 +150,13 @@ export const components = pgTable(
       .$type<DistributionChannel[]>()
       .notNull()
       .default(["shadcn", "modulora-cli", "compatible-cli"]),
+    // Creator-supplied install commands for the channels they run themselves.
+    // Modulora CLI is derived; shadcn / other CLIs are entered by the creator.
+    shadcnCommand: text("shadcn_command"),
+    otherCliCommand: text("other_cli_command"),
+    // Provenance: canonical source + attribution links.
+    originalUrl: text("original_url"),
+    inspiredBy: jsonb("inspired_by").$type<string[]>().notNull().default([]),
     // Latest published version id, for fast reads.
     latestVersionId: uuid("latest_version_id"),
     // Presentation:

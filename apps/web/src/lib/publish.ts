@@ -34,6 +34,10 @@ export interface PublishInput {
   pricing: "free" | "paid";
   purchaseUrl: string;
   distributionChannels: string[];
+  shadcnCommand: string;
+  otherCliCommand: string;
+  originalUrl: string;
+  inspiredBy: string[];
   files: PublishFile[];
 }
 
@@ -112,6 +116,29 @@ export const publishComponent = createServerFn({ method: "POST" })
     const channels = ALL_CHANNELS.filter((channel) => data.distributionChannels?.includes(channel));
     if (channels.length === 0) return { ok: false, error: "Enable at least one distribution channel." };
 
+    // Creator-run channels require the actual install command.
+    const shadcnCommand = String(data.shadcnCommand ?? "").trim();
+    const otherCliCommand = String(data.otherCliCommand ?? "").trim();
+    if (channels.includes("shadcn") && !shadcnCommand) {
+      return { ok: false, error: "Enter the shadcn install command." };
+    }
+    if (channels.includes("compatible-cli") && !otherCliCommand) {
+      return { ok: false, error: "Enter the command for other CLIs." };
+    }
+
+    // Provenance links (optional). Validate any provided URLs.
+    const originalUrl = String(data.originalUrl ?? "").trim();
+    if (originalUrl && !/^https?:\/\//i.test(originalUrl)) {
+      return { ok: false, error: "Original URL must start with http(s)." };
+    }
+    const inspiredBy = (data.inspiredBy ?? [])
+      .map((url) => String(url).trim())
+      .filter(Boolean)
+      .slice(0, 8);
+    if (inspiredBy.some((url) => !/^https?:\/\//i.test(url))) {
+      return { ok: false, error: "Inspired-by links must start with http(s)." };
+    }
+
     // ── Persistence ───────────────────────────────────────────
     const db = drizzle(neon(databaseUrl), { schema });
     const [ns] = await db
@@ -151,6 +178,10 @@ export const publishComponent = createServerFn({ method: "POST" })
           sourceModel,
           itemType: "registry:component",
           distributionChannels: channels,
+          shadcnCommand: channels.includes("shadcn") ? shadcnCommand : null,
+          otherCliCommand: channels.includes("compatible-cli") ? otherCliCommand : null,
+          originalUrl: originalUrl || null,
+          inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
           updatedAt: new Date(),
         })
@@ -168,6 +199,10 @@ export const publishComponent = createServerFn({ method: "POST" })
           itemType: "registry:component",
           sourceModel,
           distributionChannels: channels,
+          shadcnCommand: channels.includes("shadcn") ? shadcnCommand : null,
+          otherCliCommand: channels.includes("compatible-cli") ? otherCliCommand : null,
+          originalUrl: originalUrl || null,
+          inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
         })
         .returning({ id: schema.components.id });

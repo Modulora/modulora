@@ -84,11 +84,17 @@ function Editor() {
   const [pricing, setPricing] = useState<"free" | "paid">("free");
   const [purchaseUrl, setPurchaseUrl] = useState("");
   const [channels, setChannels] = useState<string[]>(["shadcn", "modulora-cli", "compatible-cli"]);
+  const [shadcnCommand, setShadcnCommand] = useState("");
+  const [otherCliCommand, setOtherCliCommand] = useState("");
+  const [originalUrl, setOriginalUrl] = useState("");
+  const [inspiredBy, setInspiredBy] = useState<string[]>([]);
 
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [published, setPublished] = useState<{ namespace: string; name: string } | null>(null);
   const seq = useRef(0);
+
+  const { user } = Route.useRouteContext();
 
   useEffect(() => {
     const timers = [
@@ -99,13 +105,33 @@ function Editor() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // Prefill the shadcn command for the default-enabled channel.
+  useEffect(() => {
+    const handle = user?.username ?? "you";
+    setShadcnCommand(`npx shadcn@latest add https://modulora.dev/r/@${handle}/name@0.1.0`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const active = files.find((file) => file.path === activePath) ?? files[0];
   const effectiveName = nameEdited ? name : slugify(title);
   const canPublish =
     title.trim().length > 0 &&
     effectiveName.length >= 2 &&
     files.some((file) => file.content.trim().length > 0) &&
-    channels.length > 0;
+    channels.length > 0 &&
+    (!channels.includes("shadcn") || shadcnCommand.trim().length > 0) &&
+    (!channels.includes("compatible-cli") || otherCliCommand.trim().length > 0);
+
+  function toggleChannel(id: string) {
+    setChannels((current) => {
+      const on = current.includes(id);
+      const next = on ? current.filter((x) => x !== id) : [...current, id];
+      if (!on && id === "shadcn" && !shadcnCommand.trim()) {
+        const handle = user?.username ?? "you";
+        setShadcnCommand(`npx shadcn@latest add https://modulora.dev/r/@${handle}/${effectiveName || "name"}@${version || "0.1.0"}`);
+      }
+      return next;
+    });
+  }
 
   function updateActive(content: string) {
     setFiles((current) => current.map((file) => (file.path === activePath ? { ...file, content } : file)));
@@ -145,6 +171,10 @@ function Editor() {
         pricing,
         purchaseUrl: purchaseUrl.trim(),
         distributionChannels: channels,
+        shadcnCommand: shadcnCommand.trim(),
+        otherCliCommand: otherCliCommand.trim(),
+        originalUrl: originalUrl.trim(),
+        inspiredBy: inspiredBy.map((url) => url.trim()).filter(Boolean),
         files,
       },
     });
@@ -275,16 +305,42 @@ function Editor() {
           ) : null}
 
           <MetaField label="Distribution">
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2.5">
               {CHANNELS.map((channel) => {
                 const on = channels.includes(channel.id);
                 return (
-                  <button key={channel.id} type="button" aria-pressed={on} onClick={() => setChannels((c) => on ? c.filter((x) => x !== channel.id) : [...c, channel.id])} className="flex items-center gap-2 text-left text-xs text-muted-foreground transition-colors hover:text-foreground">
-                    <span className={`flex size-4 items-center justify-center rounded border ${on ? "border-foreground bg-foreground text-background" : "border-border"}`}>{on ? <Check className="size-3" /> : null}</span>
-                    {channel.label}
-                  </button>
+                  <div key={channel.id} className="flex flex-col gap-1.5">
+                    <button type="button" aria-pressed={on} onClick={() => toggleChannel(channel.id)} className="flex items-center gap-2 text-left text-xs text-muted-foreground transition-colors hover:text-foreground">
+                      <span className={`flex size-4 items-center justify-center rounded border ${on ? "border-foreground bg-foreground text-background" : "border-border"}`}>{on ? <Check className="size-3" /> : null}</span>
+                      {channel.label}
+                    </button>
+                    {on && channel.id === "shadcn" ? (
+                      <Input value={shadcnCommand} onChange={(e) => setShadcnCommand(e.target.value)} placeholder="npx shadcn@latest add …" className="h-8 font-mono text-[11px]" />
+                    ) : null}
+                    {on && channel.id === "compatible-cli" ? (
+                      <Input value={otherCliCommand} onChange={(e) => setOtherCliCommand(e.target.value)} placeholder="npx your-cli add …" className="h-8 font-mono text-[11px]" />
+                    ) : null}
+                  </div>
                 );
               })}
+            </div>
+          </MetaField>
+
+          <MetaField label="Original URL">
+            <Input value={originalUrl} onChange={(e) => setOriginalUrl(e.target.value)} placeholder="https://github.com/you/repo" />
+          </MetaField>
+
+          <MetaField label="Inspired by">
+            <div className="flex flex-col gap-2">
+              {inspiredBy.map((url, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input value={url} onChange={(e) => setInspiredBy((list) => list.map((v, i) => (i === index ? e.target.value : v)))} placeholder="https://…" className="h-8" />
+                  <button type="button" aria-label="Remove link" onClick={() => setInspiredBy((list) => list.filter((_, i) => i !== index))} className="text-muted-foreground transition-colors hover:text-destructive"><Trash2 className="size-3.5" /></button>
+                </div>
+              ))}
+              {inspiredBy.length < 8 ? (
+                <button type="button" onClick={() => setInspiredBy((list) => [...list, ""])} className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"><Plus className="size-3.5" /> Add link</button>
+              ) : null}
             </div>
           </MetaField>
         </motion.aside>
