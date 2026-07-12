@@ -18,6 +18,7 @@ import {
   Code2,
   Copy,
   ExternalLink,
+  FileCode2,
   FileLock2,
   Maximize2,
   Monitor,
@@ -34,13 +35,31 @@ import {
 import { ComponentPreview } from "@/components/component-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { highlight, langForPath } from "@/lib/highlight";
 import { findItem, type CatalogItem, type EvidenceRecord } from "../data/catalog";
 
+interface HighlightedFile {
+  path: string;
+  html: string;
+  raw: string;
+}
+
 export const Route = createFileRoute("/components/$namespace/$name")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const item = findItem(params.namespace, params.name);
     if (!item) throw notFound();
-    return item;
+    // Only open (free) components expose source; highlight server-side.
+    const files: HighlightedFile[] =
+      item.sourceModel === "open-source" && item.files
+        ? await Promise.all(
+            item.files.map(async (file) => ({
+              path: file.path,
+              raw: file.content,
+              html: await highlight(file.content, langForPath(file.path)),
+            })),
+          )
+        : [];
+    return { item, files };
   },
   component: ComponentDetail,
 });
@@ -75,7 +94,7 @@ const EVIDENCE_LABELS: Record<string, string> = {
 };
 
 function ComponentDetail() {
-  const item = Route.useLoaderData();
+  const { item, files } = Route.useLoaderData();
   const [stage, setStage] = useState(0);
   const [workspaceTab, setWorkspaceTab] = useState("preview");
   const [installTab, setInstallTab] = useState(
@@ -171,8 +190,8 @@ function ComponentDetail() {
                   </div>
                 </div>
               </Tabs.Content>
-              <Tabs.Content value="code" className="relative min-h-[32rem] outline-none">
-                {isPaid ? <LockedCode item={item} /> : <SourceCode item={item} />}
+              <Tabs.Content value="code" className="relative outline-none">
+                {isPaid ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} />}
               </Tabs.Content>
             </Tabs.Root>
           </motion.div>
@@ -281,9 +300,52 @@ function ToolbarButton({ label, active, onClick, children }: { label: string; ac
   );
 }
 
-function SourceCode({ item }: { item: CatalogItem }) {
-  const source = `import * as React from "react"\n\nexport function ${item.title.replace(/\s/g, "")}() {\n  return (\n    <div className="component">\n      {/* Published source preview */}\n    </div>\n  )\n}\n`;
-  return <pre className="h-[36rem] overflow-auto bg-[#080808] p-5 font-mono text-sm leading-7 text-zinc-300"><code>{source}</code></pre>;
+function SourceFiles({ item, files }: { item: CatalogItem; files: HighlightedFile[] }) {
+  const [active, setActive] = useState(files[0]?.path ?? "");
+
+  if (files.length === 0) {
+    return (
+      <div className="flex h-[36rem] items-center justify-center bg-[#080808] text-sm text-muted-foreground">
+        Source for {item.title} is published with each release.
+      </div>
+    );
+  }
+
+  const current = files.find((file) => file.path === active) ?? files[0]!;
+
+  return (
+    <div className="grid h-[36rem] grid-cols-[13rem_1fr] bg-[#080808]">
+      <div className="flex flex-col overflow-y-auto border-r border-border/60 p-2">
+        <span className="px-2 pb-1 pt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+          {files.length} file{files.length === 1 ? "" : "s"}
+        </span>
+        {files.map((file) => {
+          const name = file.path.split("/").pop() ?? file.path;
+          const isActive = file.path === current.path;
+          return (
+            <button
+              key={file.path}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => setActive(file.path)}
+              className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${isActive ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
+            >
+              <FileCode2 className="size-3.5 shrink-0 opacity-70" />
+              <span className="truncate">{name}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="relative min-w-0">
+        <div className="absolute right-3 top-3 z-10"><CopyButton value={current.raw} /></div>
+        <div
+          className="h-[36rem] overflow-auto p-5 text-sm leading-7 [&_pre]:!bg-transparent [&_pre]:font-mono"
+          // Shiki output is generated from trusted, server-highlighted source.
+          dangerouslySetInnerHTML={{ __html: current.html }}
+        />
+      </div>
+    </div>
+  );
 }
 
 function LockedCode({ item }: { item: CatalogItem }) {

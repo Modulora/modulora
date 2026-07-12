@@ -40,6 +40,12 @@ export type DistributionChannel =
   | "modulora-cli"
   | "compatible-cli";
 
+export interface ComponentFile {
+  /** Target path in the consumer's project. */
+  path: string;
+  content: string;
+}
+
 export interface CatalogItem {
   schemaVersion: "0";
   namespace: string;
@@ -61,6 +67,7 @@ export interface CatalogItem {
   category: string;
   distributionChannels?: DistributionChannel[];
   installCount?: number;
+  files?: ComponentFile[];
   evidence: EvidenceRecord[];
 }
 
@@ -84,6 +91,103 @@ export const catalog: CatalogItem[] = [
       "An accessible date picker with range selection, keyboard navigation, and timezone-safe defaults.",
     category: "Date & Time",
     distributionChannels: ["shadcn", "modulora-cli", "compatible-cli"],
+    files: [
+      {
+        path: "components/ui/calendar.tsx",
+        content: `import * as React from "react"
+import { useCalendar } from "./use-calendar"
+import "./calendar.css"
+
+export interface CalendarProps {
+  value?: Date
+  onChange?: (date: Date) => void
+}
+
+export function Calendar({ value, onChange }: CalendarProps) {
+  const { days, month, year, select, selected } = useCalendar(value)
+
+  return (
+    <div className="cal" role="grid" aria-label={\`\${month} \${year}\`}>
+      <header className="cal__head">
+        <span>{month} {year}</span>
+      </header>
+      <div className="cal__grid">
+        {days.map((day) => (
+          <button
+            key={day.toISOString()}
+            type="button"
+            aria-pressed={selected(day)}
+            className="cal__day"
+            onClick={() => {
+              select(day)
+              onChange?.(day)
+            }}
+          >
+            {day.getDate()}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+`,
+      },
+      {
+        path: "components/ui/use-calendar.ts",
+        content: `import * as React from "react"
+
+export function useCalendar(initial?: Date) {
+  const [selectedDate, setSelectedDate] = React.useState(initial ?? new Date())
+  const view = selectedDate
+
+  const days = React.useMemo(() => {
+    const first = new Date(view.getFullYear(), view.getMonth(), 1)
+    const total = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate()
+    return Array.from({ length: total }, (_, i) =>
+      new Date(first.getFullYear(), first.getMonth(), i + 1),
+    )
+  }, [view])
+
+  return {
+    days,
+    month: view.toLocaleString("en", { month: "long" }),
+    year: view.getFullYear(),
+    selected: (day: Date) => day.toDateString() === selectedDate.toDateString(),
+    select: setSelectedDate,
+  }
+}
+`,
+      },
+      {
+        path: "components/ui/calendar.css",
+        content: `.cal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 16rem;
+}
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.cal__day {
+  aspect-ratio: 1;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cal__day[aria-pressed="true"] {
+  background: var(--foreground);
+  color: var(--background);
+}
+`,
+      },
+    ],
     evidence: [
       {
         type: "owner-verified",
