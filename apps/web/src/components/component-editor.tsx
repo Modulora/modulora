@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, Check, FileCode2, Loader2, Plus, Rocket, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Clock, FileCode2, Loader2, Plus, Rocket, Trash2 } from "lucide-react";
 
 import { CodeEditor } from "@/components/code-editor";
 import { Button } from "@/components/ui/button";
@@ -332,17 +332,17 @@ function Segment({ active, onClick, children }: { active: boolean; onClick: () =
   );
 }
 
-function PublishedCard({ published, onDone, mode }: { published: { namespace: string; name: string; version: string }; onDone: () => void; mode: "create" | "edit" }) {
-  const { version } = published;
-  const command = `npx shadcn@latest add https://modulora.dev/r/@${published.namespace}/${published.name}@${version}`;
+function PublishedCard({ published, onDone }: { published: { namespace: string; name: string; version: string }; onDone: () => void; mode: "create" | "edit" }) {
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center gap-5 py-16 text-center">
-      <span className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400"><Check className="size-6" /></span>
+      <span className="flex size-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-500"><Clock className="size-6" /></span>
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{mode === "edit" ? "Update published" : "Published"}</h1>
-        <p className="mt-1 text-muted-foreground">@{published.namespace}/{published.name}@{version} is live in your studio.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Submitted for review</h1>
+        <p className="mt-1 text-muted-foreground">
+          @{published.namespace}/{published.name} is in the curation queue. A curator reviews every submission
+          before it&apos;s listed publicly — you&apos;ll see the status in your components.
+        </p>
       </div>
-      <pre className="w-full overflow-x-auto rounded-lg border border-border/60 bg-[#080808] p-3 text-left font-mono text-xs text-zinc-300"><code>{command}</code></pre>
       <Button type="button" variant="outline" onClick={onDone}>View my components</Button>
     </div>
   );

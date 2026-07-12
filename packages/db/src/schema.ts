@@ -41,6 +41,8 @@ export const users = pgTable("user", {
   websiteUrl: text("website_url"),
   githubUrl: text("github_url"),
   xUrl: text("x_url"),
+  // Curators can approve/reject submitted components for public listing.
+  isCurator: boolean("is_curator").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -167,12 +169,21 @@ export const components = pgTable(
     purchaseDomainVerifiedAt: timestamp("purchase_domain_verified_at", {
       withTimezone: true,
     }),
+    // Curation: nothing is publicly listed until a curator approves it.
+    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+      .notNull()
+      .default("pending"),
+    reviewReason: text("review_reason"),
+    reviewedBy: text("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("components_namespace_name").on(t.namespaceId, t.name),
     index("components_visibility").on(t.visibility),
+    index("components_review_status").on(t.reviewStatus),
   ],
 );
 

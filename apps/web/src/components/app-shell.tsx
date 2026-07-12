@@ -65,6 +65,10 @@ export function AppShell({
 }) {
   const [stage, setStage] = useState(0);
 
+  const navLinks = user?.isCurator
+    ? [...NAV_LINKS, { label: "Review", to: "/review" as const }]
+    : NAV_LINKS;
+
   useEffect(() => {
     setStage(0);
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -103,7 +107,7 @@ export function AppShell({
           </motion.div>
 
           <nav className="flex items-center gap-1">
-            {NAV_LINKS.map((link, i) => (
+            {navLinks.map((link, i) => (
               <motion.div
                 key={link.to}
                 initial={{ opacity: 0, y: ACTIONS.offsetY }}
@@ -130,7 +134,7 @@ export function AppShell({
               }}
               transition={{
                 ...ACTIONS.spring,
-                delay: NAV_LINKS.length * ACTIONS.stagger,
+                delay: navLinks.length * ACTIONS.stagger,
               }}
               className="ml-2"
             >

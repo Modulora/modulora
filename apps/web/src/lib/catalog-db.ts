@@ -99,7 +99,7 @@ export const fetchCatalog = createServerFn({ method: "GET" }).handler(
       .from(schema.components)
       .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
       .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
-      .where(eq(schema.components.visibility, "public"))
+      .where(and(eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved")))
       .orderBy(desc(schema.components.createdAt));
 
     const dbItems = rows.map((row) => toCatalogItem(row.namespace, row.component, row.version));
@@ -128,6 +128,51 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       .limit(1);
     if (!row) return null;
 
+    // Un-approved components are visible only to their owner or a curator.
+    if (row.component.reviewStatus !== "approved") {
+      const request = getRequest();
+      const viewer = request ? await getCurrentUser(request) : null;
+      const isOwner = viewer?.username && viewer.username === row.namespace;
+      if (!isOwner && !viewer?.isCurator) return null;
+    }
+
+    const files = row.version
+      ? await database
+          .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
+          .from(schema.componentFiles)
+          .where(eq(schema.componentFiles.componentVersionId, row.version.id))
+          .orderBy(schema.componentFiles.orderIndex)
+      : [];
+    const evidence = row.version ? await loadEvidence(database, row.version.id) : [];
+
+    return toCatalogItem(
+      row.namespace,
+      row.component,
+      row.version,
+      files.map((file) => ({ path: file.path, content: file.content ?? "" })),
+      evidence,
+    );
+  });
+
+/** Curator-only: load a component's full detail by id, regardless of status. */
+export const fetchComponentForReview = createServerFn({ method: "GET" })
+  .validator((data: { id: string }) => ({ id: String(data.id ?? "").trim() }))
+  .handler(async ({ data }): Promise<CatalogItem | null> => {
+    const request = getRequest();
+    const viewer = request ? await getCurrentUser(request) : null;
+    if (!viewer?.isCurator) return null;
+    const database = db();
+    if (!database || !data.id) return null;
+
+    const [row] = await database
+      .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name })
+      .from(schema.components)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+      .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
+      .where(eq(schema.components.id, data.id))
+      .limit(1);
+    if (!row) return null;
+
     const files = row.version
       ? await database
           .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
@@ -152,6 +197,8 @@ export interface MyComponent {
   category: string;
   version: string;
   sourceModel: string;
+  reviewStatus: "pending" | "approved" | "rejected";
+  reviewReason: string | null;
   updatedAt: string;
 }
 
@@ -183,6 +230,8 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
       category: categoryLabel(row.component.category),
       version: row.version?.version ?? "0.0.0",
       sourceModel: row.component.sourceModel,
+      reviewStatus: row.component.reviewStatus,
+      reviewReason: row.component.reviewReason,
       updatedAt: row.component.updatedAt.toISOString(),
     }));
   },

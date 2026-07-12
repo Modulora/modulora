@@ -13,6 +13,7 @@ import { getCurrentUser } from "./session";
 import { isCategoryId } from "./taxonomy";
 import { verifyShadcnParity } from "./parity";
 import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
+import { fireReviewWebhook } from "./review";
 import { contentDigest } from "./digest";
 
 const NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
@@ -49,6 +50,7 @@ export interface PublishResult {
   namespace?: string;
   name?: string;
   version?: string;
+  status?: "pending";
 }
 
 /** Next patch version, or 0.1.0 for a brand-new component. */
@@ -211,6 +213,12 @@ export const publishComponent = createServerFn({ method: "POST" })
           originalUrl: originalUrl || null,
           inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
+          // Any new release re-enters curation before it is public again.
+          reviewStatus: "pending",
+          reviewReason: null,
+          reviewedBy: null,
+          reviewedAt: null,
+          submittedAt: new Date(),
           updatedAt: new Date(),
         })
         .where(eq(schema.components.id, componentId));
@@ -349,5 +357,24 @@ export const publishComponent = createServerFn({ method: "POST" })
         .where(eq(schema.componentVersions.id, createdVersion!.id));
     }
 
-    return { ok: true, namespace: user.username, name, version };
+    // Announce the submission to the curation channel. The component stays
+    // pending and hidden from browse until a curator approves it.
+    const origin = (() => {
+      try {
+        return new URL(getRequest()!.url).origin;
+      } catch {
+        return "https://modulora.dev";
+      }
+    })();
+    await fireReviewWebhook({
+      componentId,
+      title,
+      username: user.username,
+      name,
+      category: data.category,
+      paid: isPaid,
+      origin,
+    });
+
+    return { ok: true, namespace: user.username, name, version, status: "pending" as const };
   });

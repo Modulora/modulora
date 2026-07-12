@@ -14,8 +14,10 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ReviewIndexRouteImport } from './routes/review.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
+import { Route as ReviewIdRouteImport } from './routes/review.$id'
 import { Route as ISplatRouteImport } from './routes/i.$'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
@@ -49,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReviewIndexRoute = ReviewIndexRouteImport.update({
+  id: '/review/',
+  path: '/review/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -57,6 +64,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
 const ComponentsIndexRoute = ComponentsIndexRouteImport.update({
   id: '/components/',
   path: '/components/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewIdRoute = ReviewIdRouteImport.update({
+  id: '/review/$id',
+  path: '/review/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ISplatRoute = ISplatRouteImport.update({
@@ -105,8 +117,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
+  '/review/$id': typeof ReviewIdRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/review/': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -120,8 +134,10 @@ export interface FileRoutesByTo {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
+  '/review/$id': typeof ReviewIdRoute
   '/components': typeof ComponentsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/review': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -137,8 +153,10 @@ export interface FileRoutesById {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
+  '/review/$id': typeof ReviewIdRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/review/': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -155,8 +173,10 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
+    | '/review/$id'
     | '/components/'
     | '/dashboard/'
+    | '/review/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -170,8 +190,10 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
+    | '/review/$id'
     | '/components'
     | '/dashboard'
+    | '/review'
     | '/api/auth/$'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -186,8 +208,10 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
+    | '/review/$id'
     | '/components/'
     | '/dashboard/'
+    | '/review/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -201,7 +225,9 @@ export interface RootRouteChildren {
   SigninRoute: typeof SigninRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   ISplatRoute: typeof ISplatRoute
+  ReviewIdRoute: typeof ReviewIdRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
+  ReviewIndexRoute: typeof ReviewIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
 }
@@ -243,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/review/': {
+      id: '/review/'
+      path: '/review'
+      fullPath: '/review/'
+      preLoaderRoute: typeof ReviewIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
@@ -255,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/components'
       fullPath: '/components/'
       preLoaderRoute: typeof ComponentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review/$id': {
+      id: '/review/$id'
+      path: '/review/$id'
+      fullPath: '/review/$id'
+      preLoaderRoute: typeof ReviewIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/i/$': {
@@ -335,7 +375,9 @@ const rootRouteChildren: RootRouteChildren = {
   SigninRoute: SigninRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   ISplatRoute: ISplatRoute,
+  ReviewIdRoute: ReviewIdRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
+  ReviewIndexRoute: ReviewIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,
 }

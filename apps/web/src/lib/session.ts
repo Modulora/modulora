@@ -22,6 +22,7 @@ export interface CurrentUser {
   websiteUrl: string | null;
   githubUrl: string | null;
   xUrl: string | null;
+  isCurator: boolean;
 }
 
 export async function getCurrentUser(request: Request): Promise<CurrentUser | null> {
@@ -51,6 +52,7 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     websiteUrl: row.websiteUrl,
     githubUrl: row.githubUrl,
     xUrl: row.xUrl,
+    isCurator: row.isCurator,
   };
 }
 

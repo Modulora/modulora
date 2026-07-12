@@ -101,6 +101,16 @@ function MyComponents() {
   );
 }
 
+function ReviewBadge({ status }: { status: MyComponent["reviewStatus"] }) {
+  const map = {
+    approved: { label: "Live", cls: "bg-emerald-500/10 text-emerald-500" },
+    pending: { label: "In review", cls: "bg-amber-500/10 text-amber-500" },
+    rejected: { label: "Changes requested", cls: "bg-destructive/10 text-destructive" },
+  } as const;
+  const { label, cls } = map[status];
+  return <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${cls}`}>{label}</span>;
+}
+
 function ComponentRow({ component, username }: { component: MyComponent; username: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -124,8 +134,12 @@ function ComponentRow({ component, username }: { component: MyComponent; usernam
           <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${component.sourceModel === "open-source" ? "bg-secondary text-muted-foreground" : "border border-border/60 text-muted-foreground"}`}>
             {component.sourceModel === "open-source" ? "Free" : "Paid"}
           </span>
+          <ReviewBadge status={component.reviewStatus} />
         </div>
         <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">@{username}/{component.name}@{component.version} · {component.category}</p>
+        {component.reviewStatus === "rejected" && component.reviewReason ? (
+          <p className="mt-1 line-clamp-2 text-xs text-destructive">Changes requested: {component.reviewReason}</p>
+        ) : null}
       </div>
       <div className="flex items-center gap-1">
         <Button asChild variant="ghost" size="sm" className="gap-1.5">
