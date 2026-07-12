@@ -13,18 +13,16 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SandboxTestRouteImport } from './routes/sandbox-test'
+import { Route as ReviewRouteImport } from './routes/review'
 import { Route as PublishingPolicyRouteImport } from './routes/publishing-policy'
 import { Route as ProfitShareRouteImport } from './routes/profit-share'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DeviceRouteImport } from './routes/device'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ReviewIndexRouteImport } from './routes/review.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
-import { Route as ReviewIdRouteImport } from './routes/review.$id'
 import { Route as RSplatRouteImport } from './routes/r.$'
 import { Route as ISplatRouteImport } from './routes/i.$'
 import { Route as DocsSplatRouteImport } from './routes/docs.$'
@@ -34,13 +32,16 @@ import { Route as DashboardPayoutsRouteImport } from './routes/dashboard.payouts
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
+import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-receipt'
 import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard.settings.index'
+import { Route as DashboardReviewIndexRouteImport } from './routes/dashboard.review.index'
 import { Route as DashboardSettingsSecurityRouteImport } from './routes/dashboard.settings.security'
 import { Route as DashboardSettingsDangerRouteImport } from './routes/dashboard.settings.danger'
 import { Route as DashboardSettingsAppearanceRouteImport } from './routes/dashboard.settings.appearance'
+import { Route as DashboardReviewIdRouteImport } from './routes/dashboard.review.$id'
 import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
@@ -64,6 +65,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SandboxTestRoute = SandboxTestRouteImport.update({
   id: '/sandbox-test',
   path: '/sandbox-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublishingPolicyRoute = PublishingPolicyRouteImport.update({
@@ -91,11 +97,6 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const UsernameRoute = UsernameRouteImport.update({
   id: '/$username',
   path: '/$username',
@@ -106,11 +107,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ReviewIndexRoute = ReviewIndexRouteImport.update({
-  id: '/review/',
-  path: '/review/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -119,11 +115,6 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
 const ComponentsIndexRoute = ComponentsIndexRouteImport.update({
   id: '/components/',
   path: '/components/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReviewIdRoute = ReviewIdRouteImport.update({
-  id: '/review/$id',
-  path: '/review/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RSplatRoute = RSplatRouteImport.update({
@@ -171,6 +162,11 @@ const DashboardComponentsRoute = DashboardComponentsRouteImport.update({
   path: '/components',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAdminRoute = DashboardAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
   id: '/api/upload-avatar',
   path: '/api/upload-avatar',
@@ -191,6 +187,11 @@ const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardSettingsRoute,
 } as any)
+const DashboardReviewIndexRoute = DashboardReviewIndexRouteImport.update({
+  id: '/review/',
+  path: '/review/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSettingsSecurityRoute =
   DashboardSettingsSecurityRouteImport.update({
     id: '/security',
@@ -208,6 +209,11 @@ const DashboardSettingsAppearanceRoute =
     path: '/appearance',
     getParentRoute: () => DashboardSettingsRoute,
   } as any)
+const DashboardReviewIdRoute = DashboardReviewIdRouteImport.update({
+  id: '/review/$id',
+  path: '/review/$id',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardEditNameRoute = DashboardEditNameRouteImport.update({
   id: '/edit/$name',
   path: '/edit/$name',
@@ -232,12 +238,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
-  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/device': typeof DeviceRoute
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
+  '/review': typeof ReviewRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -254,27 +261,27 @@ export interface FileRoutesByFullPath {
   '/docs/$': typeof DocsSplatRoute
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
-  '/review/$id': typeof ReviewIdRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/review/': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review/$id': typeof DashboardReviewIdRoute
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/review/': typeof DashboardReviewIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
-  '/admin': typeof AdminRoute
   '/device': typeof DeviceRoute
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
+  '/review': typeof ReviewRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByTo {
   '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -290,29 +298,29 @@ export interface FileRoutesByTo {
   '/docs/$': typeof DocsSplatRoute
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
-  '/review/$id': typeof ReviewIdRoute
   '/components': typeof ComponentsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
-  '/review': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review/$id': typeof DashboardReviewIdRoute
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/review': typeof DashboardReviewIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
-  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/device': typeof DeviceRoute
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
+  '/review': typeof ReviewRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
@@ -320,6 +328,7 @@ export interface FileRoutesById {
   '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -329,17 +338,17 @@ export interface FileRoutesById {
   '/docs/$': typeof DocsSplatRoute
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
-  '/review/$id': typeof ReviewIdRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/review/': typeof ReviewIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review/$id': typeof DashboardReviewIdRoute
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/review/': typeof DashboardReviewIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -347,12 +356,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$username'
-    | '/admin'
     | '/dashboard'
     | '/device'
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
+    | '/review'
     | '/sandbox-test'
     | '/settings'
     | '/signin'
@@ -360,6 +369,7 @@ export interface FileRouteTypes {
     | '/api/install-receipt'
     | '/api/search'
     | '/api/upload-avatar'
+    | '/dashboard/admin'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -369,27 +379,27 @@ export interface FileRouteTypes {
     | '/docs/$'
     | '/i/$'
     | '/r/$'
-    | '/review/$id'
     | '/components/'
     | '/dashboard/'
-    | '/review/'
     | '/api/auth/$'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/review/$id'
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/dashboard/review/'
     | '/dashboard/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$username'
-    | '/admin'
     | '/device'
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
+    | '/review'
     | '/sandbox-test'
     | '/settings'
     | '/signin'
@@ -397,6 +407,7 @@ export interface FileRouteTypes {
     | '/api/install-receipt'
     | '/api/search'
     | '/api/upload-avatar'
+    | '/dashboard/admin'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -405,28 +416,28 @@ export interface FileRouteTypes {
     | '/docs/$'
     | '/i/$'
     | '/r/$'
-    | '/review/$id'
     | '/components'
     | '/dashboard'
-    | '/review'
     | '/api/auth/$'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/review/$id'
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/dashboard/review'
     | '/dashboard/settings'
   id:
     | '__root__'
     | '/'
     | '/$username'
-    | '/admin'
     | '/dashboard'
     | '/device'
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
+    | '/review'
     | '/sandbox-test'
     | '/settings'
     | '/signin'
@@ -434,6 +445,7 @@ export interface FileRouteTypes {
     | '/api/install-receipt'
     | '/api/search'
     | '/api/upload-avatar'
+    | '/dashboard/admin'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -443,29 +455,29 @@ export interface FileRouteTypes {
     | '/docs/$'
     | '/i/$'
     | '/r/$'
-    | '/review/$id'
     | '/components/'
     | '/dashboard/'
-    | '/review/'
     | '/api/auth/$'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/review/$id'
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/dashboard/review/'
     | '/dashboard/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   UsernameRoute: typeof UsernameRoute
-  AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   DeviceRoute: typeof DeviceRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfitShareRoute: typeof ProfitShareRoute
   PublishingPolicyRoute: typeof PublishingPolicyRoute
+  ReviewRoute: typeof ReviewRoute
   SandboxTestRoute: typeof SandboxTestRoute
   SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
@@ -476,9 +488,7 @@ export interface RootRouteChildren {
   DocsSplatRoute: typeof DocsSplatRoute
   ISplatRoute: typeof ISplatRoute
   RSplatRoute: typeof RSplatRoute
-  ReviewIdRoute: typeof ReviewIdRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
-  ReviewIndexRoute: typeof ReviewIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
@@ -512,6 +522,13 @@ declare module '@tanstack/react-router' {
       path: '/sandbox-test'
       fullPath: '/sandbox-test'
       preLoaderRoute: typeof SandboxTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/publishing-policy': {
@@ -549,13 +566,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/$username': {
       id: '/$username'
       path: '/$username'
@@ -570,13 +580,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/review/': {
-      id: '/review/'
-      path: '/review'
-      fullPath: '/review/'
-      preLoaderRoute: typeof ReviewIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
@@ -589,13 +592,6 @@ declare module '@tanstack/react-router' {
       path: '/components'
       fullPath: '/components/'
       preLoaderRoute: typeof ComponentsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/review/$id': {
-      id: '/review/$id'
-      path: '/review/$id'
-      fullPath: '/review/$id'
-      preLoaderRoute: typeof ReviewIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/r/$': {
@@ -661,6 +657,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardComponentsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/admin': {
+      id: '/dashboard/admin'
+      path: '/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/upload-avatar': {
       id: '/api/upload-avatar'
       path: '/api/upload-avatar'
@@ -689,6 +692,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingsIndexRouteImport
       parentRoute: typeof DashboardSettingsRoute
     }
+    '/dashboard/review/': {
+      id: '/dashboard/review/'
+      path: '/review'
+      fullPath: '/dashboard/review/'
+      preLoaderRoute: typeof DashboardReviewIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings/security': {
       id: '/dashboard/settings/security'
       path: '/security'
@@ -709,6 +719,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/settings/appearance'
       preLoaderRoute: typeof DashboardSettingsAppearanceRouteImport
       parentRoute: typeof DashboardSettingsRoute
+    }
+    '/dashboard/review/$id': {
+      id: '/dashboard/review/$id'
+      path: '/review/$id'
+      fullPath: '/dashboard/review/$id'
+      preLoaderRoute: typeof DashboardReviewIdRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/edit/$name': {
       id: '/dashboard/edit/$name'
@@ -759,6 +776,7 @@ const DashboardSettingsRouteWithChildren =
   DashboardSettingsRoute._addFileChildren(DashboardSettingsRouteChildren)
 
 interface DashboardRouteChildren {
+  DashboardAdminRoute: typeof DashboardAdminRoute
   DashboardComponentsRoute: typeof DashboardComponentsRoute
   DashboardEarningsRoute: typeof DashboardEarningsRoute
   DashboardNewRoute: typeof DashboardNewRoute
@@ -767,9 +785,12 @@ interface DashboardRouteChildren {
   DashboardSettingsRoute: typeof DashboardSettingsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardEditNameRoute: typeof DashboardEditNameRoute
+  DashboardReviewIdRoute: typeof DashboardReviewIdRoute
+  DashboardReviewIndexRoute: typeof DashboardReviewIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAdminRoute: DashboardAdminRoute,
   DashboardComponentsRoute: DashboardComponentsRoute,
   DashboardEarningsRoute: DashboardEarningsRoute,
   DashboardNewRoute: DashboardNewRoute,
@@ -778,6 +799,8 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardSettingsRoute: DashboardSettingsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardEditNameRoute: DashboardEditNameRoute,
+  DashboardReviewIdRoute: DashboardReviewIdRoute,
+  DashboardReviewIndexRoute: DashboardReviewIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
@@ -787,12 +810,12 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   UsernameRoute: UsernameRoute,
-  AdminRoute: AdminRoute,
   DashboardRoute: DashboardRouteWithChildren,
   DeviceRoute: DeviceRoute,
   PrivacyRoute: PrivacyRoute,
   ProfitShareRoute: ProfitShareRoute,
   PublishingPolicyRoute: PublishingPolicyRoute,
+  ReviewRoute: ReviewRoute,
   SandboxTestRoute: SandboxTestRoute,
   SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
@@ -803,9 +826,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsSplatRoute: DocsSplatRoute,
   ISplatRoute: ISplatRoute,
   RSplatRoute: RSplatRoute,
-  ReviewIdRoute: ReviewIdRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
-  ReviewIndexRoute: ReviewIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,

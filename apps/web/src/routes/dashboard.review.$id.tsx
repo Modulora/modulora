@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { fetchComponentForReview } from "@/lib/catalog-db";
 import { decideReview } from "@/lib/review";
 
-export const Route = createFileRoute("/review/$id")({
+export const Route = createFileRoute("/dashboard/review/$id")({
   validateSearch: (search: Record<string, unknown>): { action?: "approve" | "deny" } => ({
     action: search.action === "approve" || search.action === "deny" ? search.action : undefined,
   }),
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/review/$id")({
 function ReviewDetail() {
   const { item } = Route.useLoaderData();
   const { id } = Route.useParams();
-  const { action } = useSearch({ from: "/review/$id" });
+  const { action } = useSearch({ from: "/dashboard/review/$id" });
   const router = useRouter();
 
   const [ready, setReady] = useState(false);
@@ -47,9 +47,9 @@ function ReviewDetail() {
 
   if (!item) {
     return (
-      <div className="mx-auto w-full max-w-2xl px-6 py-24 text-center">
+      <div className="w-full max-w-2xl py-16 text-center">
         <p className="text-sm text-muted-foreground">This component is no longer in the queue.</p>
-        <Link to="/review" className="mt-4 inline-block text-sm underline">
+        <Link to="/dashboard/review" className="mt-4 inline-block text-sm underline">
           Back to queue
         </Link>
       </div>
@@ -75,8 +75,8 @@ function ReviewDetail() {
   const file = files[activeFile];
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <Link to="/review" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <div className="w-full max-w-5xl">
+      <Link to="/dashboard/review" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Review queue
       </Link>
 

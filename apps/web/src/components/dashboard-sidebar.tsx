@@ -5,6 +5,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Banknote,
+  ClipboardCheck,
+  ShieldEllipsis,
   BarChart3,
   Blocks,
   KeyRound,
@@ -74,6 +76,26 @@ export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
         <SidebarRow icon={KeyRound} label="API key" muted />
         <SidebarRow icon={TerminalSquare} label="Modulora CLI" muted />
       </nav>
+
+      {summary.roles.curator ? (
+        <nav className="flex flex-col gap-1">
+          <SidebarHeading>Curation</SidebarHeading>
+          <Link to="/dashboard/review" className={itemClass}>
+            <ClipboardCheck className="size-4 shrink-0 opacity-70" />
+            <span className="flex-1 truncate">Review queue</span>
+          </Link>
+        </nav>
+      ) : null}
+
+      {summary.roles.owner ? (
+        <nav className="flex flex-col gap-1">
+          <SidebarHeading>Platform</SidebarHeading>
+          <Link to="/dashboard/admin" className={itemClass}>
+            <ShieldEllipsis className="size-4 shrink-0 opacity-70" />
+            <span className="flex-1 truncate">Admin</span>
+          </Link>
+        </nav>
+      ) : null}
 
       <nav className="flex flex-col gap-1">
         <SidebarHeading>Account</SidebarHeading>

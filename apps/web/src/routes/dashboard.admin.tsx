@@ -14,15 +14,16 @@ import { Input } from "@/components/ui/input";
 import { getCurrentUser } from "@/lib/session";
 import { isOwnerUser } from "@/lib/access";
 import { createPayoutRun, listPayoutRuns, type PayoutRunSummary } from "@/lib/distribution";
+import { listMembers, setCuratorRole, type Member } from "@/lib/roles";
 
 const fetchAdmin = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
   const user = request ? await getCurrentUser(request) : null;
   if (!user || !isOwnerUser(user.id)) return null;
-  return { runs: await listPayoutRuns() };
+  return { runs: await listPayoutRuns(), members: await listMembers() };
 });
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/dashboard/admin")({
   loader: async () => {
     const data = await fetchAdmin();
     if (!data) throw notFound();
@@ -32,9 +33,9 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminPage() {
-  const { runs } = Route.useLoaderData();
+  const { runs, members } = Route.useLoaderData();
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-12">
+    <div className="w-full max-w-3xl">
       <div className="flex items-center gap-3">
         <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-foreground">
           <ShieldEllipsis className="size-4.5" />
@@ -46,6 +47,50 @@ function AdminPage() {
       </div>
 
       <DistributionsSection runs={runs} />
+      <RolesSection members={members} />
+    </div>
+  );
+}
+
+/** Grant/revoke curator. Ownership is env-only — never assignable here. */
+function RolesSection({ members }: { members: Member[] }) {
+  const router = useRouter();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function toggle(member: Member) {
+    setBusyId(member.id);
+    await setCuratorRole({ data: { userId: member.id, curator: !member.isCurator } });
+    await router.invalidate();
+    setBusyId(null);
+  }
+
+  return (
+    <div className="mt-12">
+      <h2 className="text-sm font-semibold">Roles</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Curators review submissions. Ownership is configured in the environment (OWNER_USER_IDS) and can never be granted here.
+      </p>
+      <ul className="mt-4 flex flex-col gap-2">
+        {members.map((member) => (
+          <li key={member.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-4 py-2.5">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">
+                {member.username ? `@${member.username}` : member.name || member.email}
+                {member.isOwner ? <span className="ml-2 rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">Owner</span> : null}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+            </div>
+            <Button
+              size="sm"
+              variant={member.isCurator ? "outline" : "default"}
+              disabled={busyId === member.id}
+              onClick={() => toggle(member)}
+            >
+              {member.isCurator ? "Revoke curator" : "Make curator"}
+            </Button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

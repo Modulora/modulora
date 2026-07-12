@@ -67,7 +67,7 @@ export function AppShell({
   const [stage, setStage] = useState(0);
 
   const navLinks = user?.isCurator
-    ? [...NAV_LINKS, { label: "Review", to: "/review" as const }]
+    ? [...NAV_LINKS, { label: "Review", to: "/dashboard/review" as const }]
     : NAV_LINKS;
 
   useEffect(() => {

@@ -10,6 +10,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { and, count, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
+import { isOwnerUser } from "./access";
 
 export interface StudioSummary {
   user: {
@@ -22,6 +23,11 @@ export interface StudioSummary {
     components: number;
     libraries: number;
     verifiedInstalls: number;
+  };
+  /** Role-gated dashboard surfaces. */
+  roles: {
+    curator: boolean;
+    owner: boolean;
   };
   /** The earning journey, from real state — drives the Overview checklist. */
   journey: {
@@ -43,6 +49,7 @@ export const fetchStudioSummary = createServerFn({ method: "GET" }).handler(
       user: { name: user.name, username: user.username, image: user.image },
       namespace: user.username,
       counts: { components: 0, libraries: 0, verifiedInstalls: 0 },
+      roles: { curator: user.isCurator ?? false, owner: isOwnerUser(user.id) },
       journey: { published: false, approved: false, payouts: user.payoutsEnabled ?? false, priced: false },
     };
 

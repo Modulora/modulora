@@ -11,7 +11,7 @@ import { createPayoutRun, listPayoutRuns, type PayoutRunSummary } from "@/lib/di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export const Route = createFileRoute("/review/")({
+export const Route = createFileRoute("/dashboard/review/")({
   beforeLoad: ({ context }) => {
     if (!context.user) throw redirect({ to: "/signin" });
     if (!context.user.isCurator) throw redirect({ to: "/" });
@@ -50,7 +50,7 @@ function ReviewQueue() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-12">
+    <div className="w-full max-w-4xl">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={ready ? { opacity: 1, y: 0 } : {}}
@@ -84,7 +84,7 @@ function ReviewQueue() {
               transition={{ delay: 0.08 + i * 0.04, type: "spring", stiffness: 340, damping: 28 }}
             >
               <Link
-                to="/review/$id"
+                to="/dashboard/review/$id"
                 params={{ id: item.id }}
                 className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-secondary/50"
               >
