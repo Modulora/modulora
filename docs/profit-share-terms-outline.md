@@ -27,7 +27,10 @@
 - **"Marketplace Sale"** — a one-time purchase of a paid Component through
   Modulora Checkout.
 - **"Marketplace Fee"** — Modulora's per-sale commission on a Marketplace Sale:
-  `[30]%` of the sale price (before payment-processing fees). `[Confirm rate.]`
+  **10%** of the sale price. Modulora covers payment-processing fees out of this
+  commission, so the Creator's net is the sale price minus the Marketplace Fee
+  (i.e., the Creator keeps 90%). `[Confirm rate; consider a fixed component for
+  sub-$5 listings where the processing fee exceeds 10%.]`
 - **"Distributable Profit"** — for a given Payout Period, Attributable Revenue
   minus Attributable Costs (see §3). It is a net figure, not gross revenue.
 - **"Attributable Revenue"** — the revenue Modulora allocates to the profit-share
@@ -55,9 +58,11 @@
 ## 2. The two earning mechanisms
 
 1. **Marketplace Sales (direct).** For each Marketplace Sale, the buyer pays
-   Modulora; Modulora retains the Marketplace Fee and transfers the remainder to
-   the Creator's Connected Account at the time of charge (Stripe destination
-   charge). Modulora is the merchant of record.
+   Modulora; Modulora retains the Marketplace Fee (10%, from which Modulora pays
+   payment processing) and transfers the remainder (90% of the sale price) to the
+   Creator's Connected Account at the time of charge (Stripe destination charge).
+   Modulora is the merchant of record. Marketplace Sales are separate from the
+   distributable-profit pool in §3.
 2. **Profit Share (pooled).** Eligible Components earn a share of Distributable
    Profit based on Verified Installs, paid periodically (see §3–§4).
 
@@ -117,8 +122,8 @@
 7. **Governing law, venue, arbitration/class-action waiver** for the target
    jurisdiction.
 8. **Notice period** and change-acceptance mechanism.
-9. Confirm the **Marketplace Fee** rate and that it's distinct from the profit
-   split.
+9. Confirm the **Marketplace Fee** rate (currently 10%, Modulora absorbs
+   processing) and that it's distinct from the profit split.
 
 Keep this consistent with: Terms of Service (`/terms`), Privacy (`/privacy`),
 Publishing Policy (`/publishing-policy`), and the explainer (`/profit-share`).

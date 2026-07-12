@@ -18,6 +18,7 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@beui": "https://beui.dev/r/{name}.json"
+    "@beui": "https://beui.dev/r/{name}.json",
+    "@bklit": "https://bklit.com/r/{name}.json"
   }
 }

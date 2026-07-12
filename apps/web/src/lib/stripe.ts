@@ -13,6 +13,7 @@
  * Uses fetch-based HTTP (httpClient) so it runs on the Cloudflare Worker.
  */
 import Stripe from "stripe";
+import { platformFee } from "./pricing";
 
 let cached: Stripe | null | undefined;
 
@@ -33,9 +34,12 @@ export function isStripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY);
 }
 
-/** Modulora's marketplace take on a paid component sale (basis points). */
-export const MARKETPLACE_FEE_BPS = 3000; // 30% to Modulora before the OSS/creator split (#32)
-
+/**
+ * Marketplace take (Stripe application fee). Creators keep the rest; Modulora
+ * covers payment processing from its fee. Rate lives in ./pricing so the price
+ * calculator and the charge stay in sync. Separate from the distributable-
+ * profit pool (60/30/10, #32).
+ */
 export function applicationFee(amountCents: number): number {
-  return Math.round((amountCents * MARKETPLACE_FEE_BPS) / 10000);
+  return platformFee(amountCents);
 }

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { deleteMyComponent, fetchMyComponents, type MyComponent } from "@/lib/catalog-db";
 import { confirmCheckout, setComponentPrice, startPromotion } from "@/lib/marketplace";
+import { creatorNet, platformFee, MARKETPLACE_FEE_PERCENT } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { Tag } from "lucide-react";
 
@@ -166,7 +167,7 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
         <DialogHeader>
           <DialogTitle>Sell {component.title}</DialogTitle>
           <DialogDescription>
-            Set a one-time price. Buyers pay through Modulora and get the source + install; you receive your share (minus the marketplace fee) in your connected account.
+            Set a one-time price. Buyers pay through Modulora and get the source + install; you keep 90% of the price (Modulora&apos;s 10% covers our fee and payment processing), paid to your connected account.
           </DialogDescription>
         </DialogHeader>
         {!payoutsEnabled ? (
@@ -179,6 +180,7 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
               <span className="text-sm text-muted-foreground">$</span>
               <Input value={dollars} onChange={(e) => setDollars(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="29" className="h-9" inputMode="decimal" />
             </div>
+            <EarningsBreakdown dollars={dollars} />
             {error ? <p className="text-xs text-destructive">{error}</p> : null}
             <div className="flex gap-2">
               <Button type="button" className="flex-1" disabled={pending || !dollars} onClick={() => save(Math.round(parseFloat(dollars) * 100))}>
@@ -192,6 +194,30 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function EarningsBreakdown({ dollars }: { dollars: string }) {
+  const cents = Math.round((parseFloat(dollars) || 0) * 100);
+  if (cents <= 0) return null;
+  const fee = platformFee(cents);
+  const net = creatorNet(cents);
+  const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-secondary/30 p-3 text-xs">
+      <div className="flex items-center justify-between text-muted-foreground">
+        <span>Buyer pays</span>
+        <span className="tabular-nums">{money(cents)}</span>
+      </div>
+      <div className="flex items-center justify-between text-muted-foreground">
+        <span>Modulora fee ({MARKETPLACE_FEE_PERCENT}%, incl. processing)</span>
+        <span className="tabular-nums">−{money(fee)}</span>
+      </div>
+      <div className="mt-0.5 flex items-center justify-between border-t border-border/60 pt-1.5 font-medium text-foreground">
+        <span>You earn</span>
+        <span className="tabular-nums text-emerald-500">{money(net)}</span>
+      </div>
+    </div>
   );
 }
 
