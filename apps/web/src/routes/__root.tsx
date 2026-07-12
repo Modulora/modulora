@@ -6,6 +6,7 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
+import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { AppShell } from "@/components/app-shell";
 import { fetchCurrentUser } from "@/lib/session";
 import appCss from "../styles.css?url";
@@ -41,16 +42,20 @@ function RootComponent() {
   if (CHROME_FREE.has(pathname)) {
     return (
       <RootDocument>
-        <Outlet />
+        <NuqsAdapter>
+          <Outlet />
+        </NuqsAdapter>
       </RootDocument>
     );
   }
 
   return (
     <RootDocument>
-      <AppShell user={user}>
-        <Outlet />
-      </AppShell>
+      <NuqsAdapter>
+        <AppShell user={user}>
+          <Outlet />
+        </AppShell>
+      </NuqsAdapter>
     </RootDocument>
   );
 }

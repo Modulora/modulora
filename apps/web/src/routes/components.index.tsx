@@ -1,53 +1,325 @@
+/* ─────────────────────────────────────────────────────────
+ * COMPONENTS BROWSE — gallery entrance storyboard
+ *
+ *    0ms   gallery hidden
+ *   60ms   taxonomy rail slides in from the left
+ *  140ms   toolbar fades in
+ *  220ms   preview tiles rise, staggered 50ms
+ * ───────────────────────────────────────────────────────── */
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Badge } from "@/components/ui/badge";
+import { motion } from "motion/react";
 import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { catalog } from "../data/catalog";
+  createStandardSchemaV1,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+  type inferParserType,
+} from "nuqs";
+import {
+  BadgeCheck,
+  CalendarDays,
+  Clock3,
+  Filter,
+  Grid2X2,
+  List,
+  Search,
+  Sparkles,
+  Table2,
+  Users,
+  X,
+} from "lucide-react";
 
-export const Route = createFileRoute("/components/")({ component: Catalog });
+import { Badge } from "@/components/ui/badge";
+import { ComponentPreview } from "@/components/component-preview";
+import { Input } from "@/components/ui/input";
+import {
+  catalog,
+  type CatalogItem,
+  type EvidenceType,
+  type SourceModel,
+} from "../data/catalog";
+
+const SOURCE_MODELS = [
+  "open-source",
+  "external-commercial",
+  "hosted-commercial",
+  "private-team",
+] as const satisfies readonly SourceModel[];
+const LICENSES = ["open", "commercial", "custom"] as const;
+const EVIDENCE_FILTERS = [
+  "owner-verified",
+  "artifact-signed",
+  "secret-scan",
+  "source-not-assessed",
+] as const satisfies readonly EvidenceType[];
+const VIEWS = ["featured", "newest", "authors"] as const;
+const LAYOUTS = ["grid", "list"] as const;
+
+const catalogSearchParams = {
+  q: parseAsString.withDefault(""),
+  category: parseAsString,
+  source: parseAsStringLiteral(SOURCE_MODELS),
+  license: parseAsStringLiteral(LICENSES),
+  evidence: parseAsStringLiteral(EVIDENCE_FILTERS),
+  view: parseAsStringLiteral(VIEWS).withDefault("newest"),
+  layout: parseAsStringLiteral(LAYOUTS).withDefault("grid"),
+};
+
+type CatalogSearch = inferParserType<typeof catalogSearchParams>;
+
+export const Route = createFileRoute("/components/")({
+  validateSearch: createStandardSchemaV1(catalogSearchParams, {
+    partialOutput: true,
+  }),
+  component: Catalog,
+});
+
+const TIMING = { rail: 60, toolbar: 140, tiles: 220 };
+const RISE = {
+  offsetY: 10,
+  stagger: 0.05,
+  spring: { type: "spring" as const, stiffness: 340, damping: 29 },
+};
+const RAIL = {
+  offsetX: -10,
+  spring: { type: "spring" as const, stiffness: 320, damping: 30 },
+};
+
+const CATEGORIES = [...new Set(catalog.map((item) => item.category))].sort();
+const SOURCE_OPTIONS: { value: (typeof SOURCE_MODELS)[number]; label: string }[] = [
+  { value: "open-source", label: "Open source" },
+  { value: "external-commercial", label: "External commercial" },
+  { value: "hosted-commercial", label: "Hosted commercial" },
+  { value: "private-team", label: "Private team" },
+];
+const EVIDENCE_OPTIONS: { value: (typeof EVIDENCE_FILTERS)[number]; label: string }[] = [
+  { value: "owner-verified", label: "Owner verified" },
+  { value: "artifact-signed", label: "Artifact signed" },
+  { value: "secret-scan", label: "Secret scanned" },
+];
 
 function Catalog() {
+  const [search, setSearch] = useQueryStates(catalogSearchParams, {
+    history: "replace",
+    shallow: true,
+    clearOnDefault: true,
+  });
+  const [stage, setStage] = useState(0);
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setStage(1), TIMING.rail),
+      setTimeout(() => setStage(2), TIMING.toolbar),
+      setTimeout(() => setStage(3), TIMING.tiles),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const items = useMemo(
+    () => catalog.filter((item) => matches(item, search)),
+    [search],
+  );
+  const advancedCount = [search.source, search.license, search.evidence].filter(Boolean).length;
+
+  function toggle(
+    key: "category" | "source" | "license" | "evidence",
+    value: string,
+  ) {
+    void setSearch({ [key]: search[key] === value ? null : value });
+  }
+
+  function clear() {
+    void setSearch({
+      q: null,
+      category: null,
+      source: null,
+      license: null,
+      evidence: null,
+    });
+  }
+
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Components</h1>
-        <p className="mt-1 text-muted-foreground">
-          {catalog.length} creator-authorized components
-        </p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {catalog.map((item) => (
-          <Link
-            key={`${item.namespace}/${item.name}`}
-            to="/components/$namespace/$name"
-            params={{ namespace: item.namespace, name: item.name }}
-          >
-            <Card className="h-full transition-colors hover:border-muted-foreground/40">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle>{item.title}</CardTitle>
-                  <Badge variant="outline">
-                    {item.sourceModel === "open-source"
-                      ? item.license.kind === "spdx"
-                        ? item.license.spdxExpression
-                        : "Open"
-                      : "Commercial"}
-                  </Badge>
-                </div>
-                <CardDescription>{item.description}</CardDescription>
-              </CardHeader>
-              <CardFooter className="text-xs text-muted-foreground">
-                @{item.namespace} · v{item.version} · {item.category}
-              </CardFooter>
-            </Card>
-          </Link>
-        ))}
-      </div>
+    <div className="grid min-h-[calc(100svh-7.5rem)] gap-0 border border-border/60 bg-[#0d0d0d] lg:grid-cols-[17rem_1fr]">
+      <motion.aside
+        initial={{ opacity: 0, x: RAIL.offsetX }}
+        animate={{ opacity: stage >= 1 ? 1 : 0, x: stage >= 1 ? 0 : RAIL.offsetX }}
+        transition={RAIL.spring}
+        className="border-b border-border/60 p-4 lg:border-b-0 lg:border-r"
+      >
+        <div className="sticky top-20 flex flex-col gap-5">
+          <div className="flex items-center gap-2 px-1">
+            <span className="flex size-7 items-center justify-center rounded-md bg-secondary">
+              <Grid2X2 className="size-3.5" />
+            </span>
+            <span className="font-semibold">Components</span>
+          </div>
+
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search.q}
+              onChange={(event) => void setSearch({ q: event.target.value })}
+              placeholder="Search components"
+              className="h-9 bg-secondary/50 pl-9"
+            />
+          </div>
+
+          <nav className="flex flex-col gap-1">
+            <RailButton icon={Sparkles} active={search.view === "featured"} onClick={() => void setSearch({ view: "featured" })}>Featured</RailButton>
+            <RailButton icon={Clock3} active={search.view === "newest"} onClick={() => void setSearch({ view: "newest" })}>Newest</RailButton>
+            <RailButton icon={Users} active={search.view === "authors"} onClick={() => void setSearch({ view: "authors" })}>Top authors</RailButton>
+          </nav>
+
+          <div className="flex flex-col gap-1">
+            <RailHeading>Categories</RailHeading>
+            {CATEGORIES.map((category) => (
+              <RailButton
+                key={category}
+                icon={category === "Date & Time" ? CalendarDays : Table2}
+                active={search.category === category}
+                count={catalog.filter((item) => item.category === category).length}
+                onClick={() => toggle("category", category)}
+              >
+                {category}
+              </RailButton>
+            ))}
+          </div>
+
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-accent/60 hover:text-foreground">
+              <span className="flex items-center gap-2"><Filter className="size-4" /> Advanced filters</span>
+              {advancedCount ? <Badge variant="secondary">{advancedCount}</Badge> : null}
+            </summary>
+            <div className="mt-3 flex flex-col gap-4 pl-2">
+              <FilterGroup title="Source">
+                {SOURCE_OPTIONS.map((option) => (
+                  <SmallFilter key={option.value} active={search.source === option.value} onClick={() => toggle("source", option.value)}>{option.label}</SmallFilter>
+                ))}
+              </FilterGroup>
+              <FilterGroup title="License">
+                <SmallFilter active={search.license === "open"} onClick={() => toggle("license", "open")}>Open license</SmallFilter>
+                <SmallFilter active={search.license === "commercial"} onClick={() => toggle("license", "commercial")}>Commercial</SmallFilter>
+              </FilterGroup>
+              <FilterGroup title="Evidence">
+                {EVIDENCE_OPTIONS.map((option) => (
+                  <SmallFilter key={option.value} active={search.evidence === option.value} onClick={() => toggle("evidence", option.value)}>{option.label}</SmallFilter>
+                ))}
+              </FilterGroup>
+            </div>
+          </details>
+        </div>
+      </motion.aside>
+
+      <section className="min-w-0">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: stage >= 2 ? 1 : 0 }}
+          transition={{ duration: 0.35 }}
+          className="flex h-14 items-center justify-between border-b border-border/60 px-5"
+        >
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Components</span>
+            <span className="text-border">/</span>
+            <span className="capitalize">{search.view === "authors" ? "Top authors" : search.view}</span>
+            {search.category ? <><span className="text-border">/</span><span>{search.category}</span></> : null}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs tabular-nums text-muted-foreground">{items.length} result{items.length === 1 ? "" : "s"}</span>
+            {(search.q || search.category || advancedCount) ? (
+              <button type="button" onClick={clear} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><X className="size-3" /> Clear</button>
+            ) : null}
+            <div className="flex rounded-md border border-border/60 p-0.5">
+              <LayoutButton label="Grid" active={search.layout === "grid"} onClick={() => void setSearch({ layout: "grid" })}><Grid2X2 /></LayoutButton>
+              <LayoutButton label="List" active={search.layout === "list"} onClick={() => void setSearch({ layout: "list" })}><List /></LayoutButton>
+            </div>
+          </div>
+        </motion.div>
+
+        {items.length ? (
+          <div className={search.layout === "grid" ? "grid sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col"}>
+            {items.map((item, index) => (
+              <motion.div
+                key={`${item.namespace}/${item.name}`}
+                initial={{ opacity: 0, y: RISE.offsetY }}
+                animate={{ opacity: stage >= 3 ? 1 : 0, y: stage >= 3 ? 0 : RISE.offsetY }}
+                transition={{ ...RISE.spring, delay: index * RISE.stagger }}
+              >
+                <GalleryItem item={item} list={search.layout === "list"} />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex min-h-[30rem] flex-col items-center justify-center gap-3 text-center">
+            <Filter className="size-5 text-muted-foreground" />
+            <div><p className="font-medium">No components match</p><p className="mt-1 text-sm text-muted-foreground">Try another category or clear the filters.</p></div>
+            <button type="button" onClick={clear} className="text-sm underline underline-offset-4">Clear filters</button>
+          </div>
+        )}
+      </section>
     </div>
   );
+}
+
+function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
+  return (
+    <Link
+      to="/components/$namespace/$name"
+      params={{ namespace: item.namespace, name: item.name }}
+      className={`group flex border-border/60 transition-colors hover:bg-card/45 ${list ? "items-center gap-5 border-b p-4" : "flex-col border-b border-r p-5"}`}
+    >
+      <ComponentPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} />
+      <div className="flex min-w-0 flex-1 items-start justify-between gap-3 px-1 pb-1 pt-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h2 className="truncate text-sm font-medium">{item.title}</h2>
+            {item.evidence.some((record) => record.type === "owner-verified") ? <BadgeCheck className="size-3.5 text-muted-foreground" /> : null}
+          </div>
+          <p className="mt-1 truncate text-xs text-muted-foreground">@{item.namespace} · {item.category}</p>
+        </div>
+        <Badge variant={item.sourceModel === "open-source" ? "secondary" : "outline"} className="shrink-0">
+          {item.sourceModel === "open-source" ? "Open" : "Commercial"}
+        </Badge>
+      </div>
+    </Link>
+  );
+}
+
+function RailHeading({ children }: { children: ReactNode }) {
+  return <span className="px-2 pb-1 text-xs font-medium text-muted-foreground/60">{children}</span>;
+}
+
+function RailButton({ icon: Icon, active, count, onClick, children }: { icon: typeof Sparkles; active: boolean; count?: number; onClick: () => void; children: ReactNode }) {
+  return (
+    <button type="button" aria-pressed={active} onClick={onClick} className={`flex items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm transition-colors ${active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}>
+      <Icon className="size-4 shrink-0" /><span className="flex-1 truncate">{children}</span>{typeof count === "number" ? <span className="text-xs tabular-nums opacity-60">{count}</span> : null}
+    </button>
+  );
+}
+
+function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
+  return <div className="flex flex-col gap-1"><span className="text-[10px] uppercase tracking-wider text-muted-foreground/50">{title}</span>{children}</div>;
+}
+
+function SmallFilter({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return <button type="button" aria-pressed={active} onClick={onClick} className={`flex items-center gap-2 py-1 text-left text-xs ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}><span className={`size-1.5 rounded-full ${active ? "bg-foreground" : "bg-border"}`} />{children}</button>;
+}
+
+function LayoutButton({ label, active, onClick, children }: { label: string; active: boolean; onClick: () => void; children: ReactNode }) {
+  return <button type="button" aria-label={label} aria-pressed={active} onClick={onClick} className={`flex size-7 items-center justify-center rounded [&_svg]:size-3.5 ${active ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}>{children}</button>;
+}
+
+function matches(item: CatalogItem, search: CatalogSearch) {
+  if (search.q) {
+    const haystack = `${item.namespace} ${item.name} ${item.title} ${item.description}`.toLowerCase();
+    if (!haystack.includes(search.q.toLowerCase())) return false;
+  }
+  if (search.category && item.category !== search.category) return false;
+  if (search.source && item.sourceModel !== search.source) return false;
+  if (search.license) {
+    const license = item.license.kind === "spdx" ? "open" : item.license.kind;
+    if (license !== search.license) return false;
+  }
+  if (search.evidence && !item.evidence.some((record) => record.type === search.evidence)) return false;
+  return true;
 }

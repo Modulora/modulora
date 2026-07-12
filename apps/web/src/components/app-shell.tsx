@@ -85,7 +85,7 @@ export function AppShell({
         transition={BAR.spring}
         className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl"
       >
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+        <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: stage >= 2 ? 1 : 0 }}
@@ -140,7 +140,7 @@ export function AppShell({
         </div>
       </motion.header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-6 py-8">
         {children}
       </main>
     </div>
