@@ -7,7 +7,7 @@
  *  260ms   danger zone fades in
  * ───────────────────────────────────────────────────────── */
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { BadgeCheck, Check, Copy, Globe, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
@@ -365,10 +365,11 @@ function PayoutsSection({ initial }: { initial: PayoutStatus }) {
 
   return (
     <>
-      <div>
+      <div id="payouts" className="scroll-mt-24">
         <h2 className="text-sm font-semibold">Payouts</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Connect a Stripe account to sell paid components and receive earnings. Stripe handles verification, banking, and tax.
+          Connect a Stripe account to sell paid components and receive earnings — you keep 90% of every sale.{" "}
+          <Link to="/profit-share" className="text-foreground underline underline-offset-2">How earning works</Link>. Stripe handles verification, banking, and tax.
         </p>
       </div>
 

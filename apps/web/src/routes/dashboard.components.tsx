@@ -174,8 +174,11 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
           </DialogDescription>
         </DialogHeader>
         {!payoutsEnabled ? (
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-500">
-            Set up payouts in settings before selling components.
+          <div className="mt-4 flex flex-col gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+            <p className="text-sm text-amber-500">Connect payouts first — it takes about two minutes, and you keep 90% of every sale.</p>
+            <Button asChild size="sm" className="self-start">
+              <Link to="/settings" hash="payouts">Set up payouts</Link>
+            </Button>
           </div>
         ) : (
           <div className="mt-4 flex flex-col gap-3">
