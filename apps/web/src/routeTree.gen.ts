@@ -19,6 +19,7 @@ import { Route as ReviewIndexRouteImport } from './routes/review.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
 import { Route as ReviewIdRouteImport } from './routes/review.$id'
+import { Route as RSplatRouteImport } from './routes/r.$'
 import { Route as ISplatRouteImport } from './routes/i.$'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
@@ -77,6 +78,11 @@ const ReviewIdRoute = ReviewIdRouteImport.update({
   path: '/review/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RSplatRoute = RSplatRouteImport.update({
+  id: '/r/$',
+  path: '/r/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ISplatRoute = ISplatRouteImport.update({
   id: '/i/$',
   path: '/i/$',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
+  '/r/$': typeof RSplatRoute
   '/review/$id': typeof ReviewIdRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
+  '/r/$': typeof RSplatRoute
   '/review/$id': typeof ReviewIdRoute
   '/components': typeof ComponentsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/i/$': typeof ISplatRoute
+  '/r/$': typeof RSplatRoute
   '/review/$id': typeof ReviewIdRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
+    | '/r/$'
     | '/review/$id'
     | '/components/'
     | '/dashboard/'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
+    | '/r/$'
     | '/review/$id'
     | '/components'
     | '/dashboard'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/new'
     | '/i/$'
+    | '/r/$'
     | '/review/$id'
     | '/components/'
     | '/dashboard/'
@@ -238,6 +250,7 @@ export interface RootRouteChildren {
   SigninRoute: typeof SigninRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   ISplatRoute: typeof ISplatRoute
+  RSplatRoute: typeof RSplatRoute
   ReviewIdRoute: typeof ReviewIdRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
   ReviewIndexRoute: typeof ReviewIndexRoute
@@ -315,6 +328,13 @@ declare module '@tanstack/react-router' {
       path: '/review/$id'
       fullPath: '/review/$id'
       preLoaderRoute: typeof ReviewIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/r/$': {
+      id: '/r/$'
+      path: '/r/$'
+      fullPath: '/r/$'
+      preLoaderRoute: typeof RSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/i/$': {
@@ -396,6 +416,7 @@ const rootRouteChildren: RootRouteChildren = {
   SigninRoute: SigninRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   ISplatRoute: ISplatRoute,
+  RSplatRoute: RSplatRoute,
   ReviewIdRoute: ReviewIdRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
   ReviewIndexRoute: ReviewIndexRoute,

@@ -1,15 +1,146 @@
-import { createFileRoute } from "@tanstack/react-router";
+/* ─────────────────────────────────────────────────────────
+ * PUBLIC PROFILE — /@username
+ *
+ *    0ms   hidden
+ *   60ms   header rises (avatar, name, socials)
+ *  160ms   component grid fades in, staggered
+ * ───────────────────────────────────────────────────────── */
+import { useEffect, useState } from "react";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { motion } from "motion/react";
+import { Blocks, CalendarDays, Globe } from "lucide-react";
+
+import { ComponentPreview } from "@/components/component-preview";
+import { GitHubIcon, XIcon } from "@/components/brand-icons";
+import { Badge } from "@/components/ui/badge";
+import { fetchPublicProfile } from "@/lib/catalog-db";
+import type { CatalogItem } from "@/data/catalog";
 
 export const Route = createFileRoute("/$username")({
-  component: ProfileStub,
+  loader: async ({ params }) => {
+    const handle = params.username.replace(/^@/, "");
+    const data = await fetchPublicProfile({ data: { username: handle } });
+    if (!data) throw notFound();
+    return data;
+  },
+  component: Profile,
 });
 
-function ProfileStub() {
-  const { username } = Route.useParams();
+const RISE = { offsetY: 8, spring: { type: "spring" as const, stiffness: 340, damping: 28 }, stagger: 0.05 };
+
+function hostOf(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function Profile() {
+  const { profile, components } = Route.useLoaderData();
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const timers = [setTimeout(() => setStage(1), 60), setTimeout(() => setStage(2), 160)];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const joined = new Date(profile.joinedAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
   return (
-    <div className="flex flex-col gap-2">
-      <h1 className="text-3xl font-bold tracking-tight">@{username}</h1>
-      <p className="text-muted-foreground">Public profile is coming soon.</p>
+    <div className="mx-auto w-full max-w-5xl px-6 py-10">
+      <motion.header
+        initial={{ opacity: 0, y: RISE.offsetY }}
+        animate={{ opacity: stage >= 1 ? 1 : 0, y: stage >= 1 ? 0 : RISE.offsetY }}
+        transition={RISE.spring}
+        className="flex flex-col gap-5 sm:flex-row sm:items-start"
+      >
+        <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-secondary text-2xl font-semibold text-muted-foreground">
+          {profile.image ? (
+            <img src={profile.image} alt={profile.name} className="size-full object-cover" />
+          ) : (
+            (profile.name || profile.username).slice(0, 1).toUpperCase()
+          )}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold tracking-tight">{profile.name || profile.username}</h1>
+          <p className="text-sm text-muted-foreground">@{profile.username}</p>
+          {profile.bio ? <p className="mt-3 max-w-2xl text-sm leading-relaxed">{profile.bio}</p> : null}
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays className="size-3.5" /> Joined {joined}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Blocks className="size-3.5" /> {components.length} component{components.length === 1 ? "" : "s"}
+            </span>
+            {profile.websiteUrl ? (
+              <a href={profile.websiteUrl} target="_blank" rel="noreferrer noopener me" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                <Globe className="size-3.5" /> {hostOf(profile.websiteUrl)}
+              </a>
+            ) : null}
+            {profile.githubUrl ? (
+              <a href={profile.githubUrl} target="_blank" rel="noreferrer noopener me" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                <GitHubIcon className="size-3.5" /> GitHub
+              </a>
+            ) : null}
+            {profile.xUrl ? (
+              <a href={profile.xUrl} target="_blank" rel="noreferrer noopener me" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                <XIcon className="size-3" /> X
+              </a>
+            ) : null}
+          </div>
+        </div>
+      </motion.header>
+
+      <div className="mt-10">
+        {components.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: stage >= 2 ? 1 : 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 text-center"
+          >
+            <Blocks className="size-5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No public components yet.</p>
+          </motion.div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {components.map((item, i) => (
+              <motion.div
+                key={`${item.namespace}/${item.name}`}
+                initial={{ opacity: 0, y: RISE.offsetY }}
+                animate={{ opacity: stage >= 2 ? 1 : 0, y: stage >= 2 ? 0 : RISE.offsetY }}
+                transition={{ ...RISE.spring, delay: i * RISE.stagger }}
+              >
+                <ProfileCard item={item} />
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+function ProfileCard({ item }: { item: CatalogItem }) {
+  return (
+    <Link
+      to="/components/$namespace/$name"
+      params={{ namespace: item.namespace, name: item.name }}
+      className="group flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40 p-3 transition-colors hover:border-foreground/20 hover:bg-card/70"
+    >
+      <ComponentPreview item={item} className="w-full" />
+      <div className="flex items-start justify-between gap-3 px-1 pb-1 pt-3">
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-medium">{item.title}</h2>
+          <p className="mt-1 truncate text-xs text-muted-foreground">{item.category}</p>
+        </div>
+        <Badge variant={item.sourceModel === "open-source" ? "secondary" : "outline"} className="shrink-0">
+          {item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"}
+        </Badge>
+      </div>
+    </Link>
   );
 }

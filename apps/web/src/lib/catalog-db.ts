@@ -191,6 +191,61 @@ export const fetchComponentForReview = createServerFn({ method: "GET" })
     );
   });
 
+export interface PublicProfile {
+  username: string;
+  name: string;
+  image: string | null;
+  bio: string | null;
+  websiteUrl: string | null;
+  githubUrl: string | null;
+  xUrl: string | null;
+  joinedAt: string;
+}
+
+/** Public profile + a creator's approved, public components. */
+export const fetchPublicProfile = createServerFn({ method: "GET" })
+  .validator((data: { username: string }) => ({ username: String(data.username ?? "").trim().toLowerCase() }))
+  .handler(async ({ data }): Promise<{ profile: PublicProfile; components: CatalogItem[] } | null> => {
+    const database = db();
+    if (!database || !data.username) return null;
+
+    const [ns] = await database
+      .select({ id: schema.namespaces.id, ownerUserId: schema.namespaces.ownerUserId })
+      .from(schema.namespaces)
+      .where(eq(schema.namespaces.name, data.username))
+      .limit(1);
+    if (!ns?.ownerUserId) return null;
+
+    const [user] = await database
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, ns.ownerUserId))
+      .limit(1);
+    if (!user) return null;
+
+    const rows = await database
+      .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name })
+      .from(schema.components)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+      .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
+      .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved")))
+      .orderBy(desc(schema.components.createdAt));
+
+    return {
+      profile: {
+        username: user.username ?? data.username,
+        name: user.name,
+        image: user.image,
+        bio: user.bio,
+        websiteUrl: user.websiteUrl,
+        githubUrl: user.githubUrl,
+        xUrl: user.xUrl,
+        joinedAt: user.createdAt.toISOString(),
+      },
+      components: rows.map((row) => toCatalogItem(row.namespace, row.component, row.version)),
+    };
+  });
+
 export interface MyComponent {
   name: string;
   title: string;
