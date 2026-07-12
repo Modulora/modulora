@@ -13,6 +13,7 @@ import { schema } from "@modulora/db";
 import { catalog as demoCatalog, findItem, type CatalogItem } from "../data/catalog";
 import { categoryLabel } from "./taxonomy";
 import { getCurrentUser } from "./session";
+import { normalizeDomain } from "./domains";
 
 function db() {
   const url = process.env.DATABASE_URL;
@@ -200,6 +201,7 @@ export interface PublicProfile {
   githubUrl: string | null;
   xUrl: string | null;
   githubUsername: string | null;
+  websiteVerified: boolean;
   joinedAt: string;
 }
 
@@ -224,6 +226,18 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       .limit(1);
     if (!user) return null;
 
+    // Website is "verified" only if its domain is a confirmed verified domain.
+    let websiteVerified = false;
+    const websiteDomain = user.websiteUrl ? normalizeDomain(user.websiteUrl) : null;
+    if (websiteDomain) {
+      const [vd] = await database
+        .select({ id: schema.verifiedDomains.id })
+        .from(schema.verifiedDomains)
+        .where(and(eq(schema.verifiedDomains.ownerUserId, user.id), eq(schema.verifiedDomains.domain, websiteDomain)))
+        .limit(1);
+      websiteVerified = Boolean(vd);
+    }
+
     const rows = await database
       .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name })
       .from(schema.components)
@@ -242,6 +256,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         githubUrl: user.githubUrl,
         xUrl: user.xUrl,
         githubUsername: user.githubUsername,
+        websiteVerified,
         joinedAt: user.createdAt.toISOString(),
       },
       components: rows.map((row) => toCatalogItem(row.namespace, row.component, row.version)),

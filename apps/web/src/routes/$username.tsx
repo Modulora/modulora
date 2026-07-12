@@ -93,9 +93,12 @@ function Profile() {
               <Blocks className="size-3.5" /> {components.length} component{components.length === 1 ? "" : "s"}
             </span>
             {profile.websiteUrl ? (
-              <a href={profile.websiteUrl} target="_blank" rel="noreferrer noopener me" className="inline-flex items-center gap-1.5 hover:text-foreground">
-                <Globe className="size-3.5" /> {hostOf(profile.websiteUrl)}
-              </a>
+              <SocialLink
+                href={profile.websiteUrl}
+                icon={<Globe className="size-3.5" />}
+                label={hostOf(profile.websiteUrl) ?? "Website"}
+                verifiedVia={profile.websiteVerified ? "a DNS TXT record" : undefined}
+              />
             ) : null}
             {profile.githubUsername ? (
               <SocialLink

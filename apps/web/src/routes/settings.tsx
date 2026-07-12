@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { Check, Loader2, Upload, X } from "lucide-react";
+import { BadgeCheck, Check, Copy, Globe, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { GitHubIcon } from "@/components/brand-icons";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ import {
   type ProfileInput,
 } from "@/lib/profile";
 import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
+import { addDomain, listDomains, removeDomain, verifyDomain, type DomainRecord } from "@/lib/domains";
 import { CodeThemePicker } from "@/components/code-theme-picker";
 import { changePassword, linkSocial, signOut } from "@/lib/auth-client";
 
@@ -45,7 +46,8 @@ export const Route = createFileRoute("/settings")({
     const user = await fetchCurrentUser();
     if (!user) throw redirect({ to: "/signin" });
     const connections = await getConnections();
-    return { user, connections };
+    const domains = await listDomains();
+    return { user, connections, domains };
   },
   component: Settings,
 });
@@ -57,7 +59,7 @@ const RISE = {
 };
 
 function Settings() {
-  const { user, connections } = Route.useLoaderData();
+  const { user, connections, domains } = Route.useLoaderData();
   const router = useRouter();
   const navigate = useNavigate();
   const [stage, setStage] = useState(0);
@@ -270,6 +272,15 @@ function Settings() {
         )}
       </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: RISE.offsetY }}
+        animate={{ opacity: stage >= 3 ? 1 : 0, y: stage >= 3 ? 0 : RISE.offsetY }}
+        transition={RISE.spring}
+        className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/35 p-6"
+      >
+        <DomainsSection initial={domains} />
+      </motion.div>
+
       {connections.hasPassword ? (
         <motion.div
           initial={{ opacity: 0, y: RISE.offsetY }}
@@ -296,6 +307,124 @@ function Settings() {
         <div className="h-px bg-destructive/20" />
         <DeleteAccountSection identifier={user.username ?? user.email} />
       </motion.div>
+    </div>
+  );
+}
+
+function DomainsSection({ initial }: { initial: DomainRecord[] }) {
+  const [domains, setDomains] = useState<DomainRecord[]>(initial);
+  const [input, setInput] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [status, setStatus] = useState<Record<string, string>>({});
+
+  async function onAdd() {
+    setError(null);
+    setAdding(true);
+    const res = await addDomain({ data: { domain: input } });
+    setAdding(false);
+    if (!res.ok || !res.record) {
+      setError(res.error ?? "Could not add domain.");
+      return;
+    }
+    setInput("");
+    setDomains((list) => (list.some((d) => d.domain === res.record!.domain) ? list : [res.record!, ...list]));
+  }
+
+  async function onVerify(domain: string) {
+    setBusy(domain);
+    setStatus((s) => ({ ...s, [domain]: "" }));
+    const res = await verifyDomain({ data: { domain } });
+    setBusy(null);
+    if (res.verified) {
+      setDomains((list) => list.map((d) => (d.domain === domain ? { ...d, verified: true } : d)));
+    } else {
+      setStatus((s) => ({ ...s, [domain]: res.error ?? "Not verified yet." }));
+    }
+  }
+
+  async function onRemove(domain: string) {
+    await removeDomain({ data: { domain } });
+    setDomains((list) => list.filter((d) => d.domain !== domain));
+  }
+
+  return (
+    <>
+      <div>
+        <h2 className="text-sm font-semibold">Verified domains</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Prove you own a domain with a DNS TXT record. Verified domains back your website badge and let you sell components from that domain.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="yoursite.com" className="h-9" onKeyDown={(e) => e.key === "Enter" && onAdd()} />
+        <Button type="button" size="sm" className="gap-1.5" disabled={adding || !input.trim()} onClick={onAdd}>
+          {adding ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Add
+        </Button>
+      </div>
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+
+      <div className="flex flex-col gap-3">
+        {domains.map((d) => (
+          <div key={d.domain} className="rounded-lg border border-border/60 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <Globe className="size-4 text-muted-foreground" />
+                {d.domain}
+                {d.verified ? (
+                  <span className="flex items-center gap-1 text-xs text-emerald-500"><BadgeCheck className="size-3.5" /> Verified</span>
+                ) : (
+                  <span className="text-xs text-amber-500">Pending</span>
+                )}
+              </span>
+              <div className="flex items-center gap-1.5">
+                {!d.verified ? (
+                  <Button type="button" size="sm" variant="outline" disabled={busy === d.domain} onClick={() => onVerify(d.domain)}>
+                    {busy === d.domain ? <Loader2 className="size-3.5 animate-spin" /> : null} Verify
+                  </Button>
+                ) : null}
+                <button type="button" aria-label="Remove domain" onClick={() => onRemove(d.domain)} className="rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive">
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {!d.verified ? (
+              <div className="mt-3 space-y-2 rounded-md border border-border/50 bg-secondary/30 p-3">
+                <p className="text-[11px] text-muted-foreground">Add this TXT record at your DNS provider, then Verify:</p>
+                <TxtRow label="Name" value={d.txtName} />
+                <TxtRow label="Value" value={d.txtValue} />
+                {status[d.domain] ? <p className="text-[11px] text-amber-500">{status[d.domain]}</p> : null}
+              </div>
+            ) : null}
+          </div>
+        ))}
+        {domains.length === 0 ? <p className="text-xs text-muted-foreground">No domains yet.</p> : null}
+      </div>
+    </>
+  );
+}
+
+function TxtRow({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-12 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/60">{label}</span>
+      <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1 font-mono text-[11px]">{value}</code>
+      <button
+        type="button"
+        aria-label={`Copy ${label}`}
+        onClick={() => {
+          void navigator.clipboard.writeText(value);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1200);
+        }}
+        className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+      </button>
     </div>
   );
 }
