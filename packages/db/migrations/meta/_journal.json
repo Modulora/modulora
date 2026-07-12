@@ -50,6 +50,13 @@
       "when": 1783834417342,
       "tag": "0006_plain_zodiak",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783836597460,
+      "tag": "0007_magical_iron_lad",
+      "breakpoints": true
     }
   ]
 }

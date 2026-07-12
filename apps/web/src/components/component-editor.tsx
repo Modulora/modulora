@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { CATEGORIES } from "@/lib/taxonomy";
 import { publishComponent, type PublishFile } from "@/lib/publish";
 import { demoFiles, isSystemFile, roleFor, scaffoldFiles } from "@/lib/scaffold";
+import { usePageTheme } from "@/lib/use-page-theme";
 
 const RISE = { offsetY: 8, spring: { type: "spring" as const, stiffness: 340, damping: 28 } };
 
@@ -74,10 +75,12 @@ export function ComponentEditor({
   username,
   initial,
   mode = "create",
+  editorTheme,
 }: {
   username: string | null;
   initial?: EditorInitial;
   mode?: "create" | "edit";
+  editorTheme?: string;
 }) {
   const navigate = useNavigate();
   const [step, setStep] = useState<StepId>("build");
@@ -88,7 +91,10 @@ export function ComponentEditor({
   );
   const [activePath, setActivePath] = useState(files[0]!.path);
   const [showSystem, setShowSystem] = useState(false);
-  const [previewTheme, setPreviewTheme] = useState<"light" | "dark">("dark");
+  const pageTheme = usePageTheme();
+  const [themeOverride, setThemeOverride] = useState<"light" | "dark" | null>(null);
+  const previewTheme = themeOverride ?? pageTheme;
+  const setPreviewTheme = setThemeOverride;
   const [previewViewport, setPreviewViewport] = useState<PreviewViewport>("desktop");
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -292,6 +298,7 @@ export function ComponentEditor({
           setPreviewViewport={setPreviewViewport}
           previewKey={previewKey}
           resetPreview={() => setPreviewKey((v) => v + 1)}
+          editorTheme={editorTheme}
           ready={ready}
         />
       ) : step === "details" ? (
@@ -360,12 +367,13 @@ function BuildStep(props: {
   setPreviewViewport: (v: PreviewViewport) => void;
   previewKey: number;
   resetPreview: () => void;
+  editorTheme?: string;
   ready: boolean;
 }) {
   const {
     files, activePath, setActivePath, showSystem, setShowSystem, active, updateActive,
     renameActive, addFile, removeFile, demos, selectedDemo, setSelectedDemo,
-    previewTheme, setPreviewTheme, previewViewport, setPreviewViewport, previewKey, resetPreview, ready,
+    previewTheme, setPreviewTheme, previewViewport, setPreviewViewport, previewKey, resetPreview, editorTheme, ready,
   } = props;
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -422,8 +430,12 @@ function BuildStep(props: {
             className="w-full rounded-md bg-transparent px-2 py-1 font-mono text-xs text-muted-foreground outline-none focus-visible:bg-secondary/40 focus-visible:text-foreground"
           />
         </div>
-        <div className="min-h-[24rem] flex-1 overflow-hidden lg:min-h-0">
-          {active ? <CodeEditor path={active.path} value={active.content} onChange={updateActive} /> : null}
+        <div className="relative min-h-[24rem] flex-1 overflow-hidden lg:min-h-0">
+          {active ? (
+            <div className="absolute inset-0">
+              <CodeEditor path={active.path} value={active.content} onChange={updateActive} themeId={editorTheme} />
+            </div>
+          ) : null}
         </div>
       </div>
 

@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "editor_theme" text DEFAULT 'github-dark-default' NOT NULL;

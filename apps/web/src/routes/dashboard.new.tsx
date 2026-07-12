@@ -10,5 +10,5 @@ export const Route = createFileRoute("/dashboard/new")({
 
 function NewComponent() {
   const { user } = Route.useRouteContext();
-  return <ComponentEditor username={user?.username ?? null} mode="create" />;
+  return <ComponentEditor username={user?.username ?? null} mode="create" editorTheme={user?.editorTheme} />;
 }

@@ -18,6 +18,6 @@ function EditComponent() {
   const initial = Route.useLoaderData();
   const { user } = Route.useRouteContext();
   return (
-    <ComponentEditor username={user?.username ?? null} mode="edit" initial={initial} />
+    <ComponentEditor username={user?.username ?? null} mode="edit" initial={initial} editorTheme={user?.editorTheme} />
   );
 }

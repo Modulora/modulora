@@ -100,7 +100,7 @@ function Dashboard() {
         <NewButton />
 
         <nav className="flex flex-col gap-1">
-          <SidebarHeading>Content</SidebarHeading>
+          <SidebarHeading>Library</SidebarHeading>
           <Link
             to="/dashboard/components"
             className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent/60 [&.active]:bg-accent"
@@ -113,9 +113,9 @@ function Dashboard() {
         </nav>
 
         <nav className="flex flex-col gap-1">
-          <SidebarHeading>For public creators</SidebarHeading>
+          <SidebarHeading>Creator</SidebarHeading>
           <SidebarRow icon={BarChart3} label="Analytics" muted />
-          <SidebarRow icon={Sparkles} label="Demand" badge="Soon" muted />
+          <SidebarRow icon={Sparkles} label="Payouts" badge="Soon" muted />
           {summary.namespace ? (
             <SidebarLink
               icon={UserRound}
@@ -129,9 +129,9 @@ function Dashboard() {
         </nav>
 
         <nav className="flex flex-col gap-1">
-          <SidebarHeading>Developer</SidebarHeading>
+          <SidebarHeading>Tools</SidebarHeading>
           <SidebarRow icon={KeyRound} label="API key" muted />
-          <SidebarRow icon={TerminalSquare} label="CLI" muted />
+          <SidebarRow icon={TerminalSquare} label="Modulora CLI" muted />
         </nav>
       </motion.aside>
 
@@ -149,7 +149,7 @@ function Dashboard() {
                 , <span className="text-foreground">{displayName}</span>
               </>
             ) : null}
-            . Here's your studio at a glance.
+            . Your registry at a glance.
           </p>
         </motion.div>
 
@@ -179,20 +179,20 @@ function Dashboard() {
           transition={{ duration: 0.4 }}
           className="grid gap-4 lg:grid-cols-2"
         >
-          <Panel title="Start something">
+          <Panel title="Publish">
             <ActionRow
               icon={Blocks}
               title="New component"
-              description="Author a React component in the studio editor."
+              description="Build with a live preview, then submit it for review."
               to="/dashboard/new"
             />
           </Panel>
 
-          <Panel title="Grow your reach">
+          <Panel title="Track">
             <ActionRow
               icon={BarChart3}
               title="Analytics"
-              description="See views and installs once you publish."
+              description="Views and verified installs, once published."
               disabled
             />
             <ActionRow
@@ -200,7 +200,7 @@ function Dashboard() {
               title="Public profile"
               description={
                 summary.namespace
-                  ? `Your components live at @${summary.namespace}.`
+                  ? `Everything you publish, at modulora.dev/${summary.namespace}.`
                   : "Claim a namespace to get a public profile."
               }
               to={summary.namespace ? "/$username" : undefined}

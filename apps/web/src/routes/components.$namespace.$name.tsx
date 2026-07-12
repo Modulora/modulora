@@ -54,7 +54,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { highlight, langForPath } from "@/lib/highlight";
+import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
+import { CodeEditor } from "@/components/code-editor";
+import { usePageTheme } from "@/lib/use-page-theme";
+import { fetchCurrentUser } from "@/lib/session";
 import {
   Tooltip,
   TooltipContent,
@@ -69,7 +72,6 @@ import { type CatalogItem, type EvidenceRecord } from "../data/catalog";
 
 interface HighlightedFile {
   path: string;
-  html: string;
   raw: string;
 }
 
@@ -77,18 +79,14 @@ export const Route = createFileRoute("/components/$namespace/$name")({
   loader: async ({ params }) => {
     const item = await fetchCatalogDetail({ data: { namespace: params.namespace, name: params.name } });
     if (!item) throw notFound();
-    // Only open (free) components expose source; highlight server-side.
+    // Only open (free) components expose source. Rendered client-side in a
+    // read-only editor using the viewer's chosen code theme (settings).
+    const viewer = await fetchCurrentUser();
     const files: HighlightedFile[] =
       item.sourceModel === "open-source" && item.files
-        ? await Promise.all(
-            item.files.map(async (file) => ({
-              path: file.path,
-              raw: file.content,
-              html: await highlight(file.content, langForPath(file.path)),
-            })),
-          )
+        ? item.files.map((file) => ({ path: file.path, raw: file.content }))
         : [];
-    return { item, files };
+    return { item, files, viewerTheme: viewer?.editorTheme ?? DEFAULT_EDITOR_THEME };
   },
   component: ComponentDetail,
 });
@@ -124,13 +122,17 @@ const EVIDENCE_LABELS: Record<string, string> = {
 };
 
 function ComponentDetail() {
-  const { item, files } = Route.useLoaderData();
+  const { item, files, viewerTheme } = Route.useLoaderData();
   const [stage, setStage] = useState(0);
   const [workspaceTab, setWorkspaceTab] = useState("preview");
   const [installTab, setInstallTab] = useState(
     item.distributionChannels?.includes("shadcn") ? "shadcn" : "modulora-cli",
   );
-  const [previewTheme, setPreviewTheme] = useState<"light" | "dark">("light");
+  // Preview defaults to the site's theme; the toolbar can override per-view.
+  const pageTheme = usePageTheme();
+  const [themeOverride, setThemeOverride] = useState<"light" | "dark" | null>(null);
+  const previewTheme = themeOverride ?? pageTheme;
+  const setPreviewTheme = setThemeOverride;
   const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const [previewKey, setPreviewKey] = useState(0);
   const previewStageRef = useRef<HTMLDivElement>(null);
@@ -215,9 +217,8 @@ function ComponentDetail() {
             initial={{ opacity: 0, scale: WORKSPACE.initialScale }}
             animate={{ opacity: stage >= 3 ? 1 : 0, scale: stage >= 3 ? 1 : WORKSPACE.initialScale }}
             transition={WORKSPACE.spring}
-            className="flex min-h-0 flex-1 flex-col"
           >
-            <Tabs.Root value={workspaceTab} onValueChange={setWorkspaceTab} className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-[#0d0d0d]">
+            <Tabs.Root value={workspaceTab} onValueChange={setWorkspaceTab} className="overflow-hidden rounded-xl border border-border/60 bg-[#0d0d0d]">
               <div className="flex h-12 items-center justify-between border-b border-border/60 px-3">
                 <Tabs.List className="flex items-center gap-1">
                   <WorkspaceTab value="preview" icon={PackageCheck}>Preview</WorkspaceTab>
@@ -252,9 +253,9 @@ function ComponentDetail() {
                   <span className="text-xs text-muted-foreground">{item.category}</span>
                 )}
               </div>
-              <Tabs.Content value="preview" className="flex-1 outline-none data-[state=inactive]:hidden">
-                <div ref={previewStageRef} className={`flex h-full min-h-[24rem] items-center justify-center overflow-auto bg-[#181818] ${previewTheme === "dark" ? "[color-scheme:dark]" : "[color-scheme:light]"}`}>
-                  <div className={`h-full w-full transition-[max-width] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] ${viewport === "mobile" ? "max-w-[390px]" : viewport === "tablet" ? "max-w-[768px]" : "max-w-none"}`}>
+              <Tabs.Content value="preview" className="outline-none">
+                <div ref={previewStageRef} className={`flex h-[38rem] items-center justify-center overflow-auto bg-[#181818] ${previewTheme === "dark" ? "[color-scheme:dark]" : "[color-scheme:light]"}`}>
+                  <div className={`w-full transition-[max-width] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] ${demos.length > 0 && activeDemo ? "h-full" : ""} ${viewport === "mobile" ? "max-w-[390px]" : viewport === "tablet" ? "max-w-[768px]" : "max-w-none"}`}>
                     {demos.length > 0 && activeDemo ? (
                       <ComponentSandbox
                         key={previewKey}
@@ -270,7 +271,7 @@ function ComponentDetail() {
                 </div>
               </Tabs.Content>
               <Tabs.Content value="code" className="relative outline-none">
-                {isPaid ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} />}
+                {isPaid ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} themeId={viewerTheme} />}
               </Tabs.Content>
             </Tabs.Root>
           </motion.div>
@@ -280,7 +281,7 @@ function ComponentDetail() {
           initial={{ opacity: 0, x: RAIL.offsetX }}
           animate={{ opacity: stage >= 3 ? 1 : 0, x: stage >= 3 ? 0 : RAIL.offsetX }}
           transition={RAIL.spring}
-          className="flex flex-col gap-3 self-start"
+          className="flex flex-col gap-3"
         >
           {typeof item.installCount === "number" ? (
             <FactCard label="Verified CLI installs" value={item.installCount.toLocaleString()} icon={Terminal} />
@@ -316,12 +317,12 @@ function WorkspaceTab({ value, icon: Icon, children }: { value: string; icon: ty
 }
 
 
-function SourceFiles({ item, files }: { item: CatalogItem; files: HighlightedFile[] }) {
+function SourceFiles({ item, files, themeId }: { item: CatalogItem; files: HighlightedFile[]; themeId: string }) {
   const [active, setActive] = useState(files[0]?.path ?? "");
 
   if (files.length === 0) {
     return (
-      <div className="flex h-[36rem] items-center justify-center bg-[#080808] text-sm text-muted-foreground">
+      <div className="flex h-[38rem] items-center justify-center bg-[#080808] text-sm text-muted-foreground">
         Source for {item.title} is published with each release.
       </div>
     );
@@ -330,8 +331,8 @@ function SourceFiles({ item, files }: { item: CatalogItem; files: HighlightedFil
   const current = files.find((file) => file.path === active) ?? files[0]!;
 
   return (
-    <div className="grid h-[36rem] grid-cols-[13rem_1fr] bg-[#080808]">
-      <div className="flex flex-col overflow-y-auto border-r border-border/60 p-2">
+    <div className="grid h-[38rem] grid-cols-[13rem_1fr] bg-[#080808]">
+      <div className="flex min-h-0 flex-col overflow-y-auto border-r border-border/60 p-2">
         <span className="px-2 pb-1 pt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
           {files.length} file{files.length === 1 ? "" : "s"}
         </span>
@@ -342,13 +343,11 @@ function SourceFiles({ item, files }: { item: CatalogItem; files: HighlightedFil
           depth={0}
         />
       </div>
-      <div className="relative min-w-0">
+      <div className="relative min-w-0 overflow-hidden">
         <div className="absolute right-3 top-3 z-10"><CopyButton value={current.raw} /></div>
-        <div
-          className="h-full overflow-auto p-5 text-sm leading-7 [&_pre]:!bg-transparent [&_pre]:font-mono"
-          // Shiki output is generated from trusted, server-highlighted source.
-          dangerouslySetInnerHTML={{ __html: current.html }}
-        />
+        <div className="absolute inset-0">
+          <CodeEditor key={current.path} path={current.path} value={current.raw} themeId={themeId} readOnly />
+        </div>
       </div>
     </div>
   );
@@ -434,7 +433,7 @@ function FileTree({
 
 function LockedCode({ item }: { item: CatalogItem }) {
   return (
-    <div className="relative h-[36rem] overflow-hidden bg-[#080808]">
+    <div className="relative h-[38rem] overflow-hidden bg-[#080808]">
       <pre aria-hidden className="select-none p-5 font-mono text-sm leading-7 text-zinc-500 blur-[5px]">{`export function ${item.title.replace(/\s/g, "")}() {\n  // Paid component — source delivered on purchase\n  return <PremiumComponent />\n}\n`.repeat(5)}</pre>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/45 text-center backdrop-blur-[2px]">
         <span className="flex size-11 items-center justify-center rounded-full border border-white/15 bg-black/60"><FileLock2 className="size-5" /></span>

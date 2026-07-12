@@ -1,8 +1,8 @@
 /**
- * Live component preview (21st-style demo model). Renders a chosen *demo* file
- * — whose default export shows the component with realistic props — inside a
- * sandboxed, cross-origin Sandpack iframe. Untrusted React runs isolated from
- * the Modulora app, its cookies, and its DOM.
+ * Live component preview. Renders a chosen demo file — whose default export
+ * shows the component with realistic props — inside a sandboxed, cross-origin
+ * Sandpack iframe. Untrusted React runs isolated from the Modulora app, its
+ * cookies, and its DOM.
  *
  * Styling: Tailwind v4 browser build, loaded via Sandpack's documented
  * `externalResources` option. The author's `src/index.css` (v4 syntax: tokens +

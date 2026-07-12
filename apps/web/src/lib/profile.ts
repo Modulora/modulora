@@ -11,6 +11,7 @@ import { and, eq, ne } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { validateUsername } from "./username";
+import { isEditorTheme } from "./highlight";
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 15;
 const COOLDOWN_MS = USERNAME_CHANGE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
@@ -29,6 +30,7 @@ export interface ProfileInput {
   websiteUrl: string;
   githubUrl: string;
   xUrl: string;
+  editorTheme?: string;
 }
 
 export interface ProfileResult {
@@ -112,6 +114,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     websiteUrl: String(data.websiteUrl ?? "").trim(),
     githubUrl: String(data.githubUrl ?? "").trim(),
     xUrl: String(data.xUrl ?? "").trim(),
+    editorTheme: String(data.editorTheme ?? "").trim(),
   }))
   .handler(async ({ data }): Promise<ProfileResult> => {
     const request = getRequest();
@@ -163,6 +166,7 @@ export const updateProfile = createServerFn({ method: "POST" })
         websiteUrl: normalizeUrl(data.websiteUrl),
         githubUrl: normalizeUrl(data.githubUrl),
         xUrl: normalizeUrl(data.xUrl),
+        editorTheme: isEditorTheme(data.editorTheme) ? data.editorTheme : undefined,
         updatedAt: new Date(),
       })
       .where(eq(schema.users.id, user.id));

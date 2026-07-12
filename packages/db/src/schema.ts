@@ -43,6 +43,8 @@ export const users = pgTable("user", {
   xUrl: text("x_url"),
   // Curators can approve/reject submitted components for public listing.
   isCurator: boolean("is_curator").notNull().default(false),
+  // Shiki theme used for code views (detail page, review) chosen in settings.
+  editorTheme: text("editor_theme").notNull().default("github-dark-default"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

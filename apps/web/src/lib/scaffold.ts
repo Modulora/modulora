@@ -1,5 +1,5 @@
 /**
- * Editor file model (21st-style). A component is authored as a small sandbox:
+ * Authoring file model. A component is authored as a small sandbox:
  *   - component files  src/components/ui/*     → installed via the registry
  *   - demo files       src/demos/*             → preview only (default export)
  *   - styles           src/index.css           → preview only
@@ -64,12 +64,14 @@ export function Component({ className }: { className?: string }) {
 }
 `;
 
-const DEMO_DEFAULT_TSX = `// This file is a demo for your component — it's what users see in the preview.
-// Add more files in this directory to add more demos.
+const DEMO_DEFAULT_TSX = `/**
+ * Live preview entry — the default export of each file in src/demos/ renders
+ * as a selectable variant on your component's page. Demos ship with the
+ * preview only; they are never part of what gets installed.
+ */
 import { Component } from "@/components/ui/component";
 
-// Only the default export is treated as a demo.
-export default function DemoOne() {
+export default function Preview() {
   return <Component />;
 }
 `;
@@ -90,7 +92,7 @@ const PACKAGE_JSON = `{
 }
 `;
 
-const INDEX_CSS = `/* Tailwind v4 theme. Extend only with what your component needs. */
+const INDEX_CSS = `/* Preview design tokens (Tailwind v4). Adjust to match your component. */
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));

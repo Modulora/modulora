@@ -33,6 +33,7 @@ import {
   type HandleStatus,
   type ProfileInput,
 } from "@/lib/profile";
+import { EDITOR_THEMES, DEFAULT_EDITOR_THEME } from "@/lib/highlight";
 import { changePassword, linkSocial, signOut } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/settings")({
@@ -66,6 +67,7 @@ function Settings() {
     websiteUrl: user.websiteUrl ?? "",
     githubUrl: user.githubUrl ?? "",
     xUrl: user.xUrl ?? "",
+    editorTheme: user.editorTheme ?? DEFAULT_EDITOR_THEME,
   });
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -212,6 +214,23 @@ function Settings() {
           <Field id="websiteUrl" label="Website" value={form.websiteUrl} onChange={(v) => set("websiteUrl", v)} placeholder="you.dev" />
           <Field id="githubUrl" label="GitHub" value={form.githubUrl} onChange={(v) => set("githubUrl", v)} placeholder="github.com/you" />
           <Field id="xUrl" label="X" value={form.xUrl} onChange={(v) => set("xUrl", v)} placeholder="x.com/you" />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="editorTheme">Code theme</Label>
+          <select
+            id="editorTheme"
+            value={form.editorTheme ?? DEFAULT_EDITOR_THEME}
+            onChange={(e) => set("editorTheme", e.target.value)}
+            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            {EDITOR_THEMES.map((theme) => (
+              <option key={theme.id} value={theme.id} className="bg-popover">
+                {theme.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">Syntax highlighting for source code across Modulora.</p>
         </div>
 
         <div className="flex items-center justify-between gap-3">

@@ -3,14 +3,34 @@
  *
  * Uses the fine-grained core with the JavaScript RegExp engine so it runs on
  * the Cloudflare Worker without WASM. Highlighting happens in route loaders
- * (server side); the rendered HTML is streamed to the client.
+ * (server side); the rendered HTML is streamed to the client. Every Shiki
+ * bundled theme is selectable in settings; themes load lazily on first use.
  */
 import { createHighlighterCore, type HighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import { bundledThemes, bundledThemesInfo } from "shiki/themes";
+import { THEME_PALETTES } from "./theme-palettes.generated";
 
-const THEME = "github-dark-default";
+export const DEFAULT_EDITOR_THEME = "github-dark-default";
+
+/** All Shiki bundled themes, selectable in settings. */
+export const EDITOR_THEMES = bundledThemesInfo.map((info) => ({
+  id: info.id,
+  label: info.displayName ?? info.id,
+  type: info.type,
+}));
+
+const THEME_IDS = new Set(EDITOR_THEMES.map((theme) => theme.id));
+
+export function isEditorTheme(value: string): boolean {
+  return THEME_IDS.has(value);
+}
+
+/** Exact preview colors per theme (bg/fg + token colors), for the picker. */
+export { THEME_PALETTES };
 
 let highlighterPromise: Promise<HighlighterCore> | null = null;
+const loadedThemes = new Set<string>([DEFAULT_EDITOR_THEME]);
 
 function getHighlighter() {
   if (!highlighterPromise) {
@@ -42,11 +62,21 @@ export function langForPath(path: string): string {
   return EXTENSION_LANG[extension] ?? "tsx";
 }
 
-export async function highlight(code: string, lang: string): Promise<string> {
+async function ensureTheme(highlighter: HighlighterCore, theme: string) {
+  if (loadedThemes.has(theme) || !isEditorTheme(theme)) return;
+  const loader = bundledThemes[theme as keyof typeof bundledThemes];
+  if (!loader) return;
+  await highlighter.loadTheme(await loader());
+  loadedThemes.add(theme);
+}
+
+export async function highlight(
+  code: string,
+  lang: string,
+  theme: string = DEFAULT_EDITOR_THEME,
+): Promise<string> {
   const highlighter = await getHighlighter();
-  return highlighter.codeToHtml(code, {
-    lang,
-    theme: THEME,
-    colorReplacements: { "#0d1117": "transparent" },
-  });
+  const resolved = isEditorTheme(theme) ? theme : DEFAULT_EDITOR_THEME;
+  await ensureTheme(highlighter, resolved);
+  return highlighter.codeToHtml(code, { lang, theme: resolved });
 }
