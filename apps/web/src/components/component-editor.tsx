@@ -169,13 +169,21 @@ export function ComponentEditor({
     setFiles((current) => current.map((file) => (file.path === activePath ? { ...file, path } : file)));
     setActivePath(path);
   }
-  function addFile(kind: "component" | "demo") {
-    const base = kind === "demo" ? "src/demos/demo" : "src/components/ui/file";
-    let index = 1;
-    let path = `${base}-${index}.tsx`;
-    while (files.some((file) => file.path === path)) path = `${base}-${++index}.tsx`;
+  // Create a file at a group-relative path. Slashes create folders; a trailing
+  // slash (or no extension) is treated as a folder and gets a placeholder file.
+  function createFile(kind: "component" | "demo", relPath: string): string | null {
+    const base = kind === "demo" ? "src/demos/" : "src/components/";
+    let rel = relPath.trim().replace(/^\/+/, "").replace(/\\/g, "/");
+    if (!rel || rel.split("/").some((part) => part === ".." || part === ".")) return "Invalid path.";
+    // A folder-only entry (ends with / or has no file extension) seeds a file.
+    if (rel.endsWith("/") || !/\.[a-z0-9]+$/i.test(rel)) {
+      rel = rel.replace(/\/+$/, "") + (kind === "demo" ? "/demo.tsx" : "/component.tsx");
+    }
+    const path = base + rel;
+    if (files.some((file) => file.path === path)) return "That file already exists.";
     setFiles((current) => [...current, { path, content: "" }]);
     setActivePath(path);
+    return null;
   }
   function removeFile(path: string) {
     if (files.length === 1) return;
@@ -287,7 +295,7 @@ export function ComponentEditor({
           active={active}
           updateActive={updateActive}
           renameActive={renameActive}
-          addFile={addFile}
+          createFile={createFile}
           removeFile={removeFile}
           demos={demos}
           selectedDemo={selectedDemo}
@@ -356,7 +364,7 @@ function BuildStep(props: {
   active: PublishFile | undefined;
   updateActive: (content: string) => void;
   renameActive: (path: string) => void;
-  addFile: (kind: "component" | "demo") => void;
+  createFile: (kind: "component" | "demo", relPath: string) => string | null;
   removeFile: (path: string) => void;
   demos: PublishFile[];
   selectedDemo: string;
@@ -372,10 +380,29 @@ function BuildStep(props: {
 }) {
   const {
     files, activePath, setActivePath, showSystem, setShowSystem, active, updateActive,
-    renameActive, addFile, removeFile, demos, selectedDemo, setSelectedDemo,
+    renameActive, createFile, removeFile, demos, selectedDemo, setSelectedDemo,
     previewTheme, setPreviewTheme, previewViewport, setPreviewViewport, previewKey, resetPreview, editorTheme, ready,
   } = props;
   const stageRef = useRef<HTMLDivElement>(null);
+  const [adding, setAdding] = useState<"component" | "demo" | null>(null);
+  const [newPath, setNewPath] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
+
+  function openAdd(kind: "component" | "demo") {
+    setAdding(kind);
+    setNewPath("");
+    setAddError(null);
+  }
+  function submitAdd() {
+    if (!adding) return;
+    const err = createFile(adding, newPath);
+    if (err) {
+      setAddError(err);
+      return;
+    }
+    setAdding(null);
+    setNewPath("");
+  }
 
   const grouped = useMemo(() => {
     const component = files.filter((f) => roleFor(f.path) === "component");
@@ -393,15 +420,21 @@ function BuildStep(props: {
     >
       {/* Files rail */}
       <aside className="flex flex-col gap-1 overflow-y-auto rounded-xl border border-border/60 bg-card/35 p-2 lg:h-full">
-        <FileGroup label="Component" onAdd={() => addFile("component")}>
+        <FileGroup label="Component" onAdd={() => openAdd("component")}>
           {grouped.component.map((file) => (
-            <FileRow key={file.path} file={file} activePath={activePath} onOpen={setActivePath} onRemove={grouped.component.length > 1 ? removeFile : undefined} />
+            <FileRow key={file.path} file={file} label={file.path.replace(/^src\/components\//, "")} activePath={activePath} onOpen={setActivePath} onRemove={grouped.component.length > 1 ? removeFile : undefined} />
           ))}
+          {adding === "component" ? (
+            <NewFileInput prefix="src/components/" value={newPath} onChange={(v) => { setNewPath(v); setAddError(null); }} onSubmit={submitAdd} onCancel={() => setAdding(null)} error={addError} />
+          ) : null}
         </FileGroup>
-        <FileGroup label="Demos" onAdd={() => addFile("demo")} hint="Preview only — not installed">
+        <FileGroup label="Demos" onAdd={() => openAdd("demo")} hint="Preview only — not installed">
           {grouped.demo.map((file) => (
-            <FileRow key={file.path} file={file} activePath={activePath} onOpen={setActivePath} onRemove={grouped.demo.length > 1 ? removeFile : undefined} />
+            <FileRow key={file.path} file={file} label={file.path.replace(/^src\/demos\//, "")} activePath={activePath} onOpen={setActivePath} onRemove={grouped.demo.length > 1 ? removeFile : undefined} />
           ))}
+          {adding === "demo" ? (
+            <NewFileInput prefix="src/demos/" value={newPath} onChange={(v) => { setNewPath(v); setAddError(null); }} onSubmit={submitAdd} onCancel={() => setAdding(null)} error={addError} />
+          ) : null}
         </FileGroup>
         <button
           type="button"
@@ -505,30 +538,79 @@ function FileGroup({ label, hint, onAdd, children }: { label: string; hint?: str
 
 function FileRow({
   file,
+  label,
   activePath,
   onOpen,
   onRemove,
 }: {
   file: PublishFile;
+  label?: string;
   activePath: string;
   onOpen: (p: string) => void;
   onRemove?: (p: string) => void;
 }) {
+  // Show the folder path (relative to the group) so nested structure is visible.
+  const shown = label ?? file.path.split("/").pop() ?? file.path;
+  const dir = shown.includes("/") ? shown.slice(0, shown.lastIndexOf("/") + 1) : "";
+  const name = shown.slice(dir.length);
   return (
     <div
       className={`group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
         file.path === activePath ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
       }`}
     >
-      <button type="button" onClick={() => onOpen(file.path)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+      <button type="button" onClick={() => onOpen(file.path)} className="flex min-w-0 flex-1 items-center gap-2 text-left" title={file.path}>
         <FileCode2 className="size-3.5 shrink-0 opacity-70" />
-        <span className="truncate">{file.path.split("/").pop()}</span>
+        <span className="truncate">
+          {dir ? <span className="text-muted-foreground/50">{dir}</span> : null}
+          {name}
+        </span>
       </button>
       {onRemove ? (
         <button type="button" onClick={() => onRemove(file.path)} aria-label="Remove file" className="opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100">
           <Trash2 className="size-3.5" />
         </button>
       ) : null}
+    </div>
+  );
+}
+
+function NewFileInput({
+  prefix,
+  value,
+  onChange,
+  onSubmit,
+  onCancel,
+  error,
+}: {
+  prefix: string;
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  error: string | null;
+}) {
+  return (
+    <div className="px-2 py-1">
+      <div className="flex items-center gap-1 rounded-md border border-ring/60 bg-background px-1.5">
+        <span className="shrink-0 font-mono text-[10px] text-muted-foreground/50">{prefix}</span>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit();
+            if (e.key === "Escape") onCancel();
+          }}
+          onBlur={() => (value.trim() ? onSubmit() : onCancel())}
+          placeholder="ui/button.tsx"
+          spellCheck={false}
+          className="h-6 min-w-0 flex-1 bg-transparent py-1 font-mono text-[11px] outline-none"
+        />
+      </div>
+      <p className="mt-1 px-1 text-[10px] text-muted-foreground/60">
+        {error ? <span className="text-destructive">{error}</span> : "Use / for folders. Enter to add, Esc to cancel."}
+      </p>
     </div>
   );
 }
