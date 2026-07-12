@@ -160,8 +160,25 @@ function ComponentDetail() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="flex min-w-0 flex-col gap-3">
           <motion.div
+            initial={{ opacity: 0, y: RISE.offsetY }}
+            animate={{ opacity: stage >= 2 ? 1 : 0, y: stage >= 2 ? 0 : RISE.offsetY }}
+            transition={RISE.spring}
+          >
+            {isPaid ? (
+              <CommercialTray item={item} />
+            ) : (
+              <InstallTray
+                tabs={enabledInstallTabs}
+                active={installTab}
+                onActive={setInstallTab}
+                commands={commands}
+              />
+            )}
+          </motion.div>
+
+          <motion.div
             initial={{ opacity: 0, scale: WORKSPACE.initialScale }}
-            animate={{ opacity: stage >= 2 ? 1 : 0, scale: stage >= 2 ? 1 : WORKSPACE.initialScale }}
+            animate={{ opacity: stage >= 3 ? 1 : 0, scale: stage >= 3 ? 1 : WORKSPACE.initialScale }}
             transition={WORKSPACE.spring}
           >
             <Tabs.Root value={workspaceTab} onValueChange={setWorkspaceTab} className="overflow-hidden rounded-xl border border-border/60 bg-[#0d0d0d]">
@@ -194,23 +211,6 @@ function ComponentDetail() {
                 {isPaid ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} />}
               </Tabs.Content>
             </Tabs.Root>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: RISE.offsetY }}
-            animate={{ opacity: stage >= 4 ? 1 : 0, y: stage >= 4 ? 0 : RISE.offsetY }}
-            transition={RISE.spring}
-          >
-            {isPaid ? (
-              <CommercialTray item={item} />
-            ) : (
-              <InstallTray
-                tabs={enabledInstallTabs}
-                active={installTab}
-                onActive={setInstallTab}
-                commands={commands}
-              />
-            )}
           </motion.div>
         </div>
 
