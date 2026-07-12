@@ -397,6 +397,35 @@ export const purchases = pgTable(
  * Paid promotion: a creator buys clearly-labeled featured placement for a
  * component over a time window. Never mixed with organic rank or trust.
  */
+/**
+ * Verified install receipts from the Modulora CLI. Each row is one `modulora
+ * add` that completed. `verified` means the CLI-computed digest matched the
+ * published digest at install time — the attribution signal for profit share
+ * and analytics. userId is set when the installer was signed in.
+ */
+export const installReceipts = pgTable(
+  "install_receipts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    componentVersionId: uuid("component_version_id").references(() => componentVersions.id, {
+      onDelete: "set null",
+    }),
+    userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+    version: text("version").notNull().default(""),
+    digest: text("digest").notNull(),
+    verified: boolean("verified").notNull().default(false),
+    client: text("client").notNull().default("modulora-cli"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("install_receipts_component").on(t.componentId),
+    index("install_receipts_user").on(t.userId),
+  ],
+);
+
 export const promotions = pgTable(
   "promotions",
   {

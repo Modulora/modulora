@@ -29,6 +29,7 @@ import { Route as ISplatRouteImport } from './routes/i.$'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
+import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-receipt'
 import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
@@ -134,6 +135,11 @@ const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
   path: '/api/upload-avatar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInstallReceiptRoute = ApiInstallReceiptRouteImport.update({
+  id: '/api/install-receipt',
+  path: '/api/install-receipt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardEditNameRoute = DashboardEditNameRouteImport.update({
   id: '/edit/$name',
   path: '/edit/$name',
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
+  '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
+  '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
+  '/api/install-receipt': typeof ApiInstallReceiptRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signin'
     | '/terms'
+    | '/api/install-receipt'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/new'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signin'
     | '/terms'
+    | '/api/install-receipt'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/new'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signin'
     | '/terms'
+    | '/api/install-receipt'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/new'
@@ -325,6 +337,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
   TermsRoute: typeof TermsRoute
+  ApiInstallReceiptRoute: typeof ApiInstallReceiptRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   ISplatRoute: typeof ISplatRoute
   RSplatRoute: typeof RSplatRoute
@@ -478,6 +491,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUploadAvatarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/install-receipt': {
+      id: '/api/install-receipt'
+      path: '/api/install-receipt'
+      fullPath: '/api/install-receipt'
+      preLoaderRoute: typeof ApiInstallReceiptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/edit/$name': {
       id: '/dashboard/edit/$name'
       path: '/edit/$name'
@@ -539,6 +559,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
   TermsRoute: TermsRoute,
+  ApiInstallReceiptRoute: ApiInstallReceiptRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   ISplatRoute: ISplatRoute,
   RSplatRoute: RSplatRoute,
