@@ -17,6 +17,7 @@ export interface CurrentUser {
   name: string;
   image: string | null;
   username: string | null;
+  usernameChangedAt: string | null;
   bio: string | null;
   websiteUrl: string | null;
   githubUrl: string | null;
@@ -45,6 +46,7 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     name: row.name,
     image: row.image,
     username: row.username,
+    usernameChangedAt: row.usernameChangedAt?.toISOString() ?? null,
     bio: row.bio,
     websiteUrl: row.websiteUrl,
     githubUrl: row.githubUrl,

@@ -36,6 +36,7 @@ export const users = pgTable("user", {
   image: text("image"),
   // Modulora profile fields:
   username: text("username").unique(),
+  usernameChangedAt: timestamp("username_changed_at"),
   bio: text("bio"),
   websiteUrl: text("website_url"),
   githubUrl: text("github_url"),

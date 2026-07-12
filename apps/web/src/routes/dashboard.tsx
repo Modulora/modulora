@@ -118,7 +118,7 @@ function Dashboard() {
               icon={UserRound}
               label="Public profile"
               to="/$username"
-              params={{ username: `@${summary.namespace}` }}
+              params={{ username: summary.namespace }}
             />
           ) : (
             <SidebarRow icon={UserRound} label="Public profile" muted />
@@ -203,7 +203,7 @@ function Dashboard() {
               to={summary.namespace ? "/$username" : undefined}
               params={
                 summary.namespace
-                  ? { username: `@${summary.namespace}` }
+                  ? { username: summary.namespace }
                   : undefined
               }
             />

@@ -3,37 +3,10 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { count, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
+import { RESERVED_USERNAMES, USERNAME_PATTERN } from "./username";
 
-const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 const EMAIL_PATTERN = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,24}$/;
-const RESERVED = new Set([
-  "admin",
-  "administrator",
-  "api",
-  "app",
-  "auth",
-  "billing",
-  "blog",
-  "cli",
-  "cloud",
-  "components",
-  "dashboard",
-  "docs",
-  "help",
-  "modulora",
-  "official",
-  "registry",
-  "root",
-  "security",
-  "settings",
-  "shadcn",
-  "spec",
-  "support",
-  "system",
-  "team",
-  "waitlist",
-  "www",
-]);
+const RESERVED = RESERVED_USERNAMES;
 
 export interface WaitlistResult {
   ok: boolean;

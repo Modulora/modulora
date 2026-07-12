@@ -27,6 +27,7 @@ import {
   PackageCheck,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   Smartphone,
   Sun,
   Tablet,
@@ -34,6 +35,8 @@ import {
 } from "lucide-react";
 
 import { ComponentPreview } from "@/components/component-preview";
+import { ShadcnIcon } from "@/components/brand-icons";
+import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { highlight, langForPath } from "@/lib/highlight";
@@ -144,7 +147,7 @@ function ComponentDetail() {
         className="flex flex-col gap-2"
       >
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/$username" params={{ username: `@${item.namespace}` }} className="hover:text-foreground">@{item.namespace}</Link>
+          <Link to="/$username" params={{ username: item.namespace }} className="hover:text-foreground">@{item.namespace}</Link>
           <span>·</span><span>v{item.version}</span><span>·</span><span>React</span>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -435,13 +438,28 @@ function InstallTray({ tabs, active, onActive, commands }: { tabs: string[]; act
     <Tabs.Root value={active} onValueChange={onActive} className="overflow-hidden rounded-xl border border-border/60 bg-card/35">
       <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
         <Tabs.List className="flex items-center gap-1">
-          {tabs.map((tab) => <Tabs.Trigger key={tab} value={tab} className="rounded-md px-3 py-1.5 text-xs capitalize text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-foreground">{tab === "modulora-cli" ? "Modulora CLI" : tab === "shadcn" ? "shadcn" : "Agent prompt"}</Tabs.Trigger>)}
+          {tabs.map((tab) => (
+            <Tabs.Trigger
+              key={tab}
+              value={tab}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-accent data-[state=active]:text-foreground [&_svg]:size-3.5"
+            >
+              <InstallTabIcon tab={tab} />
+              {tab === "modulora-cli" ? "Modulora CLI" : tab === "shadcn" ? "shadcn" : "Prompt"}
+            </Tabs.Trigger>
+          ))}
         </Tabs.List>
         <CopyButton value={commands[active] ?? ""} />
       </div>
       {tabs.map((tab) => <Tabs.Content key={tab} value={tab} className="outline-none"><pre className="overflow-x-auto bg-[#080808] p-4 font-mono text-sm text-zinc-300"><code>{commands[tab]}</code></pre></Tabs.Content>)}
     </Tabs.Root>
   );
+}
+
+function InstallTabIcon({ tab }: { tab: string }) {
+  if (tab === "shadcn") return <ShadcnIcon />;
+  if (tab === "modulora-cli") return <Logo />;
+  return <Sparkles />;
 }
 
 function CommercialTray({ item }: { item: CatalogItem }) {

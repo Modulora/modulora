@@ -197,7 +197,7 @@ function UserMenu({ user }: { user: CurrentUser }) {
         </DropdownMenuItem>
         {user.username ? (
           <DropdownMenuItem asChild>
-            <Link to="/$username" params={{ username: `@${user.username}` }}>
+            <Link to="/$username" params={{ username: user.username }}>
               <UserIcon />
               Profile
             </Link>
