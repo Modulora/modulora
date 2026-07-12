@@ -8,5 +8,8 @@
     { "pattern": "modulora.dev", "custom_domain": true },
     { "pattern": "www.modulora.dev", "custom_domain": true }
   ],
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "modulora-media" }
+  ],
   "observability": { "enabled": true }
 }

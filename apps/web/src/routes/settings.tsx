@@ -6,10 +6,10 @@
  *  160ms   profile card rises
  *  260ms   danger zone fades in
  * ───────────────────────────────────────────────────────── */
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { Check, Github, Loader2, X } from "lucide-react";
+import { Check, Github, Loader2, Upload, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,16 +143,21 @@ function Settings() {
         <div className="flex items-center gap-4">
           <Avatar username={form.username} name={user.name} imageUrl={form.imageUrl} />
           <div className="flex-1">
-            <Label htmlFor="imageUrl">Avatar URL</Label>
-            <Input
-              id="imageUrl"
-              value={form.imageUrl}
-              onChange={(event) => set("imageUrl", event.target.value)}
-              placeholder="https://…/avatar.png"
-              autoComplete="off"
-              className="mt-2"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">Paste an image URL. Upload lands with hosted storage.</p>
+            <Label htmlFor="imageUrl">Avatar</Label>
+            <div className="mt-2 flex items-center gap-2">
+              <Input
+                id="imageUrl"
+                value={form.imageUrl}
+                onChange={(event) => set("imageUrl", event.target.value)}
+                placeholder="https://…/avatar.png"
+                autoComplete="off"
+                className="flex-1"
+              />
+              <AvatarUpload
+                onUploaded={(url) => set("imageUrl", url)}
+              />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Upload an image (PNG/JPEG/WebP, under 2 MB) or paste a URL.</p>
           </div>
         </div>
 
@@ -375,6 +380,44 @@ function HandleStatusLine({ status, username }: { status: HandleStatus; username
     <p className="text-xs text-muted-foreground">
       Your components live at modulora.dev/{username || "handle"}.
     </p>
+  );
+}
+
+function AvatarUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setPending(true);
+    setError(null);
+    try {
+      const body = new FormData();
+      body.set("file", file);
+      const res = await fetch("/api/upload-avatar", { method: "POST", body });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        setError(data.error ?? "Upload failed.");
+        return;
+      }
+      onUploaded(data.url);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <>
+      <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={onFile} />
+      <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => inputRef.current?.click()}>
+        {pending ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+        Upload
+      </Button>
+      {error ? <span className="text-xs text-destructive">{error}</span> : null}
+    </>
   );
 }
 

@@ -15,7 +15,9 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
+import { Route as ISplatRouteImport } from './routes/i.$'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
+import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -49,10 +51,20 @@ const ComponentsIndexRoute = ComponentsIndexRouteImport.update({
   path: '/components/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ISplatRoute = ISplatRouteImport.update({
+  id: '/i/$',
+  path: '/i/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardNewRoute = DashboardNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => DashboardRoute,
+} as any)
+const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
+  id: '/api/upload-avatar',
+  path: '/api/upload-avatar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ComponentsNamespaceNameRoute = ComponentsNamespaceNameRouteImport.update({
   id: '/components/$namespace/$name',
@@ -71,7 +83,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/new': typeof DashboardNewRoute
+  '/i/$': typeof ISplatRoute
   '/components/': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -82,7 +96,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/new': typeof DashboardNewRoute
+  '/i/$': typeof ISplatRoute
   '/components': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -94,7 +110,9 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/new': typeof DashboardNewRoute
+  '/i/$': typeof ISplatRoute
   '/components/': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -107,7 +125,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/signin'
+    | '/api/upload-avatar'
     | '/dashboard/new'
+    | '/i/$'
     | '/components/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
@@ -118,7 +138,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/signin'
+    | '/api/upload-avatar'
     | '/dashboard/new'
+    | '/i/$'
     | '/components'
     | '/api/auth/$'
     | '/components/$namespace/$name'
@@ -129,7 +151,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/signin'
+    | '/api/upload-avatar'
     | '/dashboard/new'
+    | '/i/$'
     | '/components/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
@@ -141,6 +165,8 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
+  ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
+  ISplatRoute: typeof ISplatRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
@@ -190,12 +216,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComponentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/i/$': {
+      id: '/i/$'
+      path: '/i/$'
+      fullPath: '/i/$'
+      preLoaderRoute: typeof ISplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/new': {
       id: '/dashboard/new'
       path: '/new'
       fullPath: '/dashboard/new'
       preLoaderRoute: typeof DashboardNewRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/api/upload-avatar': {
+      id: '/api/upload-avatar'
+      path: '/api/upload-avatar'
+      fullPath: '/api/upload-avatar'
+      preLoaderRoute: typeof ApiUploadAvatarRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/components/$namespace/$name': {
       id: '/components/$namespace/$name'
@@ -232,6 +272,8 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
+  ApiUploadAvatarRoute: ApiUploadAvatarRoute,
+  ISplatRoute: ISplatRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,
