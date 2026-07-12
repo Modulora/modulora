@@ -1,0 +1,47 @@
+---
+title: CLI reference
+description: Every modulora command, flag, and exit code.
+---
+
+Install: `npm install -g modulora` (Node 20+). All commands work against
+`https://modulora.dev` by default; set `MODULORA_REGISTRY_URL` to override.
+
+## `modulora info <ref>`
+
+Show a component's metadata, files, and published digest.
+
+```bash
+modulora info @creator/component
+modulora info @creator/component@1.2.0 --json
+```
+
+## `modulora add <ref>`
+
+Install after verifying the content digest.
+
+```bash
+modulora add @creator/component --dry-run   # plan only, writes nothing
+modulora add @creator/component             # verify → plan → write
+```
+
+| Flag | Effect |
+| --- | --- |
+| `--dry-run` | Show the plan and verification result; write nothing. |
+| `--yes`, `-y` | Don't prompt before overwriting existing files. |
+| `--force` | Write even if the digest is unverifiable or mismatches. |
+| `--json` | Machine-readable plan/result for agents and CI. |
+| `--cwd <dir>` | Target project directory. |
+
+Digest mismatch → exit `1` and no writes. Files land under `src/` when the
+project has one. After a successful install the CLI reports an install
+receipt (best-effort, never blocks) — receipts power creator attribution.
+
+## `modulora login` / `whoami` / `logout`
+
+Device-flow sign-in: the CLI shows a code, you approve it in the browser.
+The token is stored at `~/.config/modulora/auth.json` (0600), per registry
+origin; `MODULORA_TOKEN` overrides for CI. Needed for purchased components.
+
+## Exit codes
+
+`0` success · `1` failure (including digest mismatch) · `130` user aborted.

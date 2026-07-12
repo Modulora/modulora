@@ -54,6 +54,7 @@ const ACTIONS = {
 
 const NAV_LINKS = [
   { label: "Components", to: "/components" as const },
+  { label: "Docs", to: "/docs/$" as const, params: { _splat: "" } },
 ];
 
 export function AppShell({
@@ -119,6 +120,7 @@ export function AppShell({
               >
                 <Link
                   to={link.to}
+                  params={"params" in link ? (link.params as never) : undefined}
                   className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
                 >
                   {link.label}
@@ -152,6 +154,7 @@ export function AppShell({
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground sm:flex-row">
           <span>© {new Date().getFullYear()} Modulora</span>
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link to="/docs/$" params={{ _splat: "" }} className="transition-colors hover:text-foreground">Docs</Link>
             <Link to="/profit-share" className="transition-colors hover:text-foreground">Earnings</Link>
             <Link to="/publishing-policy" className="transition-colors hover:text-foreground">Publishing policy</Link>
             <Link to="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>

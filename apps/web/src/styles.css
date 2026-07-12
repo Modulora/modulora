@@ -91,6 +91,42 @@ body {
   mix-blend-mode: overlay;
 }
 
+/* Docs prose: hand-rolled typography for MDX content (no plugin). */
+.docs-prose {
+  font-size: 0.925rem;
+  line-height: 1.75;
+  color: var(--color-foreground);
+}
+.docs-prose h2 {
+  margin: 2.25rem 0 0.75rem;
+  scroll-margin-top: 5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.docs-prose h3 {
+  margin: 1.75rem 0 0.5rem;
+  scroll-margin-top: 5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.docs-prose p { margin: 0.75rem 0; color: color-mix(in oklab, var(--color-foreground) 82%, var(--color-muted-foreground)); }
+.docs-prose a { color: var(--color-foreground); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, var(--color-foreground) 35%, transparent); }
+.docs-prose a:hover { text-decoration-color: var(--color-foreground); }
+.docs-prose ul, .docs-prose ol { margin: 0.75rem 0; padding-left: 1.4rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.docs-prose ul { list-style: disc; }
+.docs-prose ol { list-style: decimal; }
+.docs-prose li { color: color-mix(in oklab, var(--color-foreground) 82%, var(--color-muted-foreground)); }
+.docs-prose li::marker { color: var(--color-muted-foreground); }
+.docs-prose code { font-family: var(--font-mono, ui-monospace), monospace; font-size: 0.85em; background: color-mix(in oklab, var(--color-secondary) 70%, transparent); border: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); border-radius: 5px; padding: 0.1rem 0.35rem; }
+.docs-prose pre { margin: 1rem 0; overflow-x: auto; border: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); border-radius: 10px; background: #0b0b0b; padding: 1rem 1.15rem; font-size: 0.825rem; line-height: 1.65; }
+.docs-prose pre code { background: none; border: none; padding: 0; font-size: inherit; }
+.docs-prose table { margin: 1rem 0; width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.docs-prose th { text-align: left; font-weight: 500; color: var(--color-muted-foreground); border-bottom: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); padding: 0.5rem 0.75rem; }
+.docs-prose td { border-bottom: 1px solid color-mix(in oklab, var(--color-border) 40%, transparent); padding: 0.5rem 0.75rem; }
+.docs-prose blockquote { margin: 1rem 0; border-left: 2px solid var(--color-border); padding-left: 1rem; color: var(--color-muted-foreground); }
+.docs-prose hr { margin: 2rem 0; border-color: color-mix(in oklab, var(--color-border) 60%, transparent); }
+
 /* Preview loading: Modulora logo breathing in/out. */
 @keyframes logo-breathe {
   0%, 100% { opacity: 0.12; }

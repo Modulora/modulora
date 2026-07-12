@@ -1,0 +1,48 @@
+---
+title: Installing components
+description: Verified installs with the Modulora CLI, or the shadcn CLI.
+---
+
+## With the Modulora CLI (verified)
+
+```bash
+npx modulora add @creator/component
+```
+
+The CLI fetches the release, **recomputes its content digest locally and
+compares it to the published digest**, shows a write plan, then writes the
+files. It never runs an install script.
+
+Verification outcomes:
+
+- **verified** — the received files match the published digest exactly.
+- **mismatch** — they don't; the CLI refuses to write (`--force` overrides,
+  don't use it unless you understand the risk).
+- **unverifiable** — the release has no published digest; the CLI asks first.
+
+Useful flags: `--dry-run` (plan only), `--yes` (skip overwrite prompts),
+`--json` (machine-readable, for agents and CI), `--cwd <dir>`.
+
+## Purchased components
+
+Paid components are tied to your account. Sign in once:
+
+```bash
+npx modulora login   # approve in the browser
+npx modulora add @creator/pro-component
+```
+
+Anonymous or unentitled installs get a `402` with the purchase link. Check
+the license you agreed to — some licenses don't permit committing the source
+to public repositories.
+
+## With the shadcn CLI
+
+Every free component also works with shadcn:
+
+```bash
+npx shadcn@latest add https://modulora.dev/r/@creator/component
+```
+
+Note the shadcn path doesn't verify the digest — the Modulora CLI is the
+verified route.
