@@ -83,6 +83,8 @@ export const TERMS_OF_SERVICE: LegalSection[] = [
     body: [
       "Free components, public profiles, open-source code, and installs remain free.",
       "Where paid features or creator earnings apply, specific commercial terms will be presented before you opt in.",
+      "Paid components sold on Modulora are licensed under terms set by the seller and accepted by the buyer at checkout. That license is a contract between buyer and seller: Modulora records the agreement (what was accepted and when) and facilitates payment, but is not a party to the license and is not responsible for enforcing it.",
+      "We support sellers in a license dispute with documentation of the sale and the recorded agreement, but resolution is between the parties.",
     ],
   },
   {

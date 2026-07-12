@@ -46,8 +46,10 @@ export const PUBLISHING_POLICY: PolicySection[] = [
   {
     title: "Paid components",
     points: [
-      "For paid listings, you fulfill delivery and support. Modulora does not receive, scan, or review the paid source, and the listing says so.",
-      "Purchase links must resolve to a domain you have verified.",
+      "Selling on Modulora: you set the price and the buyer license (a standard template or your own terms). Buyers must accept your license before checkout, and we record that agreement on every sale.",
+      "Your license is a contract between you and the buyer. Modulora does not enforce it, but will support you with documentation of the sale and the recorded agreement if a dispute arises.",
+      "You must hold the rights to everything you sell. Selling source you don't own is grounds for removal and account suspension.",
+      "External paid listings (sold on your own site): you fulfill delivery and support. Modulora does not receive, scan, or review the paid source, and the listing says so. Purchase links must resolve to a domain you have verified.",
     ],
   },
 ];

@@ -15,6 +15,7 @@ import { categoryLabel } from "./taxonomy";
 import { getCurrentUser } from "./session";
 import { normalizeDomain } from "./domains";
 import { hasEntitlement } from "./marketplace";
+import { licenseTemplate, resolveLicenseText } from "./license";
 
 function db() {
   const url = process.env.DATABASE_URL;
@@ -167,11 +168,21 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
 
     // Marketplace pricing: an active price gates the source behind purchase.
     const [price] = await database
-      .select({ unitAmount: schema.componentPrices.unitAmount })
+      .select({
+        unitAmount: schema.componentPrices.unitAmount,
+        licenseTemplate: schema.componentPrices.licenseTemplate,
+        licenseText: schema.componentPrices.licenseText,
+      })
       .from(schema.componentPrices)
       .where(and(eq(schema.componentPrices.componentId, row.component.id), eq(schema.componentPrices.active, true)))
       .limit(1);
     const marketplacePrice = price?.unitAmount ?? null;
+    const marketplaceLicense = price
+      ? {
+          name: licenseTemplate(price.licenseTemplate).name,
+          text: resolveLicenseText(price.licenseTemplate, price.licenseText),
+        }
+      : null;
     const entitled =
       marketplacePrice === null
         ? true
@@ -194,7 +205,7 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       entitled ? files.map((file) => ({ path: file.path, content: file.content ?? "" })) : [],
       evidence,
     );
-    return { ...item, marketplacePrice, entitled };
+    return { ...item, marketplacePrice, marketplaceLicense, entitled };
   });
 
 /** Curator-only: load a component's full detail by id, regardless of status. */

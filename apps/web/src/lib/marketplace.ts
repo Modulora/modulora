@@ -17,6 +17,7 @@ import { and, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { getStripe, applicationFee } from "./stripe";
+import { LICENSE_TEMPLATES, resolveLicenseText } from "./license";
 
 /** Featured placement: flat price for a fixed window. */
 export const FEATURED_PRICE_CENTS = 1200;
@@ -87,9 +88,11 @@ export const startPromotion = createServerFn({ method: "POST" })
 /* ── Paid listing pricing ───────────────────────────────── */
 
 export const setComponentPrice = createServerFn({ method: "POST" })
-  .validator((data: { name: string; amount: number | null }) => ({
+  .validator((data: { name: string; amount: number | null; licenseTemplate?: string; licenseText?: string }) => ({
     name: String(data.name ?? "").trim().toLowerCase(),
     amount: data.amount === null ? null : Math.round(Number(data.amount)),
+    licenseTemplate: String(data.licenseTemplate ?? "modulora-commercial-v1"),
+    licenseText: String(data.licenseText ?? "").trim().slice(0, 20000),
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
     const request = getRequest();
@@ -100,6 +103,12 @@ export const setComponentPrice = createServerFn({ method: "POST" })
     }
     if (data.amount !== null && (data.amount < 100 || data.amount > 100000)) {
       return { ok: false, error: "Price must be between $1 and $1000." };
+    }
+    if (data.amount !== null && !LICENSE_TEMPLATES.some((t) => t.id === data.licenseTemplate)) {
+      return { ok: false, error: "Unknown license template." };
+    }
+    if (data.amount !== null && data.licenseTemplate === "custom" && data.licenseText.length < 40) {
+      return { ok: false, error: "Custom license terms must be at least 40 characters." };
     }
     const db = getDb();
     if (!db) return { ok: false, error: "Database is not configured." };
@@ -116,7 +125,14 @@ export const setComponentPrice = createServerFn({ method: "POST" })
     // Deactivate any existing price, then set the new one (null = free again).
     await db.update(schema.componentPrices).set({ active: false, updatedAt: new Date() }).where(eq(schema.componentPrices.componentId, component.id));
     if (data.amount !== null) {
-      await db.insert(schema.componentPrices).values({ componentId: component.id, unitAmount: data.amount, currency: "usd", active: true });
+      await db.insert(schema.componentPrices).values({
+        componentId: component.id,
+        unitAmount: data.amount,
+        currency: "usd",
+        active: true,
+        licenseTemplate: data.licenseTemplate,
+        licenseText: data.licenseTemplate === "custom" ? data.licenseText : null,
+      });
     }
     return { ok: true };
   });
@@ -124,9 +140,10 @@ export const setComponentPrice = createServerFn({ method: "POST" })
 /* ── Buy a paid listing ─────────────────────────────────── */
 
 export const buyComponent = createServerFn({ method: "POST" })
-  .validator((data: { namespace: string; name: string }) => ({
+  .validator((data: { namespace: string; name: string; acceptLicense?: boolean }) => ({
     namespace: String(data.namespace ?? "").trim().toLowerCase(),
     name: String(data.name ?? "").trim().toLowerCase(),
+    acceptLicense: Boolean(data.acceptLicense),
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; url?: string; error?: string }> => {
     const stripe = getStripe();
@@ -146,6 +163,7 @@ export const buyComponent = createServerFn({ method: "POST" })
       .limit(1);
     if (!row?.price || !row.sellerId) return { ok: false, error: "This component isn't for sale." };
     if (row.sellerId === user.id) return { ok: false, error: "You own this component." };
+    if (!data.acceptLicense) return { ok: false, error: "You must agree to the seller's license terms first." };
 
     const [seller] = await db.select({ stripeAccountId: schema.users.stripeAccountId, payoutsEnabled: schema.users.payoutsEnabled }).from(schema.users).where(eq(schema.users.id, row.sellerId)).limit(1);
     if (!seller?.stripeAccountId || !seller.payoutsEnabled) return { ok: false, error: "The seller can't accept payments yet." };
@@ -161,7 +179,19 @@ export const buyComponent = createServerFn({ method: "POST" })
     const fee = applicationFee(amount);
     const [purchase] = await db
       .insert(schema.purchases)
-      .values({ componentId: row.component.id, buyerUserId: user.id, sellerUserId: row.sellerId, amount, feeAmount: fee, currency: "usd", status: "pending" })
+      .values({
+        componentId: row.component.id,
+        buyerUserId: user.id,
+        sellerUserId: row.sellerId,
+        amount,
+        feeAmount: fee,
+        currency: "usd",
+        status: "pending",
+        // Provable agreement log: exactly what the buyer accepted, and when.
+        licenseTemplate: row.price.licenseTemplate,
+        licenseTextSnapshot: resolveLicenseText(row.price.licenseTemplate, row.price.licenseText),
+        licenseAcceptedAt: new Date(),
+      })
       .returning({ id: schema.purchases.id });
 
     const origin = originOf();

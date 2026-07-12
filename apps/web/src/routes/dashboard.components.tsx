@@ -22,6 +22,7 @@ import {
 import { deleteMyComponent, fetchMyComponents, type MyComponent } from "@/lib/catalog-db";
 import { confirmCheckout, setComponentPrice, startPromotion } from "@/lib/marketplace";
 import { creatorNet, platformFee, MARKETPLACE_FEE_PERCENT } from "@/lib/pricing";
+import { LICENSE_TEMPLATES } from "@/lib/license";
 import { Input } from "@/components/ui/input";
 import { Tag } from "lucide-react";
 
@@ -139,13 +140,15 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [dollars, setDollars] = useState(component.marketplacePrice != null ? String(component.marketplacePrice / 100) : "");
+  const [licenseTemplate, setLicenseTemplate] = useState<string>("modulora-commercial-v1");
+  const [licenseText, setLicenseText] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function save(amount: number | null) {
     setPending(true);
     setError(null);
-    const res = await setComponentPrice({ data: { name: component.name, amount } });
+    const res = await setComponentPrice({ data: { name: component.name, amount, licenseTemplate, licenseText } });
     setPending(false);
     if (!res.ok) {
       setError(res.error ?? "Could not save.");
@@ -181,6 +184,7 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
               <Input value={dollars} onChange={(e) => setDollars(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="29" className="h-9" inputMode="decimal" />
             </div>
             <EarningsBreakdown dollars={dollars} />
+            <LicensePicker template={licenseTemplate} setTemplate={setLicenseTemplate} text={licenseText} setText={setLicenseText} />
             {error ? <p className="text-xs text-destructive">{error}</p> : null}
             <div className="flex gap-2">
               <Button type="button" className="flex-1" disabled={pending || !dollars} onClick={() => save(Math.round(parseFloat(dollars) * 100))}>
@@ -194,6 +198,39 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function LicensePicker({ template, setTemplate, text, setText }: { template: string; setTemplate: (v: string) => void; text: string; setText: (v: string) => void }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xs font-medium text-muted-foreground">Buyer license</p>
+      <div className="flex flex-col gap-1.5">
+        {LICENSE_TEMPLATES.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTemplate(t.id)}
+            className={`rounded-lg border p-2.5 text-left text-xs transition-colors ${template === t.id ? "border-foreground/40 bg-secondary/40" : "border-border/60 hover:border-border"}`}
+          >
+            <span className="font-medium">{t.name}</span>
+            {t.summary ? <span className="mt-0.5 block text-muted-foreground">{t.summary}</span> : null}
+          </button>
+        ))}
+      </div>
+      {template === "custom" ? (
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={5}
+          placeholder="Your license terms. Buyers must agree to these before purchase."
+          className="w-full rounded-lg border border-border/60 bg-transparent p-2.5 font-mono text-xs outline-none focus:border-foreground/40"
+        />
+      ) : null}
+      <p className="text-[11px] leading-relaxed text-muted-foreground">
+        Buyers must agree to these terms before checkout; we record the agreement on every sale. Modulora doesn&apos;t enforce licenses, but we support you with sale documentation and agreement logs if you need them.
+      </p>
+    </div>
   );
 }
 

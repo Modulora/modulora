@@ -331,6 +331,10 @@ export const componentPrices = pgTable(
     unitAmount: integer("unit_amount").notNull(), // minor units (cents)
     currency: text("currency").notNull().default("usd"),
     active: boolean("active").notNull().default(true),
+    // Seller-set license: a standard template id (e.g. "modulora-commercial-v1")
+    // or "custom" with the full text. Shown pre-purchase; buyer must agree.
+    licenseTemplate: text("license_template").notNull().default("modulora-commercial-v1"),
+    licenseText: text("license_text"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -358,6 +362,10 @@ export const purchases = pgTable(
     feeAmount: integer("fee_amount").notNull().default(0),
     currency: text("currency").notNull().default("usd"),
     status: text("status", { enum: ["pending", "paid", "refunded"] }).notNull().default("pending"),
+    // Buyer's license agreement, recorded at checkout creation (provable log).
+    licenseTemplate: text("license_template"),
+    licenseTextSnapshot: text("license_text_snapshot"),
+    licenseAcceptedAt: timestamp("license_accepted_at", { withTimezone: true }),
     stripeCheckoutSessionId: text("stripe_checkout_session_id"),
     stripePaymentIntentId: text("stripe_payment_intent_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -455,18 +455,53 @@ function formatPrice(cents: number): string {
 }
 
 function BuyButton({ item, children }: { item: CatalogItem; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const license = item.marketplaceLicense;
+
   async function onBuy() {
     setBusy(true);
-    const res = await buyComponent({ data: { namespace: item.namespace, name: item.name } });
-    if (res.ok && res.url) window.location.href = res.url;
-    else setBusy(false);
+    setError(null);
+    const res = await buyComponent({ data: { namespace: item.namespace, name: item.name, acceptLicense: agreed } });
+    if (res.ok && res.url) {
+      window.location.href = res.url;
+      return;
+    }
+    setError(res.error ?? "Could not start checkout.");
+    setBusy(false);
   }
+
   return (
-    <Button onClick={onBuy} disabled={busy} className="gap-2">
-      {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-      {children}
-    </Button>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setAgreed(false); setError(null); } }}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">{children}</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>License terms</DialogTitle>
+          <DialogDescription>
+            {license?.name ?? "Seller license"} — agree to the seller&apos;s terms to continue. Your agreement is recorded with the purchase.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-border/60 bg-secondary/20 p-3">
+          <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-muted-foreground">{license?.text || "The seller has not provided license text."}</pre>
+        </div>
+        <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm">
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-4 accent-foreground" />
+          <span>I agree to the seller&apos;s license terms for this component.</span>
+        </label>
+        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          This license is between you and the seller. Modulora records the agreement and facilitates the sale, but is not a party to — and does not enforce — its terms.
+        </p>
+        {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
+        <Button onClick={onBuy} disabled={busy || !agreed} className="mt-3 w-full gap-2">
+          {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+          Agree &amp; {typeof children === "string" ? children : "buy"}
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }
 
