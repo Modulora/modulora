@@ -145,21 +145,13 @@ function Catalog() {
   }
 
   return (
-    <div className="grid min-h-[calc(100svh-7.5rem)] gap-0 border border-border/60 bg-[#0d0d0d] lg:grid-cols-[17rem_1fr]">
+    <div className="grid gap-8 lg:grid-cols-[16rem_1fr]">
       <motion.aside
         initial={{ opacity: 0, x: RAIL.offsetX }}
         animate={{ opacity: stage >= 1 ? 1 : 0, x: stage >= 1 ? 0 : RAIL.offsetX }}
         transition={RAIL.spring}
-        className="border-b border-border/60 p-4 lg:border-b-0 lg:border-r"
       >
         <div className="sticky top-20 flex flex-col gap-5">
-          <div className="flex items-center gap-2 px-1">
-            <span className="flex size-7 items-center justify-center rounded-md bg-secondary">
-              <Grid2X2 className="size-3.5" />
-            </span>
-            <span className="font-semibold">Components</span>
-          </div>
-
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -222,12 +214,12 @@ function Catalog() {
         </div>
       </motion.aside>
 
-      <section className="min-w-0">
+      <section className="flex min-w-0 flex-col gap-5">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: stage >= 2 ? 1 : 0 }}
           transition={{ duration: 0.35 }}
-          className="flex h-14 items-center justify-between border-b border-border/60 px-5"
+          className="flex items-center justify-between"
         >
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Components</span>
@@ -248,7 +240,7 @@ function Catalog() {
         </motion.div>
 
         {items.length ? (
-          <div className={search.layout === "grid" ? "grid sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col"}>
+          <div className={search.layout === "grid" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3"}>
             {items.map((item, index) => (
               <motion.div
                 key={`${item.namespace}/${item.name}`}
@@ -277,7 +269,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
     <Link
       to="/components/$namespace/$name"
       params={{ namespace: item.namespace, name: item.name }}
-      className={`group flex border-border/60 transition-colors hover:bg-card/45 ${list ? "items-center gap-5 border-b p-4" : "flex-col border-b border-r p-5"}`}
+      className={`group flex overflow-hidden rounded-xl border border-border/60 bg-card/40 transition-colors hover:border-foreground/20 hover:bg-card/70 ${list ? "items-center gap-5 p-3" : "flex-col p-3"}`}
     >
       <ComponentPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} />
       <div className="flex min-w-0 flex-1 items-start justify-between gap-3 px-1 pb-1 pt-3">
