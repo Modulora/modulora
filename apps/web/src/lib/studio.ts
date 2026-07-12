@@ -22,6 +22,13 @@ export interface StudioSummary {
     components: number;
     libraries: number;
   };
+  /** The earning journey, from real state — drives the Overview checklist. */
+  journey: {
+    published: boolean;
+    approved: boolean;
+    payouts: boolean;
+    priced: boolean;
+  };
 }
 
 export const fetchStudioSummary = createServerFn({ method: "GET" }).handler(
@@ -35,6 +42,7 @@ export const fetchStudioSummary = createServerFn({ method: "GET" }).handler(
       user: { name: user.name, username: user.username, image: user.image },
       namespace: user.username,
       counts: { components: 0, libraries: 0 },
+      journey: { published: false, approved: false, payouts: user.payoutsEnabled ?? false, priced: false },
     };
 
     const databaseUrl = process.env.DATABASE_URL;
@@ -58,6 +66,20 @@ export const fetchStudioSummary = createServerFn({ method: "GET" }).handler(
             ),
           );
         summary.counts.components = row?.total ?? 0;
+        summary.journey.published = summary.counts.components > 0;
+
+        const [approved] = await db
+          .select({ total: count() })
+          .from(schema.components)
+          .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.reviewStatus, "approved")));
+        summary.journey.approved = (approved?.total ?? 0) > 0;
+
+        const [priced] = await db
+          .select({ total: count() })
+          .from(schema.componentPrices)
+          .innerJoin(schema.components, eq(schema.components.id, schema.componentPrices.componentId))
+          .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.componentPrices.active, true)));
+        summary.journey.priced = (priced?.total ?? 0) > 0;
       }
     } catch {
       // Counts are best-effort; an empty studio still renders.

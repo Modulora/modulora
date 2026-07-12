@@ -14,6 +14,7 @@ import { createFileRoute, getRouteApi, Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { ArrowRight, BarChart3, Blocks, Library, UserRound } from "lucide-react";
 import type { StudioSummary } from "@/lib/studio";
+import { JourneyChecklist, journeyComplete } from "@/components/journey";
 
 export const Route = createFileRoute("/dashboard/")({
   component: Dashboard,
@@ -78,6 +79,27 @@ function Dashboard() {
           . Your work at a glance.
         </p>
       </motion.div>
+
+      {!journeyComplete(summary.journey) ? (
+        <motion.div
+          initial={{ opacity: 0, y: RISE.offsetY }}
+          animate={{ opacity: stage >= 2 ? 1 : 0, y: stage >= 2 ? 0 : RISE.offsetY }}
+          transition={RISE.spring}
+          className="max-w-2xl"
+        >
+          <JourneyChecklist
+            journey={summary.journey}
+            renderLink={(href, children) => (
+              <Link
+                to={href}
+                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border/60 px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-accent/60"
+              >
+                {children}
+              </Link>
+            )}
+          />
+        </motion.div>
+      ) : null}
 
       <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
         {CONTENT_TYPES.map((type, i) => (
