@@ -38,6 +38,9 @@ import {
 } from "lucide-react";
 
 import { ComponentPreview } from "@/components/component-preview";
+import { ComponentSandbox } from "@/components/component-sandbox";
+import { PreviewToolbar } from "@/components/preview-toolbar";
+import { demoFiles as pickDemoFiles } from "@/lib/scaffold";
 import { ShadcnIcon } from "@/components/brand-icons";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
@@ -131,6 +134,11 @@ function ComponentDetail() {
   const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const [previewKey, setPreviewKey] = useState(0);
   const previewStageRef = useRef<HTMLDivElement>(null);
+
+  // Demo model: published components carry preview-only demo files; each demo's
+  // default export is a variant, rendered live in the sandbox.
+  const demos = useMemo(() => pickDemoFiles(item.files ?? []), [item.files]);
+  const [activeDemo, setActiveDemo] = useState<string>(demos[0]?.path ?? "");
   // Paid components are fulfilled by the creator; Modulora hosts no source.
   const isPaid = item.sourceModel !== "open-source";
 
@@ -215,22 +223,48 @@ function ComponentDetail() {
                   <WorkspaceTab value="code" icon={Code2}>{isPaid ? "Code" : "Raw code"}</WorkspaceTab>
                 </Tabs.List>
                 {workspaceTab === "preview" ? (
-                  <PreviewToolbar
-                    theme={previewTheme}
-                    onTheme={setPreviewTheme}
-                    viewport={viewport}
-                    onViewport={setViewport}
-                    onRefresh={() => setPreviewKey((value) => value + 1)}
-                    onFullscreen={() => void previewStageRef.current?.requestFullscreen()}
-                  />
+                  <div className="flex items-center gap-2">
+                    {demos.length > 1 ? (
+                      <select
+                        value={activeDemo}
+                        onChange={(event) => setActiveDemo(event.target.value)}
+                        aria-label="Demo variant"
+                        className="h-7 rounded-md border border-border/60 bg-transparent px-2 text-xs outline-none"
+                      >
+                        {demos.map((demo) => (
+                          <option key={demo.path} value={demo.path} className="bg-popover">
+                            {demo.path.split("/").pop()?.replace(/\.(tsx|jsx)$/, "")}
+                          </option>
+                        ))}
+                      </select>
+                    ) : null}
+                    <PreviewToolbar
+                      theme={previewTheme}
+                      onTheme={setPreviewTheme}
+                      viewport={viewport}
+                      onViewport={setViewport}
+                      onRefresh={() => setPreviewKey((value) => value + 1)}
+                      onFullscreen={() => void previewStageRef.current?.requestFullscreen()}
+                    />
+                  </div>
                 ) : (
                   <span className="text-xs text-muted-foreground">{item.category}</span>
                 )}
               </div>
               <Tabs.Content value="preview" className="outline-none">
                 <div ref={previewStageRef} className={`flex h-[36rem] items-center justify-center overflow-auto bg-[#181818] p-4 ${previewTheme === "dark" ? "[color-scheme:dark]" : "[color-scheme:light]"}`}>
-                  <div className={`w-full transition-[max-width] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] ${viewport === "mobile" ? "max-w-[390px]" : viewport === "tablet" ? "max-w-[768px]" : "max-w-none"}`}>
-                    <ComponentPreview key={previewKey} item={item} theme={previewTheme} interactive className="min-h-[30rem] w-full" />
+                  <div className={`h-full w-full transition-[max-width] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] ${viewport === "mobile" ? "max-w-[390px]" : viewport === "tablet" ? "max-w-[768px]" : "max-w-none"}`}>
+                    {demos.length > 0 && activeDemo ? (
+                      <ComponentSandbox
+                        key={previewKey}
+                        files={item.files ?? []}
+                        selectedDemo={activeDemo}
+                        theme={previewTheme}
+                        className="h-full w-full"
+                      />
+                    ) : (
+                      <ComponentPreview key={previewKey} item={item} theme={previewTheme} interactive className="min-h-[30rem] w-full" />
+                    )}
                   </div>
                 </div>
               </Tabs.Content>
@@ -280,55 +314,6 @@ function WorkspaceTab({ value, icon: Icon, children }: { value: string; icon: ty
   );
 }
 
-function PreviewToolbar({
-  theme,
-  onTheme,
-  viewport,
-  onViewport,
-  onRefresh,
-  onFullscreen,
-}: {
-  theme: "light" | "dark";
-  onTheme: (theme: "light" | "dark") => void;
-  viewport: "mobile" | "tablet" | "desktop";
-  onViewport: (viewport: "mobile" | "tablet" | "desktop") => void;
-  onRefresh: () => void;
-  onFullscreen: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <ToolbarGroup>
-        <ToolbarButton label="Mobile preview" active={viewport === "mobile"} onClick={() => onViewport("mobile")}><Smartphone /></ToolbarButton>
-        <ToolbarButton label="Tablet preview" active={viewport === "tablet"} onClick={() => onViewport("tablet")}><Tablet /></ToolbarButton>
-        <ToolbarButton label="Desktop preview" active={viewport === "desktop"} onClick={() => onViewport("desktop")}><Monitor /></ToolbarButton>
-      </ToolbarGroup>
-      <ToolbarGroup>
-        <ToolbarButton label="Light preview" active={theme === "light"} onClick={() => onTheme("light")}><Sun /></ToolbarButton>
-        <ToolbarButton label="Dark preview" active={theme === "dark"} onClick={() => onTheme("dark")}><Moon /></ToolbarButton>
-      </ToolbarGroup>
-      <ToolbarButton label="Reset preview" onClick={onRefresh}><RotateCcw /></ToolbarButton>
-      <ToolbarButton label="Fullscreen preview" onClick={onFullscreen}><Maximize2 /></ToolbarButton>
-    </div>
-  );
-}
-
-function ToolbarGroup({ children }: { children: ReactNode }) {
-  return <div className="mr-1 flex rounded-md border border-border/60 p-0.5">{children}</div>;
-}
-
-function ToolbarButton({ label, active, onClick, children }: { label: string; active?: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      aria-pressed={active}
-      onClick={onClick}
-      className={`flex size-7 items-center justify-center rounded transition-[background-color,color,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] active:scale-[0.96] [&_svg]:size-3.5 ${active ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-    >
-      {children}
-    </button>
-  );
-}
 
 function SourceFiles({ item, files }: { item: CatalogItem; files: HighlightedFile[] }) {
   const [active, setActive] = useState(files[0]?.path ?? "");

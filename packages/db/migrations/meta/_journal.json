@@ -43,6 +43,13 @@
       "when": 1783830775024,
       "tag": "0005_sour_phantom_reporter",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783834417342,
+      "tag": "0006_plain_zodiak",
+      "breakpoints": true
     }
   ]
 }

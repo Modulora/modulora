@@ -227,6 +227,11 @@ export const componentFiles = pgTable(
     path: text("path").notNull(),
     // shadcn file type: registry:component | registry:ui | registry:lib | ...
     fileType: text("file_type").notNull().default("registry:component"),
+    // Authoring role. Only `component` files ship in the install payload;
+    // demos/styles/system files exist for the live preview sandbox.
+    role: text("role", { enum: ["component", "demo", "styles", "system"] })
+      .notNull()
+      .default("component"),
     content: text("content"),
     storageKey: text("storage_key"),
     sizeBytes: integer("size_bytes").notNull().default(0),

@@ -14,6 +14,7 @@ import { isCategoryId } from "./taxonomy";
 import { verifyShadcnParity } from "./parity";
 import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
 import { fireReviewWebhook } from "./review";
+import { roleFor } from "./scaffold";
 import { contentDigest } from "./digest";
 
 const NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
@@ -128,6 +129,13 @@ export const publishComponent = createServerFn({ method: "POST" })
     }
     if (total > MAX_TOTAL_BYTES) return { ok: false, error: "Component exceeds the 1 MB size limit." };
 
+    // Role split: only component files ship in the install payload. Demos,
+    // styles, and system files exist for the live preview sandbox.
+    const installFiles = files.filter((file) => roleFor(file.path.trim()) === "component");
+    if (data.pricing !== "paid" && installFiles.length === 0) {
+      return { ok: false, error: "Add at least one component file under src/components/." };
+    }
+
     const isPaid = data.pricing === "paid";
     const purchaseUrl = String(data.purchaseUrl ?? "").trim();
     if (isPaid && !/^https?:\/\//i.test(purchaseUrl)) {
@@ -151,8 +159,8 @@ export const publishComponent = createServerFn({ method: "POST" })
     // namespace references (no URL) are legitimate but unverifiable. Only a
     // confirmed mismatch blocks the publish.
     let parity: Awaited<ReturnType<typeof verifyShadcnParity>> = { status: "unverifiable" };
-    if (!isPaid && channels.includes("shadcn") && files.length > 0) {
-      parity = await verifyShadcnParity(shadcnCommand, files);
+    if (!isPaid && channels.includes("shadcn") && installFiles.length > 0) {
+      parity = await verifyShadcnParity(shadcnCommand, installFiles);
       if (parity.status === "mismatch") return { ok: false, error: parity.error };
     }
 
@@ -187,7 +195,7 @@ export const publishComponent = createServerFn({ method: "POST" })
       description,
       files: isPaid
         ? []
-        : files.map((file) => ({ path: file.path.trim(), content: file.content, type: "registry:component" })),
+        : installFiles.map((file) => ({ path: file.path.trim(), content: file.content, type: "registry:component" })),
     };
 
     // Upsert the component row.
@@ -269,6 +277,7 @@ export const publishComponent = createServerFn({ method: "POST" })
           componentVersionId: createdVersion!.id,
           path: file.path.trim(),
           fileType: "registry:component",
+          role: roleFor(file.path.trim()),
           content: file.content,
           sizeBytes: new TextEncoder().encode(file.content).length,
           orderIndex: index,
@@ -289,15 +298,15 @@ export const publishComponent = createServerFn({ method: "POST" })
       },
     ];
 
-    if (!isPaid && files.length > 0) {
-      const digest = await contentDigest(files);
+    if (!isPaid && installFiles.length > 0) {
+      const digest = await contentDigest(installFiles);
       evidence.push({
         componentVersionId: createdVersion!.id,
         type: "content-integrity",
         status: "passed",
         issuer: "modulora-platform",
         toolVersion: "sha256",
-        scope: `Install delivers exactly these ${files.length} file(s) — digest sha256:${digest.slice(0, 16)}…`,
+        scope: `Install delivers exactly these ${installFiles.length} file(s) — digest sha256:${digest.slice(0, 16)}…`,
         limitations: "The Modulora CLI copies files and never runs install scripts; it verifies this digest before writing.",
       });
       const scan = scanFilesForSecrets(files);
@@ -350,10 +359,10 @@ export const publishComponent = createServerFn({ method: "POST" })
       .set({ latestVersionId: createdVersion!.id, updatedAt: new Date() })
       .where(eq(schema.components.id, componentId));
 
-    if (!isPaid && files.length > 0) {
+    if (!isPaid && installFiles.length > 0) {
       await db
         .update(schema.componentVersions)
-        .set({ contentSha256: await contentDigest(files) })
+        .set({ contentSha256: await contentDigest(installFiles) })
         .where(eq(schema.componentVersions.id, createdVersion!.id));
     }
 
