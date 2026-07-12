@@ -33,6 +33,8 @@ import {
   Sun,
   Tablet,
   Terminal,
+  TriangleAlert,
+  X,
 } from "lucide-react";
 
 import { ComponentPreview } from "@/components/component-preview";
@@ -567,32 +569,38 @@ function FactCard({ label, value, icon: Icon }: { label: string; value: string; 
   return <div className="rounded-xl border border-border/60 bg-card/35 p-4"><div className="flex items-center justify-between text-xs text-muted-foreground"><span>{label}</span><Icon className="size-3.5" /></div><p className="mt-2 text-2xl font-bold tracking-tight">{value}</p></div>;
 }
 
-const VERIFIED_TYPES = new Set(["domain-verified", "content-integrity", "install-parity", "publisher-identity"]);
-
 function EvidenceRow({ record }: { record: EvidenceRecord }) {
   const passed = record.status === "passed";
-  const showBadge = passed && VERIFIED_TYPES.has(record.type);
+  const leadIcon = passed ? (
+    <span className="mt-0.5 text-emerald-500"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={18} /></span>
+  ) : record.status === "warning" ? (
+    <span className="mt-0.5 flex size-[18px] items-center justify-center rounded-full bg-amber-500/15 text-amber-500"><TriangleAlert className="size-3" /></span>
+  ) : record.status === "failed" ? (
+    <span className="mt-0.5 flex size-[18px] items-center justify-center rounded-full bg-destructive/15 text-destructive"><X className="size-3" /></span>
+  ) : (
+    <span className="mt-0.5 flex size-[18px] items-center justify-center rounded-full bg-secondary text-muted-foreground"><Clipboard className="size-3" /></span>
+  );
+
+  const body = (
+    <div className="min-w-0">
+      <p className="truncate text-xs font-medium">{EVIDENCE_LABELS[record.type] ?? record.type}</p>
+      <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{record.scope ?? record.limitations ?? record.issuer}</p>
+    </div>
+  );
+
   return (
     <div className="flex gap-2.5 py-3 first:pt-0 last:pb-0">
-      <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${passed ? "bg-emerald-500/10 text-emerald-400" : "bg-secondary text-muted-foreground"}`}>{passed ? <Check className="size-3" /> : <Clipboard className="size-3" />}</span>
-      <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <p className="truncate text-xs font-medium">{EVIDENCE_LABELS[record.type] ?? record.type}</p>
-          {showBadge && record.limitations ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" aria-label="What this proves" className="text-emerald-500 outline-none">
-                  <HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{record.limitations}</TooltipContent>
-            </Tooltip>
-          ) : showBadge ? (
-            <span className="text-emerald-500"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} /></span>
-          ) : null}
-        </div>
-        <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{record.scope ?? record.limitations ?? record.issuer}</p>
-      </div>
+      {record.limitations ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" aria-label="What this proves" className="shrink-0 cursor-help outline-none">{leadIcon}</button>
+          </TooltipTrigger>
+          <TooltipContent side="left">{record.limitations}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <span className="shrink-0">{leadIcon}</span>
+      )}
+      {body}
     </div>
   );
 }
