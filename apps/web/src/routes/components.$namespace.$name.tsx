@@ -52,7 +52,8 @@ import {
 } from "@/components/ui/dialog";
 import { highlight, langForPath } from "@/lib/highlight";
 import { reportComponent, REPORT_REASONS } from "@/lib/report";
-import { findItem, type CatalogItem, type EvidenceRecord } from "../data/catalog";
+import { fetchCatalogDetail } from "@/lib/catalog-db";
+import { type CatalogItem, type EvidenceRecord } from "../data/catalog";
 
 interface HighlightedFile {
   path: string;
@@ -62,7 +63,7 @@ interface HighlightedFile {
 
 export const Route = createFileRoute("/components/$namespace/$name")({
   loader: async ({ params }) => {
-    const item = findItem(params.namespace, params.name);
+    const item = await fetchCatalogDetail({ data: { namespace: params.namespace, name: params.name } });
     if (!item) throw notFound();
     // Only open (free) components expose source; highlight server-side.
     const files: HighlightedFile[] =

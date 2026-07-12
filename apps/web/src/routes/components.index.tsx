@@ -37,8 +37,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ComponentPreview } from "@/components/component-preview";
 import { Input } from "@/components/ui/input";
+import { fetchCatalog } from "@/lib/catalog-db";
 import {
-  catalog,
   type CatalogItem,
   type EvidenceType,
   type SourceModel,
@@ -78,6 +78,7 @@ export const Route = createFileRoute("/components/")({
   validateSearch: createStandardSchemaV1(catalogSearchParams, {
     partialOutput: true,
   }),
+  loader: () => fetchCatalog(),
   component: Catalog,
 });
 
@@ -92,7 +93,6 @@ const RAIL = {
   spring: { type: "spring" as const, stiffness: 320, damping: 30 },
 };
 
-const CATEGORIES = [...new Set(catalog.map((item) => item.category))].sort();
 const SOURCE_OPTIONS: { value: (typeof SOURCE_MODELS)[number]; label: string }[] = [
   { value: "open-source", label: "Open source" },
   { value: "external-commercial", label: "External commercial" },
@@ -106,6 +106,11 @@ const EVIDENCE_OPTIONS: { value: (typeof EVIDENCE_FILTERS)[number]; label: strin
 ];
 
 function Catalog() {
+  const catalog = Route.useLoaderData();
+  const categories = useMemo(
+    () => [...new Set(catalog.map((item) => item.category))].sort(),
+    [catalog],
+  );
   const [search, setSearch] = useQueryStates(catalogSearchParams, {
     history: "replace",
     shallow: true,
@@ -124,7 +129,7 @@ function Catalog() {
 
   const items = useMemo(
     () => catalog.filter((item) => matches(item, search)),
-    [search],
+    [catalog, search],
   );
   const advancedCount = [search.source, search.license, search.evidence].filter(Boolean).length;
 
@@ -178,7 +183,7 @@ function Catalog() {
 
           <div className="flex flex-col gap-1">
             <RailHeading>Categories</RailHeading>
-            {CATEGORIES.map((category) => (
+            {categories.map((category) => (
               <RailButton
                 key={category}
                 icon={category === "Date & Time" ? CalendarDays : Table2}

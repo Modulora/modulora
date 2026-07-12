@@ -9,7 +9,8 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { Check, Github, Loader2, Upload, X } from "lucide-react";
+import { Check, Loader2, Upload, X } from "lucide-react";
+import { GitHubIcon } from "@/components/brand-icons";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -242,14 +243,16 @@ function Settings() {
           <h2 className="text-sm font-semibold">Connections</h2>
           <p className="mt-1 text-xs text-muted-foreground">Link accounts to sign in and publish.</p>
         </div>
-        <div className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-3">
-          <span className="flex items-center gap-2.5 text-sm"><Github className="size-4" /> GitHub</span>
-          {connections.github ? (
+        {connections.github ? (
+          <div className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-3">
+            <span className="flex items-center gap-2.5 text-sm"><GitHubIcon className="size-4" /> GitHub</span>
             <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="size-3.5" /> Connected</span>
-          ) : (
-            <Button type="button" variant="outline" size="sm" onClick={() => void linkSocial({ provider: "github", callbackURL: "/settings" })}>Connect</Button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <Button type="button" size="lg" className="w-full gap-2" onClick={() => void linkSocial({ provider: "github", callbackURL: "/settings" })}>
+            <GitHubIcon className="size-4" /> Connect to GitHub
+          </Button>
+        )}
       </motion.div>
 
       {connections.hasPassword ? (
