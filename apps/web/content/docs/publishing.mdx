@@ -16,6 +16,34 @@ Three file roles:
 Only component-role files ship in the install payload — and only they are
 covered by the content digest.
 
+## From the terminal
+
+The CLI publishes through the same pipeline — same validation, same review:
+
+```bash
+npx modulora login
+npx modulora publish            # reads ./registry-item.json
+```
+
+The manifest lists your files (contents load from disk); paths under
+`src/demos/` are preview-only, `src/components/**` is what installs:
+
+```json
+{
+  "name": "cli-badge",
+  "title": "CLI Badge",
+  "description": "A small badge component.",
+  "category": "data-display",
+  "files": [
+    { "path": "src/components/ui/cli-badge.tsx" },
+    { "path": "src/demos/default.tsx" }
+  ]
+}
+```
+
+Publishing requires accepting the [publishing policy](/publishing-policy) —
+interactively, or with `--accept-policy` in CI.
+
 ## Review
 
 Every submission goes through curator review before it lists publicly.

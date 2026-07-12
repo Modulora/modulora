@@ -46,6 +46,13 @@ origin; `MODULORA_TOKEN` overrides for CI. Needed for purchased components.
 
 `0` success · `1` failure (including digest mismatch) · `130` user aborted.
 
+## `modulora publish`
+
+Publish a component from a local `registry-item.json` manifest — the same
+pipeline and curator review as the web editor. Requires `modulora login`;
+accept the publishing policy interactively or with `--accept-policy` (CI).
+See [Publishing](/docs/publishing) for the manifest shape.
+
 ## `modulora mcp`
 
 A read-only [MCP](https://modelcontextprotocol.io) server over stdio, for AI

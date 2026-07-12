@@ -95,6 +95,16 @@ export const publishComponent = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<PublishResult> => {
     const request = getRequest();
     if (!request) return { ok: false, error: "No request context." };
+    return publishCore(data, request);
+  });
+
+/**
+ * The publish pipeline — shared by the web editor (server fn above) and the
+ * authenticated API used by `modulora publish`. Same validation, same
+ * curator-review gate, no divergence.
+ */
+export async function publishCore(data: PublishInput, request: Request): Promise<PublishResult> {
+  {
     const user = await getCurrentUser(request);
     if (!user) return { ok: false, error: "You must be signed in." };
     if (!user.username) return { ok: false, error: "Claim a username first." };
@@ -153,12 +163,13 @@ export const publishComponent = createServerFn({ method: "POST" })
     const channels = ALL_CHANNELS.filter((channel) => data.distributionChannels?.includes(channel));
     if (channels.length === 0) return { ok: false, error: "Enable at least one distribution channel." };
 
-    // Creator-run channels require the actual install command.
-    const shadcnCommand = String(data.shadcnCommand ?? "").trim();
-    const otherCliCommand = String(data.otherCliCommand ?? "").trim();
+    // Creator-run channels require the install command; default to the
+    // canonical one when omitted (the API path — the editor pre-fills it).
+    let shadcnCommand = String(data.shadcnCommand ?? "").trim();
     if (channels.includes("shadcn") && !shadcnCommand) {
-      return { ok: false, error: "Enter the shadcn install command." };
+      shadcnCommand = `npx shadcn@latest add https://modulora.dev/r/@${user.username}/${name}`;
     }
+    const otherCliCommand = String(data.otherCliCommand ?? "").trim();
     if (channels.includes("compatible-cli") && !otherCliCommand) {
       return { ok: false, error: "Enter the command for other CLIs." };
     }
@@ -401,4 +412,5 @@ export const publishComponent = createServerFn({ method: "POST" })
       .where(eq(schema.users.id, user.id));
 
     return { ok: true, namespace: user.username, name, version, status: "pending" as const };
-  });
+  }
+}

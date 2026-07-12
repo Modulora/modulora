@@ -36,6 +36,7 @@ import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analy
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
+import { Route as ApiPublishRouteImport } from './routes/api/publish'
 import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-receipt'
 import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard.settings.index'
 import { Route as DashboardReviewIndexRouteImport } from './routes/dashboard.review.index'
@@ -183,6 +184,11 @@ const ApiSearchRoute = ApiSearchRouteImport.update({
   path: '/api/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublishRoute = ApiPublishRouteImport.update({
+  id: '/api/publish',
+  path: '/api/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInstallReceiptRoute = ApiInstallReceiptRouteImport.update({
   id: '/api/install-receipt',
   path: '/api/install-receipt',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/publish': typeof ApiPublishRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/publish': typeof ApiPublishRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
@@ -334,6 +342,7 @@ export interface FileRoutesById {
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/publish': typeof ApiPublishRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
@@ -376,6 +385,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/terms'
     | '/api/install-receipt'
+    | '/api/publish'
     | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/admin'
@@ -415,6 +425,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/terms'
     | '/api/install-receipt'
+    | '/api/publish'
     | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/admin'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/terms'
     | '/api/install-receipt'
+    | '/api/publish'
     | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/admin'
@@ -495,6 +507,7 @@ export interface RootRouteChildren {
   SigninRoute: typeof SigninRoute
   TermsRoute: typeof TermsRoute
   ApiInstallReceiptRoute: typeof ApiInstallReceiptRoute
+  ApiPublishRoute: typeof ApiPublishRoute
   ApiSearchRoute: typeof ApiSearchRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   DocsSplatRoute: typeof DocsSplatRoute
@@ -697,6 +710,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/publish': {
+      id: '/api/publish'
+      path: '/api/publish'
+      fullPath: '/api/publish'
+      preLoaderRoute: typeof ApiPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/install-receipt': {
       id: '/api/install-receipt'
       path: '/api/install-receipt'
@@ -842,6 +862,7 @@ const rootRouteChildren: RootRouteChildren = {
   SigninRoute: SigninRoute,
   TermsRoute: TermsRoute,
   ApiInstallReceiptRoute: ApiInstallReceiptRoute,
+  ApiPublishRoute: ApiPublishRoute,
   ApiSearchRoute: ApiSearchRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   DocsSplatRoute: DocsSplatRoute,

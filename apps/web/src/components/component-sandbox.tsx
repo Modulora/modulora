@@ -20,6 +20,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { SandpackProvider, SandpackPreview, useSandpack } from "@codesandbox/sandpack-react";
+import { scaffoldFiles } from "@/lib/scaffold";
 import { Logo } from "@/components/logo";
 
 const TAILWIND_V4_CDN = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4";
@@ -154,10 +155,21 @@ export function ComponentSandbox({
     return () => window.clearTimeout(t);
   }, []);
 
+  // Components published without the editor scaffold (e.g. via the CLI) may
+  // omit system files the sandbox needs (lib/utils, index.css, package.json).
+  // Fall back to the scaffold defaults for any that are missing.
+  const completeFiles = useMemo(() => {
+    const present = new Set(files.map((f) => f.path));
+    const defaults = scaffoldFiles().filter(
+      (f) => ["src/index.css", "src/lib/utils.ts", "package.json"].includes(f.path) && !present.has(f.path),
+    );
+    return [...files, ...defaults];
+  }, [files]);
+
   const sandpackFiles = useMemo(() => {
     const mapped: Record<string, string> = {};
     let authorCss = "";
-    for (const file of files) {
+    for (const file of completeFiles) {
       if (file.path === "package.json") continue; // consumed by customSetup
       if (file.path === "src/index.css") {
         authorCss = file.content;
@@ -177,7 +189,7 @@ export function ComponentSandbox({
       `  return (\n    <div className="flex min-h-screen w-full items-center justify-center bg-background text-foreground p-8">\n      <Demo />\n    </div>\n  );\n}\n`;
 
     return mapped;
-  }, [files, selectedDemo, theme]);
+  }, [completeFiles, selectedDemo, theme]);
 
   const dependencies = useMemo(() => parseDependencies(files), [files]);
 
