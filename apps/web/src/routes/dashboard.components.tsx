@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { deleteMyComponent, fetchMyComponents, type MyComponent } from "@/lib/catalog-db";
 import { confirmCheckout, setComponentPrice, startPromotion } from "@/lib/marketplace";
-import { EarningsBreakdown, LicensePicker } from "@/components/money";
+import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
 import { Input } from "@/components/ui/input";
 import { Tag } from "lucide-react";
 
@@ -176,7 +176,7 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
           <div className="mt-4 flex flex-col gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
             <p className="text-sm text-amber-500">Connect payouts first — it takes about two minutes, and you keep 90% of every sale.</p>
             <Button asChild size="sm" className="self-start">
-              <Link to="/settings" hash="payouts">Set up payouts</Link>
+              <Link to="/dashboard/payouts">Set up payouts</Link>
             </Button>
           </div>
         ) : (
@@ -232,9 +232,7 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h2 className="truncate font-medium">{component.title}</h2>
-          <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${component.sourceModel === "open-source" ? "bg-secondary text-muted-foreground" : "border border-border/60 text-muted-foreground"}`}>
-            {component.sourceModel === "open-source" ? "Free" : "Paid"}
-          </span>
+          <PriceSeal paid={component.sourceModel !== "open-source" || component.marketplacePrice != null} label={component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />
           <ReviewBadge status={component.reviewStatus} />
         </div>
         <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">@{username}/{component.name}@{component.version} · {component.category}</p>

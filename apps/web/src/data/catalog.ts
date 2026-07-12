@@ -251,7 +251,7 @@ export function cn(...inputs: ClassValue[]) {
     purchase: {
       url: "https://northstar.dev/pro-table",
       domain: "northstar.dev",
-      priceLabel: "$49 one-time",
+      priceLabel: "$49",
     },
     title: "Pro Table",
     description:

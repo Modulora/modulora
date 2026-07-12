@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/tanstack-react";
-import { EarningsBreakdown, LicensePicker } from "./money";
+import { EarningsBreakdown, LicensePicker, PriceSeal } from "./money";
 
 const meta = { title: "Money/SellDialog" } satisfies Meta;
 export default meta;
@@ -21,6 +21,17 @@ export const Breakdown: Story = {
       </div>
     );
   },
+};
+
+export const Seals: Story = {
+  render: () => (
+    <div className="flex items-center gap-6">
+      <PriceSeal paid={false} />
+      <PriceSeal paid label="$19" />
+      <PriceSeal paid />
+      <PriceSeal size="md" paid label="$49" />
+    </div>
+  ),
 };
 
 export const License: Story = {

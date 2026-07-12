@@ -26,12 +26,18 @@ import { Route as ComponentsIndexRouteImport } from './routes/components.index'
 import { Route as ReviewIdRouteImport } from './routes/review.$id'
 import { Route as RSplatRouteImport } from './routes/r.$'
 import { Route as ISplatRouteImport } from './routes/i.$'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
+import { Route as DashboardPayoutsRouteImport } from './routes/dashboard.payouts'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-receipt'
+import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard.settings.index'
+import { Route as DashboardSettingsSecurityRouteImport } from './routes/dashboard.settings.security'
+import { Route as DashboardSettingsDangerRouteImport } from './routes/dashboard.settings.danger'
+import { Route as DashboardSettingsAppearanceRouteImport } from './routes/dashboard.settings.appearance'
 import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
@@ -122,9 +128,19 @@ const ISplatRoute = ISplatRouteImport.update({
   path: '/i/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardPurchasesRoute = DashboardPurchasesRouteImport.update({
   id: '/purchases',
   path: '/purchases',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPayoutsRoute = DashboardPayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardNewRoute = DashboardNewRouteImport.update({
@@ -152,6 +168,28 @@ const ApiInstallReceiptRoute = ApiInstallReceiptRouteImport.update({
   path: '/api/install-receipt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardSettingsRoute,
+} as any)
+const DashboardSettingsSecurityRoute =
+  DashboardSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => DashboardSettingsRoute,
+  } as any)
+const DashboardSettingsDangerRoute = DashboardSettingsDangerRouteImport.update({
+  id: '/danger',
+  path: '/danger',
+  getParentRoute: () => DashboardSettingsRoute,
+} as any)
+const DashboardSettingsAppearanceRoute =
+  DashboardSettingsAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
+    getParentRoute: () => DashboardSettingsRoute,
+  } as any)
 const DashboardEditNameRoute = DashboardEditNameRouteImport.update({
   id: '/edit/$name',
   path: '/edit/$name',
@@ -190,7 +228,9 @@ export interface FileRoutesByFullPath {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/payouts': typeof DashboardPayoutsRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
+  '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
   '/review/$id': typeof ReviewIdRoute
@@ -201,6 +241,10 @@ export interface FileRoutesByFullPath {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
+  '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
+  '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/settings/': typeof DashboardSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -218,6 +262,7 @@ export interface FileRoutesByTo {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/payouts': typeof DashboardPayoutsRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
@@ -229,6 +274,10 @@ export interface FileRoutesByTo {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
+  '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
+  '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/settings': typeof DashboardSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -248,7 +297,9 @@ export interface FileRoutesById {
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/payouts': typeof DashboardPayoutsRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
+  '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
   '/i/$': typeof ISplatRoute
   '/r/$': typeof RSplatRoute
   '/review/$id': typeof ReviewIdRoute
@@ -259,6 +310,10 @@ export interface FileRoutesById {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
+  '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
+  '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/settings/': typeof DashboardSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -279,7 +334,9 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
+    | '/dashboard/payouts'
     | '/dashboard/purchases'
+    | '/dashboard/settings'
     | '/i/$'
     | '/r/$'
     | '/review/$id'
@@ -290,6 +347,10 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/settings/appearance'
+    | '/dashboard/settings/danger'
+    | '/dashboard/settings/security'
+    | '/dashboard/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -307,6 +368,7 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
+    | '/dashboard/payouts'
     | '/dashboard/purchases'
     | '/i/$'
     | '/r/$'
@@ -318,6 +380,10 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/settings/appearance'
+    | '/dashboard/settings/danger'
+    | '/dashboard/settings/security'
+    | '/dashboard/settings'
   id:
     | '__root__'
     | '/'
@@ -336,7 +402,9 @@ export interface FileRouteTypes {
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
+    | '/dashboard/payouts'
     | '/dashboard/purchases'
+    | '/dashboard/settings'
     | '/i/$'
     | '/r/$'
     | '/review/$id'
@@ -347,6 +415,10 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/settings/appearance'
+    | '/dashboard/settings/danger'
+    | '/dashboard/settings/security'
+    | '/dashboard/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -494,11 +566,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ISplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/purchases': {
       id: '/dashboard/purchases'
       path: '/purchases'
       fullPath: '/dashboard/purchases'
       preLoaderRoute: typeof DashboardPurchasesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/payouts': {
+      id: '/dashboard/payouts'
+      path: '/payouts'
+      fullPath: '/dashboard/payouts'
+      preLoaderRoute: typeof DashboardPayoutsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/new': {
@@ -536,6 +622,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInstallReceiptRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/settings/': {
+      id: '/dashboard/settings/'
+      path: '/'
+      fullPath: '/dashboard/settings/'
+      preLoaderRoute: typeof DashboardSettingsIndexRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
+    '/dashboard/settings/security': {
+      id: '/dashboard/settings/security'
+      path: '/security'
+      fullPath: '/dashboard/settings/security'
+      preLoaderRoute: typeof DashboardSettingsSecurityRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
+    '/dashboard/settings/danger': {
+      id: '/dashboard/settings/danger'
+      path: '/danger'
+      fullPath: '/dashboard/settings/danger'
+      preLoaderRoute: typeof DashboardSettingsDangerRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
+    '/dashboard/settings/appearance': {
+      id: '/dashboard/settings/appearance'
+      path: '/appearance'
+      fullPath: '/dashboard/settings/appearance'
+      preLoaderRoute: typeof DashboardSettingsAppearanceRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
     '/dashboard/edit/$name': {
       id: '/dashboard/edit/$name'
       path: '/edit/$name'
@@ -567,11 +681,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardSettingsRouteChildren {
+  DashboardSettingsAppearanceRoute: typeof DashboardSettingsAppearanceRoute
+  DashboardSettingsDangerRoute: typeof DashboardSettingsDangerRoute
+  DashboardSettingsSecurityRoute: typeof DashboardSettingsSecurityRoute
+  DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
+}
+
+const DashboardSettingsRouteChildren: DashboardSettingsRouteChildren = {
+  DashboardSettingsAppearanceRoute: DashboardSettingsAppearanceRoute,
+  DashboardSettingsDangerRoute: DashboardSettingsDangerRoute,
+  DashboardSettingsSecurityRoute: DashboardSettingsSecurityRoute,
+  DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
+}
+
+const DashboardSettingsRouteWithChildren =
+  DashboardSettingsRoute._addFileChildren(DashboardSettingsRouteChildren)
+
 interface DashboardRouteChildren {
   DashboardComponentsRoute: typeof DashboardComponentsRoute
   DashboardEarningsRoute: typeof DashboardEarningsRoute
   DashboardNewRoute: typeof DashboardNewRoute
+  DashboardPayoutsRoute: typeof DashboardPayoutsRoute
   DashboardPurchasesRoute: typeof DashboardPurchasesRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardEditNameRoute: typeof DashboardEditNameRoute
 }
@@ -580,7 +713,9 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardComponentsRoute: DashboardComponentsRoute,
   DashboardEarningsRoute: DashboardEarningsRoute,
   DashboardNewRoute: DashboardNewRoute,
+  DashboardPayoutsRoute: DashboardPayoutsRoute,
   DashboardPurchasesRoute: DashboardPurchasesRoute,
+  DashboardSettingsRoute: DashboardSettingsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardEditNameRoute: DashboardEditNameRoute,
 }

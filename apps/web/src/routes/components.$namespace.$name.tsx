@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { buyComponent, confirmCheckout } from "@/lib/marketplace";
 import { OwnedTray } from "@/components/owned";
+import { PriceSeal } from "@/components/money";
 import { Tabs } from "radix-ui";
 import { motion } from "motion/react";
 import {
@@ -205,9 +206,11 @@ function ComponentDetail() {
             <h1 className="text-3xl font-bold tracking-tight">{item.title}</h1>
             <p className="mt-2 max-w-3xl text-muted-foreground">{item.description}</p>
           </div>
-          <Badge variant={isPaid || locked ? "outline" : "secondary"}>
-            {isPaid ? item.purchase?.priceLabel ?? "Paid" : item.marketplacePrice != null ? formatPrice(item.marketplacePrice) : "Free"}
-          </Badge>
+          <PriceSeal
+            size="md"
+            paid={isPaid || item.marketplacePrice != null}
+            label={isPaid ? item.purchase?.priceLabel ?? "Paid" : item.marketplacePrice != null ? formatPrice(item.marketplacePrice) : "Free"}
+          />
         </div>
       </motion.header>
 

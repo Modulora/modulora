@@ -18,6 +18,7 @@ import {
 } from "nuqs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
+import { PriceSeal } from "@/components/money";
 import {
   CalendarDays,
   Gift,
@@ -312,9 +313,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">{item.namespace} · {item.category}</p>
         </div>
-        <Badge variant={item.sourceModel === "open-source" ? "secondary" : "outline"} className="shrink-0">
-          {item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"}
-        </Badge>
+        <PriceSeal paid={item.sourceModel !== "open-source"} label={item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"} />
       </div>
     </Link>
   );
