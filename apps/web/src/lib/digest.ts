@@ -15,12 +15,14 @@ function normalize(content: string): string {
 /**
  * SHA-256 over the sorted (path, content) pairs. Sorting makes the digest
  * independent of file order; the length-prefixed encoding prevents ambiguity
- * between path and content boundaries.
+ * between path and content boundaries. The sort is a deterministic codepoint
+ * comparison (not locale-aware) so the CLI reproduces it identically on any
+ * platform.
  */
 export async function contentDigest(files: PublishFile[]): Promise<string> {
   const parts = [...files]
     .map((file) => ({ path: file.path.trim(), content: normalize(file.content) }))
-    .sort((a, b) => a.path.localeCompare(b.path))
+    .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
     .map((file) => `${file.path.length}:${file.path}\n${file.content.length}:${file.content}`);
   const encoded = new TextEncoder().encode(parts.join("\n\u0000\n"));
   const hash = await crypto.subtle.digest("SHA-256", encoded);
