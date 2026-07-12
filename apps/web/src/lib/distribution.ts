@@ -6,7 +6,8 @@
  * Honest by construction: a run records exactly what happened — who accrued
  * what from which install counts, what was carried, what was paid, and the
  * Stripe transfer id. Below-threshold balances carry forward; nothing is
- * forfeited. Runs are curator-gated (platform operators).
+ * forfeited. Runs are owner-gated (OWNER_EMAILS), never curator-gated:
+ * curators review content; owners move money.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -15,6 +16,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { and, desc, eq, gte, lt, sql as dsql } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
+import { isOwnerEmail } from "./access";
 import { getStripe } from "./stripe";
 import { PAYOUT_THRESHOLD_CENTS, SPLIT } from "./profit-share";
 
@@ -39,7 +41,7 @@ export const createPayoutRun = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<RunResult> => {
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
-    if (!user?.isCurator) return { ok: false, error: "Not authorized." };
+    if (!user || !isOwnerEmail(user.email)) return { ok: false, error: "Not authorized." };
     const db = getDb();
     if (!db) return { ok: false, error: "Database is not configured." };
     if (Number.isNaN(data.periodStart.getTime()) || Number.isNaN(data.periodEnd.getTime()) || data.periodEnd <= data.periodStart) {
@@ -172,7 +174,7 @@ export const listPayoutRuns = createServerFn({ method: "GET" }).handler(
   async (): Promise<PayoutRunSummary[]> => {
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
-    if (!user?.isCurator) return [];
+    if (!user || !isOwnerEmail(user.email)) return [];
     const db = getDb();
     if (!db) return [];
     const runs = await db.select().from(schema.payoutRuns).orderBy(desc(schema.payoutRuns.createdAt)).limit(20);

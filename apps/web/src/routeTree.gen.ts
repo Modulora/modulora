@@ -18,6 +18,7 @@ import { Route as ProfitShareRouteImport } from './routes/profit-share'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DeviceRouteImport } from './routes/device'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReviewIndexRouteImport } from './routes/review.index'
@@ -88,6 +89,11 @@ const DeviceRoute = DeviceRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UsernameRoute = UsernameRouteImport.update({
@@ -226,6 +232,7 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
+  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/device': typeof DeviceRoute
   '/privacy': typeof PrivacyRoute
@@ -263,6 +270,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
+  '/admin': typeof AdminRoute
   '/device': typeof DeviceRoute
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
@@ -299,6 +307,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
+  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/device': typeof DeviceRoute
   '/privacy': typeof PrivacyRoute
@@ -338,6 +347,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$username'
+    | '/admin'
     | '/dashboard'
     | '/device'
     | '/privacy'
@@ -375,6 +385,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$username'
+    | '/admin'
     | '/device'
     | '/privacy'
     | '/profit-share'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$username'
+    | '/admin'
     | '/dashboard'
     | '/device'
     | '/privacy'
@@ -448,6 +460,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   UsernameRoute: typeof UsernameRoute
+  AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   DeviceRoute: typeof DeviceRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -534,6 +547,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$username': {
@@ -767,6 +787,7 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   UsernameRoute: UsernameRoute,
+  AdminRoute: AdminRoute,
   DashboardRoute: DashboardRouteWithChildren,
   DeviceRoute: DeviceRoute,
   PrivacyRoute: PrivacyRoute,

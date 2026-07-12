@@ -69,3 +69,9 @@ npx wrangler r2 bucket create modulora-media
 resolve sessions; everyone else is treated as signed out on every platform
 surface (dashboard, publish, buy, review, CLI tokens). Set it in production
 until the alpha opens; leave unset locally. See #29.
+
+## Platform owner
+
+`OWNER_EMAILS` — comma-separated emails gating /admin (profit-share
+distribution runs). Separate from curator status: curators review content,
+owners move money. Unset = the admin surface 404s for everyone.

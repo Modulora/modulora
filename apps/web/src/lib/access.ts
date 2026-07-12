@@ -23,3 +23,19 @@ export function isAllowedEmail(email: string): boolean {
 export function alphaGateActive(): boolean {
   return alphaAllowlist() !== null;
 }
+
+/**
+ * Platform owner(s) — OWNER_EMAILS env, comma-separated. Gates money
+ * operations (profit-share distribution runs). Deliberately stricter and
+ * separate from is_curator: curators review content, owners move money.
+ * Unset means the admin surface doesn't exist.
+ */
+export function isOwnerEmail(email: string | null | undefined): boolean {
+  const raw = process.env.OWNER_EMAILS?.trim();
+  if (!raw || !email) return false;
+  return raw
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(email.trim().toLowerCase());
+}

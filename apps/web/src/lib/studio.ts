@@ -21,6 +21,7 @@ export interface StudioSummary {
   counts: {
     components: number;
     libraries: number;
+    verifiedInstalls: number;
   };
   /** The earning journey, from real state — drives the Overview checklist. */
   journey: {
@@ -41,7 +42,7 @@ export const fetchStudioSummary = createServerFn({ method: "GET" }).handler(
     const summary: StudioSummary = {
       user: { name: user.name, username: user.username, image: user.image },
       namespace: user.username,
-      counts: { components: 0, libraries: 0 },
+      counts: { components: 0, libraries: 0, verifiedInstalls: 0 },
       journey: { published: false, approved: false, payouts: user.payoutsEnabled ?? false, priced: false },
     };
 
@@ -80,6 +81,13 @@ export const fetchStudioSummary = createServerFn({ method: "GET" }).handler(
           .innerJoin(schema.components, eq(schema.components.id, schema.componentPrices.componentId))
           .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.componentPrices.active, true)));
         summary.journey.priced = (priced?.total ?? 0) > 0;
+
+        const [installs] = await db
+          .select({ total: count() })
+          .from(schema.installReceipts)
+          .innerJoin(schema.components, eq(schema.components.id, schema.installReceipts.componentId))
+          .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.installReceipts.verified, true)));
+        summary.counts.verifiedInstalls = installs?.total ?? 0;
       }
     } catch {
       // Counts are best-effort; an empty studio still renders.
