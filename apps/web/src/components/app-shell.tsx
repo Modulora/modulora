@@ -152,6 +152,7 @@ export function AppShell({
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground sm:flex-row">
           <span>© {new Date().getFullYear()} Modulora</span>
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link to="/profit-share" className="transition-colors hover:text-foreground">Earnings</Link>
             <Link to="/publishing-policy" className="transition-colors hover:text-foreground">Publishing policy</Link>
             <Link to="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>
             <Link to="/terms" className="transition-colors hover:text-foreground">Terms</Link>

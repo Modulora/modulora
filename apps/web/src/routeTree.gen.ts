@@ -14,6 +14,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SandboxTestRouteImport } from './routes/sandbox-test'
 import { Route as PublishingPolicyRouteImport } from './routes/publishing-policy'
+import { Route as ProfitShareRouteImport } from './routes/profit-share'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as UsernameRouteImport } from './routes/$username'
@@ -55,6 +56,11 @@ const SandboxTestRoute = SandboxTestRouteImport.update({
 const PublishingPolicyRoute = PublishingPolicyRouteImport.update({
   id: '/publishing-policy',
   path: '/publishing-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfitShareRoute = ProfitShareRouteImport.update({
+  id: '/profit-share',
+  path: '/profit-share',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/$username': typeof UsernameRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/privacy': typeof PrivacyRoute
+  '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
   '/privacy': typeof PrivacyRoute
+  '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/$username': typeof UsernameRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/privacy': typeof PrivacyRoute
+  '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/$username'
     | '/dashboard'
     | '/privacy'
+    | '/profit-share'
     | '/publishing-policy'
     | '/sandbox-test'
     | '/settings'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$username'
     | '/privacy'
+    | '/profit-share'
     | '/publishing-policy'
     | '/sandbox-test'
     | '/settings'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/$username'
     | '/dashboard'
     | '/privacy'
+    | '/profit-share'
     | '/publishing-policy'
     | '/sandbox-test'
     | '/settings'
@@ -294,6 +306,7 @@ export interface RootRouteChildren {
   UsernameRoute: typeof UsernameRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
+  ProfitShareRoute: typeof ProfitShareRoute
   PublishingPolicyRoute: typeof PublishingPolicyRoute
   SandboxTestRoute: typeof SandboxTestRoute
   SettingsRoute: typeof SettingsRoute
@@ -345,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/publishing-policy'
       fullPath: '/publishing-policy'
       preLoaderRoute: typeof PublishingPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profit-share': {
+      id: '/profit-share'
+      path: '/profit-share'
+      fullPath: '/profit-share'
+      preLoaderRoute: typeof ProfitShareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -492,6 +512,7 @@ const rootRouteChildren: RootRouteChildren = {
   UsernameRoute: UsernameRoute,
   DashboardRoute: DashboardRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
+  ProfitShareRoute: ProfitShareRoute,
   PublishingPolicyRoute: PublishingPolicyRoute,
   SandboxTestRoute: SandboxTestRoute,
   SettingsRoute: SettingsRoute,

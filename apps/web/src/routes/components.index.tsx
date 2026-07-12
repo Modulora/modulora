@@ -16,8 +16,9 @@ import {
   useQueryStates,
   type inferParserType,
 } from "nuqs";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
 import {
-  BadgeCheck,
   CalendarDays,
   Gift,
   Tag,
@@ -307,7 +308,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <h2 className="truncate text-sm font-medium">{item.title}</h2>
-            {item.evidence.some((record) => record.type === "content-integrity" || record.type === "domain-verified") ? <BadgeCheck className="size-3.5 text-muted-foreground" /> : null}
+            {item.evidence.some((record) => record.type === "content-integrity" || record.type === "domain-verified") ? <span className="text-emerald-500"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} /></span> : null}
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">{item.namespace} · {item.category}</p>
         </div>
