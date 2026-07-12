@@ -7,3 +7,6 @@ dist/
 .wrangler/
 .npmrc
 .tanstack/
+
+*storybook.log
+storybook-static
