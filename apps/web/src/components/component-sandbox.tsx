@@ -1,123 +1,189 @@
 /**
- * Live component preview. Renders the actual uploaded files in a sandboxed
- * iframe via Sandpack — no hardcoded mock. Runs untrusted React in an isolated
- * origin; it cannot reach the Modulora app, its cookies, or its DOM.
+ * Live component preview (21st-style demo model). Renders a chosen *demo* file
+ * — whose default export shows the component with realistic props — inside a
+ * sandboxed, cross-origin Sandpack iframe. Untrusted React runs isolated from
+ * the Modulora app, its cookies, and its DOM.
+ *
+ * Styling: Tailwind v4 browser build, loaded via Sandpack's documented
+ * `externalResources` option. The author's `src/index.css` (v4 syntax: tokens +
+ * `@theme inline` mapping) is injected as a `<style type="text/tailwindcss">`
+ * block, which is exactly what the v4 browser runtime consumes. No build step,
+ * no tailwind.config.js.
+ *
+ * Editor file model → sandbox mapping (the `src/` prefix is stripped so the
+ * `@/* → ./*` tsconfig alias resolves):
+ *   src/components/ui/<name>.tsx → /components/ui/<name>.tsx   (installed)
+ *   src/demos/<demo>.tsx         → /demos/<demo>.tsx           (preview only)
+ *   src/lib/utils.ts             → /lib/utils.ts               (system)
+ *   src/index.css                → injected tailwindcss style block
+ *   package.json                 → customSetup.dependencies
  */
 import { useEffect, useMemo, useState } from "react";
 import { SandpackProvider, SandpackPreview } from "@codesandbox/sandpack-react";
-import type { ComponentFile } from "@/data/catalog";
 
-/** Detect the primary component file and its rendered export. */
-function resolveEntry(files: ComponentFile[], name: string) {
-  const tsx = files.filter((file) => /\.(tsx|jsx)$/.test(file.path));
-  const preferred =
-    tsx.find((file) => file.path.split("/").pop()?.replace(/\.(tsx|jsx)$/, "") === name) ??
-    tsx.find((file) => !/use-|\.test\./.test(file.path)) ??
-    tsx[0];
-  if (!preferred) return null;
+const TAILWIND_V4_CDN = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4";
 
-  const source = preferred.content;
-  const named = source.match(/export\s+function\s+([A-Z][A-Za-z0-9_]*)/);
-  const constExport = source.match(/export\s+const\s+([A-Z][A-Za-z0-9_]*)/);
-  const isDefault = /export\s+default/.test(source);
+/**
+ * Self-hosted Sandpack bundler origin. The codesandbox.io-hosted bundler is a
+ * third-party dependency (and its handshake is blocked on some networks), so
+ * dev uses a locally served build of `sandpack-bundler` and prod will use
+ * sandpack.modulora.dev. Unset -> Sandpack's default hosted bundler.
+ */
+const BUNDLER_URL = import.meta.env.VITE_SANDPACK_BUNDLER_URL as string | undefined;
 
-  const importPath = "/src/" + preferred.path.replace(/\.(tsx|jsx)$/, "");
-  if (named) return { importPath, statement: `import { ${named[1]} } from "${importPath}"`, render: named[1] };
-  if (constExport) return { importPath, statement: `import { ${constExport[1]} } from "${importPath}"`, render: constExport[1] };
-  if (isDefault) return { importPath, statement: `import Component from "${importPath}"`, render: "Component" };
-  return { importPath, statement: `import * as mod from "${importPath}"`, render: "(Object.values(mod).find((v) => typeof v === 'function') as any)" };
+export interface SandboxFile {
+  path: string; // e.g. "src/components/ui/button.tsx", "package.json"
+  content: string;
 }
 
-/** Rewrite the `@/` alias to a sandbox-absolute path. */
-function rewrite(content: string): string {
-  return content.replace(/(["'])@\//g, "$1/src/");
+/** Map an editor path to a sandbox path (strip the leading src/). */
+function toSandboxPath(path: string): string {
+  return "/" + path.replace(/^src\//, "");
 }
 
-const DEPENDENCIES = {
-  clsx: "latest",
-  "tailwind-merge": "latest",
-  "class-variance-authority": "latest",
-  "lucide-react": "latest",
-};
+/** Pull dependency map out of an author-editable package.json. */
+function parseDependencies(files: SandboxFile[]): Record<string, string> {
+  const pkg = files.find((f) => f.path === "package.json");
+  const base: Record<string, string> = {
+    react: "^18.2.0",
+    "react-dom": "^18.2.0",
+    clsx: "^2.1.0",
+    "tailwind-merge": "^2.1.0",
+    "class-variance-authority": "^0.7.0",
+    "lucide-react": "^0.363.0",
+  };
+  if (!pkg) return base;
+  try {
+    const parsed = JSON.parse(pkg.content) as { dependencies?: Record<string, string> };
+    return { ...base, ...(parsed.dependencies ?? {}) };
+  } catch {
+    return base;
+  }
+}
 
-function indexHtml(dark: boolean): string {
-  return `<!DOCTYPE html>
-<html lang="en"${dark ? ' class="dark"' : ""}>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: "class" }</script>
-    <style>
-      :root { color-scheme: ${dark ? "dark" : "light"}; }
-      body { margin: 0; background: ${dark ? "#0a0a0a" : "#ffffff"}; color: ${dark ? "#fafafa" : "#0a0a0a"}; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`;
+const TSCONFIG = JSON.stringify(
+  {
+    compilerOptions: {
+      jsx: "react-jsx",
+      esModuleInterop: true,
+      baseUrl: ".",
+      paths: { "@/*": ["./*"] },
+    },
+  },
+  null,
+  2,
+);
+
+/**
+ * Module that installs the author's index.css as a text/tailwindcss style block
+ * (consumed by the v4 browser runtime) and applies the light/dark class.
+ */
+function tokensModule(css: string, dark: boolean): string {
+  // The v4 browser runtime provides the framework import itself.
+  const cleaned = css
+    .split("\n")
+    .filter((line) => !/@import\s+["']tailwindcss["']/.test(line))
+    .join("\n")
+    .replace(/\\/g, "\\\\")
+    .replace(/`/g, "\\`");
+  return `const css = \`${cleaned}\`;
+document.documentElement.classList.toggle("dark", ${dark});
+document.documentElement.style.colorScheme = ${dark ? '"dark"' : '"light"'};
+let el = document.getElementById("author-tokens");
+if (!el) {
+  el = document.createElement("style");
+  el.setAttribute("type", "text/tailwindcss");
+  el.id = "author-tokens";
+  document.head.appendChild(el);
+}
+el.textContent = css;
+// The bundler does not inject externalResources; load the Tailwind v4 browser
+// runtime ourselves. It scans style[type=text/tailwindcss] blocks on load and
+// observes DOM mutations afterwards.
+if (!document.getElementById("tw4-runtime")) {
+  const s = document.createElement("script");
+  s.id = "tw4-runtime";
+  s.src = ${JSON.stringify(TAILWIND_V4_CDN)};
+  document.head.appendChild(s);
+}
+export {};
+`;
 }
 
 export function ComponentSandbox({
   files,
-  name,
+  selectedDemo,
   theme,
+  className,
 }: {
-  files: ComponentFile[];
-  name: string;
+  files: SandboxFile[];
+  selectedDemo: string; // editor path e.g. "src/demos/default.tsx"
   theme: "light" | "dark";
+  className?: string;
 }) {
-  // Defer mount until after the page's entrance animation settles — Sandpack's
-  // in-browser bundler blocks the main thread and would freeze the transition.
+  // Defer mount so heavy in-browser bundling never freezes host animations.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    const idle =
-      typeof window !== "undefined" && "requestIdleCallback" in window
-        ? (window as unknown as { requestIdleCallback: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback
-        : null;
-    const timer = window.setTimeout(() => {
-      if (idle) idle(() => setMounted(true), { timeout: 500 });
-      else setMounted(true);
-    }, 450);
-    return () => window.clearTimeout(timer);
+    const t = window.setTimeout(() => setMounted(true), 350);
+    return () => window.clearTimeout(t);
   }, []);
-  const entry = useMemo(() => resolveEntry(files, name), [files, name]);
 
   const sandpackFiles = useMemo(() => {
-    if (!entry) return {};
     const mapped: Record<string, string> = {};
-    for (const file of files) mapped["/src/" + file.path] = rewrite(file.content);
-    mapped["/App.tsx"] = `${entry.statement}\n\nexport default function App() {\n  const C = ${entry.render}\n  return (\n    <div className="flex min-h-screen items-center justify-center p-8">\n      <C />\n    </div>\n  )\n}\n`;
-    mapped["/public/index.html"] = indexHtml(theme === "dark");
+    let authorCss = "";
+    for (const file of files) {
+      if (file.path === "package.json") continue; // consumed by customSetup
+      if (file.path === "src/index.css") {
+        authorCss = file.content;
+        continue; // injected as a tailwindcss style block, not bundled
+      }
+      mapped[toSandboxPath(file.path)] = file.content;
+    }
+
+    mapped["/tsconfig.json"] = TSCONFIG;
+    mapped["/tw-tokens.js"] = tokensModule(authorCss, theme === "dark");
+
+    const demoImport = "." + toSandboxPath(selectedDemo).replace(/\.(tsx|jsx)$/, "");
+    mapped["/App.tsx"] =
+      `import "./tw-tokens.js";\n` +
+      `import Demo from "${demoImport}";\n\n` +
+      `export default function App() {\n` +
+      `  return (\n    <div className="flex min-h-screen w-full items-center justify-center bg-background text-foreground p-8">\n      <Demo />\n    </div>\n  );\n}\n`;
+
     return mapped;
-  }, [entry, files, theme]);
+  }, [files, selectedDemo, theme]);
+
+  const dependencies = useMemo(() => parseDependencies(files), [files]);
 
   if (!mounted) {
-    return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading preview…</div>;
-  }
-  if (!entry) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        No renderable component file found.
+      <div className={`flex h-full items-center justify-center text-sm text-muted-foreground ${className ?? ""}`}>
+        Loading preview…
       </div>
     );
   }
 
   return (
     <SandpackProvider
-      key={theme}
+      key={theme + selectedDemo}
       template="react-ts"
       theme={theme === "dark" ? "dark" : "light"}
       files={sandpackFiles}
-      customSetup={{ dependencies: DEPENDENCIES }}
-      options={{ recompileMode: "delayed", recompileDelay: 400 }}
+      customSetup={{ dependencies }}
+      options={{
+        externalResources: [TAILWIND_V4_CDN],
+        initMode: "immediate",
+        recompileMode: "delayed",
+        recompileDelay: 400,
+        ...(BUNDLER_URL ? { bundlerURL: BUNDLER_URL } : {}),
+      }}
+      className={className}
     >
       <SandpackPreview
         showOpenInCodeSandbox={false}
         showRefreshButton={false}
         showSandpackErrorOverlay
-        style={{ height: "100%", minHeight: "30rem" }}
+        style={{ height: "100%", minHeight: "24rem" }}
       />
     </SandpackProvider>
   );

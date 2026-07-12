@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SandboxTestRouteImport } from './routes/sandbox-test'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
@@ -34,6 +35,11 @@ const SigninRoute = SigninRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SandboxTestRoute = SandboxTestRouteImport.update({
+  id: '/sandbox-test',
+  path: '/sandbox-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
+  '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$username'
     | '/dashboard'
+    | '/sandbox-test'
     | '/settings'
     | '/signin'
     | '/api/upload-avatar'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$username'
+    | '/sandbox-test'
     | '/settings'
     | '/signin'
     | '/api/upload-avatar'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$username'
     | '/dashboard'
+    | '/sandbox-test'
     | '/settings'
     | '/signin'
     | '/api/upload-avatar'
@@ -221,6 +233,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   UsernameRoute: typeof UsernameRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  SandboxTestRoute: typeof SandboxTestRoute
   SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
@@ -246,6 +259,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sandbox-test': {
+      id: '/sandbox-test'
+      path: '/sandbox-test'
+      fullPath: '/sandbox-test'
+      preLoaderRoute: typeof SandboxTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -371,6 +391,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   UsernameRoute: UsernameRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  SandboxTestRoute: SandboxTestRoute,
   SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
