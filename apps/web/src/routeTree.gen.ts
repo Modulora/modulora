@@ -15,6 +15,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
+import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -48,6 +49,11 @@ const ComponentsIndexRoute = ComponentsIndexRouteImport.update({
   path: '/components/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardNewRoute = DashboardNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ComponentsNamespaceNameRoute = ComponentsNamespaceNameRouteImport.update({
   id: '/components/$namespace/$name',
   path: '/components/$namespace/$name',
@@ -62,9 +68,10 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/dashboard/new': typeof DashboardNewRoute
   '/components/': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -72,9 +79,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/dashboard/new': typeof DashboardNewRoute
   '/components': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -83,9 +91,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
+  '/dashboard/new': typeof DashboardNewRoute
   '/components/': typeof ComponentsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/signin'
+    | '/dashboard/new'
     | '/components/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/signin'
+    | '/dashboard/new'
     | '/components'
     | '/api/auth/$'
     | '/components/$namespace/$name'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/signin'
+    | '/dashboard/new'
     | '/components/'
     | '/api/auth/$'
     | '/components/$namespace/$name'
@@ -126,7 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   UsernameRoute: typeof UsernameRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComponentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/new': {
+      id: '/dashboard/new'
+      path: '/new'
+      fullPath: '/dashboard/new'
+      preLoaderRoute: typeof DashboardNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/components/$namespace/$name': {
       id: '/components/$namespace/$name'
       path: '/components/$namespace/$name'
@@ -195,10 +214,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardRouteChildren {
+  DashboardNewRoute: typeof DashboardNewRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardNewRoute: DashboardNewRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   UsernameRoute: UsernameRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
