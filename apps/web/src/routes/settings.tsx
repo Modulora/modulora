@@ -33,7 +33,8 @@ import {
   type HandleStatus,
   type ProfileInput,
 } from "@/lib/profile";
-import { EDITOR_THEMES, DEFAULT_EDITOR_THEME } from "@/lib/highlight";
+import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
+import { CodeThemePicker } from "@/components/code-theme-picker";
 import { changePassword, linkSocial, signOut } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/settings")({
@@ -217,19 +218,11 @@ function Settings() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="editorTheme">Code theme</Label>
-          <select
-            id="editorTheme"
+          <Label>Code theme</Label>
+          <CodeThemePicker
             value={form.editorTheme ?? DEFAULT_EDITOR_THEME}
-            onChange={(e) => set("editorTheme", e.target.value)}
-            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            {EDITOR_THEMES.map((theme) => (
-              <option key={theme.id} value={theme.id} className="bg-popover">
-                {theme.label}
-              </option>
-            ))}
-          </select>
+            onChange={(id) => set("editorTheme", id)}
+          />
           <p className="text-xs text-muted-foreground">Syntax highlighting for source code across Modulora.</p>
         </div>
 
