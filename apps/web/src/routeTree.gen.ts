@@ -34,6 +34,7 @@ import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
+import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-receipt'
 import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard.settings.index'
 import { Route as DashboardSettingsSecurityRouteImport } from './routes/dashboard.settings.security'
@@ -169,6 +170,11 @@ const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
   path: '/api/upload-avatar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSearchRoute = ApiSearchRouteImport.update({
+  id: '/api/search',
+  path: '/api/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInstallReceiptRoute = ApiInstallReceiptRouteImport.update({
   id: '/api/install-receipt',
   path: '/api/install-receipt',
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
@@ -339,6 +348,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/terms'
     | '/api/install-receipt'
+    | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/earnings'
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/terms'
     | '/api/install-receipt'
+    | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/earnings'
@@ -409,6 +420,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/terms'
     | '/api/install-receipt'
+    | '/api/search'
     | '/api/upload-avatar'
     | '/dashboard/components'
     | '/dashboard/earnings'
@@ -446,6 +458,7 @@ export interface RootRouteChildren {
   SigninRoute: typeof SigninRoute
   TermsRoute: typeof TermsRoute
   ApiInstallReceiptRoute: typeof ApiInstallReceiptRoute
+  ApiSearchRoute: typeof ApiSearchRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   DocsSplatRoute: typeof DocsSplatRoute
   ISplatRoute: typeof ISplatRoute
@@ -635,6 +648,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUploadAvatarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/search': {
+      id: '/api/search'
+      path: '/api/search'
+      fullPath: '/api/search'
+      preLoaderRoute: typeof ApiSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/install-receipt': {
       id: '/api/install-receipt'
       path: '/api/install-receipt'
@@ -757,6 +777,7 @@ const rootRouteChildren: RootRouteChildren = {
   SigninRoute: SigninRoute,
   TermsRoute: TermsRoute,
   ApiInstallReceiptRoute: ApiInstallReceiptRoute,
+  ApiSearchRoute: ApiSearchRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   DocsSplatRoute: DocsSplatRoute,
   ISplatRoute: ISplatRoute,
