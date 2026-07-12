@@ -36,6 +36,13 @@ export function parseRegistryPath(splat: string): ParsedRegistryPath | null {
   return { namespace, name, version };
 }
 
+/** The canonical install path: the editor's `src/` prefix stripped. The content
+ *  digest and `/r/` files are both computed over this form so the CLI can
+ *  verify what it receives against the published digest. */
+export function stripSrc(path: string): string {
+  return path.trim().replace(/^src\//, "");
+}
+
 function fileType(path: string): string {
   if (/(^|\/)components\/ui\//.test(path)) return "registry:ui";
   if (/(^|\/)hooks?\//.test(path)) return "registry:hook";
@@ -51,6 +58,8 @@ interface RegistryItem {
   description?: string;
   dependencies?: string[];
   files: { path: string; content: string; type: string }[];
+  // Non-standard: the published content digest, so the CLI can verify installs.
+  meta?: { contentSha256: string | null; version: string };
 }
 
 export async function resolveRegistryItem(
@@ -110,6 +119,13 @@ export async function resolveRegistryItem(
     }
   }
 
+  // Digest + version for verification, from the resolved version.
+  const [version] = await db
+    .select({ contentSha256: schema.componentVersions.contentSha256, version: schema.componentVersions.version })
+    .from(schema.componentVersions)
+    .where(eq(schema.componentVersions.id, versionId))
+    .limit(1);
+
   return {
     $schema: "https://ui.shadcn.com/schema/registry-item.json",
     name: c.name,
@@ -118,8 +134,9 @@ export async function resolveRegistryItem(
     description: c.description,
     ...(dependencies.length ? { dependencies } : {}),
     files: installFiles.map((f) => {
-      const path = f.path.replace(/^src\//, "");
+      const path = stripSrc(f.path);
       return { path, content: f.content ?? "", type: fileType(path) };
     }),
+    meta: { contentSha256: version?.contentSha256 ?? null, version: version?.version ?? "" },
   };
 }

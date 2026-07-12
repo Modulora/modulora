@@ -16,6 +16,7 @@ import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
 import { fireReviewWebhook } from "./review";
 import { POLICY_VERSION } from "./publishing-policy";
 import { roleFor } from "./scaffold";
+import { stripSrc } from "./registry";
 import { contentDigest } from "./digest";
 
 const NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
@@ -137,6 +138,9 @@ export const publishComponent = createServerFn({ method: "POST" })
     // Role split: only component files ship in the install payload. Demos,
     // styles, and system files exist for the live preview sandbox.
     const installFiles = files.filter((file) => roleFor(file.path.trim()) === "component");
+    // Digest over the canonical served form (src/ stripped) so the published
+    // digest matches what /r/ serves and what the CLI computes on install.
+    const digestFiles = installFiles.map((f) => ({ path: stripSrc(f.path), content: f.content }));
     if (data.pricing !== "paid" && installFiles.length === 0) {
       return { ok: false, error: "Add at least one component file under src/components/." };
     }
@@ -200,7 +204,7 @@ export const publishComponent = createServerFn({ method: "POST" })
       description,
       files: isPaid
         ? []
-        : installFiles.map((file) => ({ path: file.path.trim(), content: file.content, type: "registry:component" })),
+        : installFiles.map((file) => ({ path: stripSrc(file.path), content: file.content, type: "registry:component" })),
     };
 
     // Upsert the component row.
@@ -304,7 +308,7 @@ export const publishComponent = createServerFn({ method: "POST" })
     ];
 
     if (!isPaid && installFiles.length > 0) {
-      const digest = await contentDigest(installFiles);
+      const digest = await contentDigest(digestFiles);
       evidence.push({
         componentVersionId: createdVersion!.id,
         type: "content-integrity",
@@ -367,7 +371,7 @@ export const publishComponent = createServerFn({ method: "POST" })
     if (!isPaid && installFiles.length > 0) {
       await db
         .update(schema.componentVersions)
-        .set({ contentSha256: await contentDigest(installFiles) })
+        .set({ contentSha256: await contentDigest(digestFiles) })
         .where(eq(schema.componentVersions.id, createdVersion!.id));
     }
 
