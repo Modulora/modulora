@@ -36,6 +36,13 @@ Digest mismatch → exit `1` and no writes. Files land under `src/` when the
 project has one. After a successful install the CLI reports an install
 receipt (best-effort, never blocks) — receipts power creator attribution.
 
+## `modulora check <ref>`
+
+Verify a component installed **without** the Modulora CLI (e.g. via
+`shadcn add`) against the published release — no lockfile needed. Verifies
+the upstream digest, then compares on-disk bytes. `--save` adopts a clean
+install into `modulora.lock`. Exit 1 when files differ.
+
 ## `modulora login` / `whoami` / `logout`
 
 Device-flow sign-in: the CLI shows a code, you approve it in the browser.

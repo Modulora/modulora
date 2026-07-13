@@ -59,3 +59,17 @@ npx shadcn@latest add https://modulora.dev/r/@creator/component
 
 Note the shadcn path doesn't verify the digest — the Modulora CLI is the
 verified route.
+
+### Installed with shadcn? Verify it after the fact
+
+Both CLIs receive **identical bytes** — `/r/` serves one payload. So a
+shadcn install can be verified post-hoc:
+
+```bash
+npx modulora check @creator/component          # compare disk ↔ published release
+npx modulora check @creator/component --save   # adopt into modulora.lock
+```
+
+`check` verifies the upstream digest first, then compares your on-disk
+files byte-for-byte. `--save` records a clean result so `verify`, `diff`,
+and `update` cover the component from then on.
