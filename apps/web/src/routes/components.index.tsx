@@ -18,7 +18,7 @@ import {
 } from "nuqs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
-import { PriceSeal } from "@/components/money";
+import { PriceSeal, PromotedBadge } from "@/components/money";
 import {
   CalendarDays,
   Gift,
@@ -292,9 +292,7 @@ function Catalog() {
               >
                 {"promoted" in item && item.promoted ? (
                   <div className="relative rounded-[calc(var(--radius)+2px)] ring-1 ring-border">
-                    <span className="absolute right-5 top-5 z-10 rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-500 backdrop-blur">
-                      Promoted
-                    </span>
+                    <PromotedBadge />
                     <GalleryItem item={item} list={search.layout === "list"} />
                   </div>
                 ) : (

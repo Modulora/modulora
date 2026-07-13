@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/tanstack-react";
-import { EarningsBreakdown, LicensePicker, PriceSeal } from "./money";
+import { EarningsBreakdown, LicensePicker, PriceSeal, PromotedBadge } from "./money";
 
 const meta = { title: "Money/SellDialog" } satisfies Meta;
 export default meta;
@@ -30,6 +30,7 @@ export const Seals: Story = {
       <PriceSeal paid label="$19" />
       <PriceSeal paid />
       <PriceSeal size="md" paid label="$49" />
+      <PriceSeal size="md" paid label="on maker.dev" />
     </div>
   ),
 };
@@ -44,4 +45,27 @@ export const License: Story = {
       </div>
     );
   },
+};
+
+/** Promoted marks paid placement, never trust. Both tones, in context on a mock card. */
+export const Promoted: Story = {
+  render: () => (
+    <div className="flex gap-6">
+      {(["amber", "neutral"] as const).map((tone) => (
+        <div key={tone} className="relative w-64 rounded-xl border border-border/60 bg-card/40 p-2 ring-1 ring-border">
+          <PromotedBadge tone={tone} />
+          <div className="flex h-36 items-center justify-center rounded-lg border border-border/50 bg-background text-sm text-muted-foreground">
+            preview
+          </div>
+          <div className="flex items-center justify-between px-2 py-2">
+            <div>
+              <p className="text-sm font-medium">countertest</p>
+              <p className="text-xs text-muted-foreground">by maker · Layout</p>
+            </div>
+            <PriceSeal paid={false} />
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
 };

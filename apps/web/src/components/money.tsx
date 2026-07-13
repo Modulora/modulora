@@ -147,3 +147,25 @@ export function MarketplaceCalculator() {
     </div>
   );
 }
+
+/* ── Promoted badge ──────────────────────────────────────── */
+
+/**
+ * Marks paid placement in the catalog grid. Placement is the only thing
+ * money buys — never trust — so the badge must read as an ad label, not
+ * an endorsement. Coloring is still under review (tones exist to make
+ * the revisit cheap).
+ */
+export function PromotedBadge({ tone = "amber" }: { tone?: "amber" | "neutral" }) {
+  const tones = {
+    amber: "border-amber-500/25 bg-amber-500/10 text-amber-500",
+    neutral: "border-border/60 bg-background/80 text-muted-foreground",
+  } as const;
+  return (
+    <span
+      className={`absolute right-5 top-5 z-10 rounded-full border px-2 py-0.5 text-[10px] font-medium backdrop-blur ${tones[tone]}`}
+    >
+      Promoted
+    </span>
+  );
+}
