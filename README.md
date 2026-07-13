@@ -6,7 +6,20 @@
 
 Modulora is a creator-first component registry for developers and coding agents. Creators publish from canonical sources and keep control of their work. Developers discover open and commercial components and install supported releases through a consistent CLI.
 
-> This repository is in the planning and foundation stage. It does not yet contain a production application.
+> Modulora is preparing for a limited alpha. The platform application exists,
+> but it isn't authorized for production deployment yet.
+
+## Alpha commerce boundary
+
+Modulora doesn't process component or collection purchases during alpha.
+Commercial listings can link to a purchase page on a domain the creator has
+verified. The creator handles checkout, licensing, delivery, updates, refunds,
+and support; Modulora doesn't host or assess the paid source, record the
+purchase, or take a transaction fee.
+
+Direct marketplace code remains disabled behind
+`VITE_DIRECT_MARKETPLACE_ENABLED=false`. Profit-share payouts for verified CLI
+installs are a separate system and remain in alpha scope.
 
 ## Product direction
 
@@ -30,7 +43,7 @@ This is the public, self-hostable core:
 - public API and non-executing job orchestration;
 - PostgreSQL schema and reference deployment.
 
-The protocol and installer live in [`Modulora/spec`](https://github.com/Modulora/spec) and [`Modulora/cli`](https://github.com/Modulora/cli). Hosted private-registry, billing, promotion, and enterprise capabilities live in private Modulora Cloud repositories.
+The protocol and installer live in [`Modulora/spec`](https://github.com/Modulora/spec) and [`Modulora/cli`](https://github.com/Modulora/cli). Hosted private-registry, direct marketplace, billing, and enterprise capabilities are outside the alpha core.
 
 ## Planning documents
 

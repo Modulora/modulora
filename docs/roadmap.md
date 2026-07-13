@@ -1,6 +1,14 @@
 # Modulora Delivery Roadmap
 
-> Status: planning baseline · Updated: 2026-07-11
+> Status: alpha delivery plan · Updated: 2026-07-13
+
+## Current scope decision
+
+Direct marketplace checkout is shelved for alpha. External commercial links on
+verified creator domains remain in scope, as do creator profit-share payouts
+for verified CLI installs. Any future first-party checkout must pass the later
+commerce, licensing, support, tax, refund, dispute, and security gates in this
+roadmap before the feature flag can be enabled.
 
 Modulora is a large security-sensitive platform. The roadmap is organized around evidence and release gates rather than optimistic feature dates. Each phase must produce a usable vertical slice and prove the assumptions required for the next one.
 

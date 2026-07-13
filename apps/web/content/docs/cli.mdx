@@ -47,7 +47,9 @@ install into `modulora.lock`. Exit 1 when files differ.
 
 Device-flow sign-in: the CLI shows a code, you approve it in the browser.
 The token is stored at `~/.config/modulora/auth.json` (0600), per registry
-origin; `MODULORA_TOKEN` overrides for CI. Needed for purchased components.
+origin; `MODULORA_TOKEN` overrides for CI. Sign-in is required for publishing
+and other account-scoped commands. Public alpha installs don't require an
+account; direct paid entitlements aren't live.
 
 ## Exit codes
 

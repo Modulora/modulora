@@ -6,6 +6,11 @@
 > T&C). It is **not legal advice** and **not final**. Fill every `[PLACEHOLDER]`
 > and resolve the Drafting notes before publishing.
 
+> **Alpha scope:** direct Marketplace Sales aren't offered during alpha. The
+> marketplace definitions below are dormant drafting material for a possible
+> later product and don't apply to creator-operated external sales. Alpha
+> earnings use the Profit Share provisions only.
+
 ---
 
 ## 0. Parties and definitions
