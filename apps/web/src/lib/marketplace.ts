@@ -27,7 +27,7 @@ function getDb() {
   const url = process.env.DATABASE_URL;
   return url ? drizzle(neon(url), { schema }) : null;
 }
-function originOf(): string {
+export function originOf(): string {
   try {
     return new URL(getRequest()!.url).origin;
   } catch {
@@ -237,6 +237,9 @@ export async function fulfilCheckout(sessionId: string): Promise<void> {
       .where(and(eq(schema.purchases.id, meta.purchaseId), eq(schema.purchases.status, "pending")));
   } else if (meta.type === "collection-purchase" && meta.collectionPurchaseId) {
     await fulfilCollectionPurchase(meta.collectionPurchaseId, (session.payment_intent as string) ?? null);
+  } else if (meta.type === "plus" && meta.userId) {
+    const { fulfilPlusCheckout } = await import("./plus");
+    await fulfilPlusCheckout(meta.userId, (session.subscription as string) ?? null);
   }
 }
 

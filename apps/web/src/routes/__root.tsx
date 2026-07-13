@@ -33,7 +33,7 @@ export const Route = createRootRoute({
     const { user, gated } = await fetchSessionContext();
     // Alpha: the whole product requires a signed-in (allowlisted) account.
     // Only the landing page, sign-in, and legal pages stay public.
-    const PUBLIC = ["/", "/signin", "/privacy", "/terms", "/publishing-policy"];
+    const PUBLIC = ["/", "/signin", "/privacy", "/terms", "/publishing-policy", "/pricing"];
     const isPublic = PUBLIC.some((path) =>
       path === "/" ? location.pathname === "/" : location.pathname === path || location.pathname.startsWith(`${path}/`),
     );

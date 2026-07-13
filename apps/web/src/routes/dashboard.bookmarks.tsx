@@ -2,14 +2,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bookmark } from "lucide-react";
 import { fetchMyBookmarks } from "@/lib/bookmarks";
+import { fetchCurrentUser } from "@/lib/session";
 
 export const Route = createFileRoute("/dashboard/bookmarks")({
-  loader: async () => ({ bookmarks: await fetchMyBookmarks() }),
+  loader: async () => ({ bookmarks: await fetchMyBookmarks(), plus: (await fetchCurrentUser())?.isPlus ?? false }),
   component: BookmarksPage,
 });
 
 function BookmarksPage() {
-  const { bookmarks } = Route.useLoaderData();
+  const { bookmarks, plus } = Route.useLoaderData();
+  if (!plus) {
+    return (
+      <div className="w-full max-w-3xl">
+        <h1 className="text-2xl font-semibold">Bookmarks</h1>
+        <p className="mt-8 rounded-xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">Bookmarks are part of Modulora Plus.</p>
+      </div>
+    );
+  }
   return (
     <div className="w-full max-w-3xl">
       <h1 className="text-2xl font-semibold">Bookmarks</h1>

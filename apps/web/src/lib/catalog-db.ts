@@ -16,6 +16,7 @@ import { getCurrentUser } from "./session";
 import { normalizeDomain } from "./domains";
 import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
 import { licenseTemplate, resolveLicenseText } from "./license";
+import { publicListsFor } from "./lists";
 
 function db() {
   const url = process.env.DATABASE_URL;
@@ -328,7 +329,7 @@ export interface PublicProfile {
 /** Public profile + a creator's approved, public components. */
 export const fetchPublicProfile = createServerFn({ method: "GET" })
   .validator((data: { username: string }) => ({ username: String(data.username ?? "").trim().toLowerCase() }))
-  .handler(async ({ data }): Promise<{ profile: PublicProfile; components: CatalogItem[]; collections: PublicCollection[] } | null> => {
+  .handler(async ({ data }): Promise<{ profile: PublicProfile; components: CatalogItem[]; collections: PublicCollection[]; publicLists: import("./lists").PublicList[] } | null> => {
     const database = db();
     if (!database || !data.username) return null;
 
@@ -417,6 +418,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       },
       components: rows.map((row) => toCatalogItem(row.namespace, row.component, row.version)),
       collections,
+      publicLists: await publicListsFor(ns.ownerUserId),
     };
   });
 

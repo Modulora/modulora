@@ -155,6 +155,7 @@ export function AppShell({
           <span>© {new Date().getFullYear()} Modulora</span>
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link to="/docs/$" params={{ _splat: "" }} className="transition-colors hover:text-foreground">Docs</Link>
+            <Link to="/pricing" className="transition-colors hover:text-foreground">Pricing</Link>
             <Link to="/profit-share" className="transition-colors hover:text-foreground">Earnings</Link>
             <Link to="/publishing-policy" className="transition-colors hover:text-foreground">Publishing policy</Link>
             <Link to="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>

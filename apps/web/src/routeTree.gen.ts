@@ -17,6 +17,7 @@ import { Route as ReviewRouteImport } from './routes/review'
 import { Route as PublishingPolicyRouteImport } from './routes/publishing-policy'
 import { Route as ProfitShareRouteImport } from './routes/profit-share'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as DeviceRouteImport } from './routes/device'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as UsernameRouteImport } from './routes/$username'
@@ -31,6 +32,7 @@ import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settin
 import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
 import { Route as DashboardPayoutsRouteImport } from './routes/dashboard.payouts'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
+import { Route as DashboardListsRouteImport } from './routes/dashboard.lists'
 import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
 import { Route as DashboardCollectionsRouteImport } from './routes/dashboard.collections'
@@ -91,6 +93,11 @@ const ProfitShareRoute = ProfitShareRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeviceRoute = DeviceRouteImport.update({
@@ -161,6 +168,11 @@ const DashboardPayoutsRoute = DashboardPayoutsRouteImport.update({
 const DashboardNewRoute = DashboardNewRouteImport.update({
   id: '/new',
   path: '/new',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardListsRoute = DashboardListsRouteImport.update({
+  id: '/lists',
+  path: '/lists',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardEarningsRoute = DashboardEarningsRouteImport.update({
@@ -276,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/$username': typeof UsernameRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/device': typeof DeviceRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
@@ -294,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/lists': typeof DashboardListsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/dashboard/payouts': typeof DashboardPayoutsRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
@@ -320,6 +334,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$username': typeof UsernameRoute
   '/device': typeof DeviceRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
@@ -338,6 +353,7 @@ export interface FileRoutesByTo {
   '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/lists': typeof DashboardListsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/dashboard/payouts': typeof DashboardPayoutsRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
@@ -365,6 +381,7 @@ export interface FileRoutesById {
   '/$username': typeof UsernameRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/device': typeof DeviceRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
@@ -383,6 +400,7 @@ export interface FileRoutesById {
   '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/lists': typeof DashboardListsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/dashboard/payouts': typeof DashboardPayoutsRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
@@ -412,6 +430,7 @@ export interface FileRouteTypes {
     | '/$username'
     | '/dashboard'
     | '/device'
+    | '/pricing'
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
@@ -430,6 +449,7 @@ export interface FileRouteTypes {
     | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
+    | '/dashboard/lists'
     | '/dashboard/new'
     | '/dashboard/payouts'
     | '/dashboard/purchases'
@@ -456,6 +476,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$username'
     | '/device'
+    | '/pricing'
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
@@ -474,6 +495,7 @@ export interface FileRouteTypes {
     | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
+    | '/dashboard/lists'
     | '/dashboard/new'
     | '/dashboard/payouts'
     | '/dashboard/purchases'
@@ -500,6 +522,7 @@ export interface FileRouteTypes {
     | '/$username'
     | '/dashboard'
     | '/device'
+    | '/pricing'
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
@@ -518,6 +541,7 @@ export interface FileRouteTypes {
     | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
+    | '/dashboard/lists'
     | '/dashboard/new'
     | '/dashboard/payouts'
     | '/dashboard/purchases'
@@ -546,6 +570,7 @@ export interface RootRouteChildren {
   UsernameRoute: typeof UsernameRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   DeviceRoute: typeof DeviceRoute
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfitShareRoute: typeof ProfitShareRoute
   PublishingPolicyRoute: typeof PublishingPolicyRoute
@@ -625,6 +650,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/device': {
@@ -723,6 +755,13 @@ declare module '@tanstack/react-router' {
       path: '/new'
       fullPath: '/dashboard/new'
       preLoaderRoute: typeof DashboardNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/lists': {
+      id: '/dashboard/lists'
+      path: '/lists'
+      fullPath: '/dashboard/lists'
+      preLoaderRoute: typeof DashboardListsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/earnings': {
@@ -899,6 +938,7 @@ interface DashboardRouteChildren {
   DashboardCollectionsRoute: typeof DashboardCollectionsRoute
   DashboardComponentsRoute: typeof DashboardComponentsRoute
   DashboardEarningsRoute: typeof DashboardEarningsRoute
+  DashboardListsRoute: typeof DashboardListsRoute
   DashboardNewRoute: typeof DashboardNewRoute
   DashboardPayoutsRoute: typeof DashboardPayoutsRoute
   DashboardPurchasesRoute: typeof DashboardPurchasesRoute
@@ -916,6 +956,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCollectionsRoute: DashboardCollectionsRoute,
   DashboardComponentsRoute: DashboardComponentsRoute,
   DashboardEarningsRoute: DashboardEarningsRoute,
+  DashboardListsRoute: DashboardListsRoute,
   DashboardNewRoute: DashboardNewRoute,
   DashboardPayoutsRoute: DashboardPayoutsRoute,
   DashboardPurchasesRoute: DashboardPurchasesRoute,
@@ -935,6 +976,7 @@ const rootRouteChildren: RootRouteChildren = {
   UsernameRoute: UsernameRoute,
   DashboardRoute: DashboardRouteWithChildren,
   DeviceRoute: DeviceRoute,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ProfitShareRoute: ProfitShareRoute,
   PublishingPolicyRoute: PublishingPolicyRoute,

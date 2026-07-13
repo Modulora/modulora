@@ -68,7 +68,7 @@ function xHandleOf(url: string): string {
 }
 
 function Profile() {
-  const { profile, components, collections } = Route.useLoaderData();
+  const { profile, components, collections, publicLists } = Route.useLoaderData();
   const [stage, setStage] = useState(0);
 
   // Returning from a collection checkout: confirm + clean the URL.
@@ -163,6 +163,36 @@ function Profile() {
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             {collections.map((collection) => (
               <CollectionCard key={collection.name} collection={collection} namespace={profile.username} components={components} />
+            ))}
+          </div>
+        </motion.section>
+      ) : null}
+
+      {publicLists.length > 0 ? (
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: stage >= 2 ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+          className="mt-10"
+        >
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Lists · curated by @{profile.username}</h2>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            {publicLists.map((list) => (
+              <div key={list.name} className="rounded-xl border border-border/60 bg-card/40 p-4">
+                <p className="text-sm font-medium">{list.title}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {list.items.map((item) => (
+                    <Link
+                      key={`${item.namespace}/${item.name}`}
+                      to="/components/$namespace/$name"
+                      params={{ namespace: item.namespace, name: item.name }}
+                      className="rounded-md border border-border/60 px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+                    >
+                      {item.title} <span className="text-muted-foreground/60">by {item.namespace}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </motion.section>

@@ -19,6 +19,7 @@ const mockUser: CurrentUser = {
   stripeAccountId: null,
   payoutsEnabled: false,
   isCurator: true,
+  isPlus: true,
   editorTheme: "github-dark-default",
 };
 

@@ -1,7 +1,7 @@
 /**
- * Bookmarks — save any component for yourself. Personal only; bookmarking
- * never affects earnings, ranking, or curation (the honesty rule). Shareable
- * lists are a separate, future concept (#63).
+ * Bookmarks (Plus) — quick-save any component. Personal only; bookmarking
+ * never affects earnings, ranking, or curation (the honesty rule). Named
+ * public/private lists live in lib/lists.ts.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -36,6 +36,7 @@ export const toggleBookmark = createServerFn({ method: "POST" })
     const user = request ? await getCurrentUser(request) : null;
     const db = getDb();
     if (!user || !db) return { ok: false, error: "Sign in first." };
+    if (!user.isPlus) return { ok: false, error: "Bookmarks are part of Modulora Plus." };
     const componentId = await componentIdOf(db, data.namespace, data.name);
     if (!componentId) return { ok: false, error: "Component not found." };
 
@@ -61,7 +62,7 @@ export const isBookmarked = createServerFn({ method: "GET" })
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
     const db = getDb();
-    if (!user || !db) return false;
+    if (!user?.isPlus || !db) return false;
     const componentId = await componentIdOf(db, data.namespace, data.name);
     if (!componentId) return false;
     const [row] = await db
@@ -85,7 +86,7 @@ export const fetchMyBookmarks = createServerFn({ method: "GET" }).handler(
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
     const db = getDb();
-    if (!user || !db) return [];
+    if (!user?.isPlus || !db) return [];
     const rows = await db
       .select({
         namespace: schema.namespaces.name,

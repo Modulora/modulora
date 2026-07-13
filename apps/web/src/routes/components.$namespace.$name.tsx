@@ -14,7 +14,7 @@ import { OwnedTray } from "@/components/owned";
 import { CollectionView } from "@/components/collection-view";
 import { fetchCollectionDetail } from "@/lib/catalog-db";
 import { PriceSeal } from "@/components/money";
-import { BookmarkButton } from "@/components/bookmark-button";
+import { SaveMenu } from "@/components/save-menu";
 import { Tabs } from "radix-ui";
 import { motion } from "motion/react";
 import {
@@ -89,7 +89,7 @@ export const Route = createFileRoute("/components/$namespace/$name")({
       // as /r/). Rendered in the same page shell with a member rail.
       const collection = await fetchCollectionDetail({ data: { namespace: params.namespace, name: params.name } });
       if (!collection) throw notFound();
-      return { kind: "collection" as const, collection, item: null, files: [], viewerTheme: DEFAULT_EDITOR_THEME };
+      return { kind: "collection" as const, collection, item: null, files: [], viewerTheme: DEFAULT_EDITOR_THEME, viewerPlus: false };
     }
     // Only open (free) components expose source. Rendered client-side in a
     // read-only editor using the viewer's chosen code theme (settings).
@@ -98,7 +98,7 @@ export const Route = createFileRoute("/components/$namespace/$name")({
       item.sourceModel === "open-source" && item.files
         ? item.files.map((file) => ({ path: file.path, raw: file.content }))
         : [];
-    return { kind: "component" as const, collection: null, item, files, viewerTheme: viewer?.editorTheme ?? DEFAULT_EDITOR_THEME };
+    return { kind: "component" as const, collection: null, item, files, viewerTheme: viewer?.editorTheme ?? DEFAULT_EDITOR_THEME, viewerPlus: viewer?.isPlus ?? false };
   },
   component: ComponentDetail,
 });
@@ -136,10 +136,10 @@ const EVIDENCE_LABELS: Record<string, string> = {
 function ComponentDetail() {
   const data = Route.useLoaderData();
   if (data.kind === "collection") return <CollectionView collection={data.collection} />;
-  return <ComponentDetailInner item={data.item} files={data.files} viewerTheme={data.viewerTheme} />;
+  return <ComponentDetailInner item={data.item} files={data.files} viewerTheme={data.viewerTheme} viewerPlus={data.viewerPlus} />;
 }
 
-function ComponentDetailInner({ item, files, viewerTheme }: { item: NonNullable<Awaited<ReturnType<typeof fetchCatalogDetail>>>; files: HighlightedFile[]; viewerTheme: string }) {
+function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: NonNullable<Awaited<ReturnType<typeof fetchCatalogDetail>>>; files: HighlightedFile[]; viewerTheme: string; viewerPlus: boolean }) {
   const [stage, setStage] = useState(0);
   const [workspaceTab, setWorkspaceTab] = useState("preview");
   const [installTab, setInstallTab] = useState(
@@ -228,7 +228,7 @@ function ComponentDetailInner({ item, files, viewerTheme }: { item: NonNullable<
             <p className="mt-2 max-w-3xl text-muted-foreground">{item.description}</p>
           </div>
           <div className="flex items-center gap-3">
-          <BookmarkButton namespace={item.namespace} name={item.name} />
+          <SaveMenu namespace={item.namespace} name={item.name} plus={viewerPlus} />
           <PriceSeal
             size="md"
             paid={isPaid || item.marketplacePrice != null}

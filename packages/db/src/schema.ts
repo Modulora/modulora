@@ -56,6 +56,12 @@ export const users = pgTable("user", {
   payoutsEnabled: boolean("payouts_enabled").notNull().default(false),
   // Curators can approve/reject submitted components for public listing.
   isCurator: boolean("is_curator").notNull().default(false),
+  /** Modulora Plus entitlement (bookmarks, lists, curated public lists). */
+  isPlus: boolean("is_plus").notNull().default(false),
+  /** Stripe customer (subscriptions/billing portal — distinct from the
+   *  Connect account used for creator payouts). */
+  stripeCustomerId: text("stripe_customer_id"),
+  plusSubscriptionId: text("plus_subscription_id"),
   // Shiki theme used for code views (detail page, review) chosen in settings.
   editorTheme: text("editor_theme").notNull().default("github-dark-default"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -466,7 +472,42 @@ export const collectionItems = pgTable(
   (t) => [uniqueIndex("collection_items_unique").on(t.collectionId, t.componentId)],
 );
 
-/** Personal bookmarks — save any component. Never affects earnings or rank. */
+/**
+ * Component lists (Plus): named groups of anyone's components, public or
+ * private. Curation-as-content — never affects earnings or rank.
+ */
+export const lists = pgTable(
+  "lists",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(), // url-safe slug, unique per user
+    title: text("title").notNull(),
+    visibility: text("visibility", { enum: ["public", "private"] }).notNull().default("private"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("lists_user_name").on(t.userId, t.name)],
+);
+
+export const listItems = pgTable(
+  "list_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("list_items_unique").on(t.listId, t.componentId)],
+);
+
+/** Personal bookmarks (Plus) — quick-save any component. Never affects earnings or rank. */
 export const bookmarks = pgTable(
   "bookmarks",
   {

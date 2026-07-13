@@ -141,6 +141,20 @@
       "when": 1783906737793,
       "tag": "0019_daffy_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1783907056768,
+      "tag": "0020_motionless_star_brand",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1783907655915,
+      "tag": "0021_bizarre_christian_walker",
+      "breakpoints": true
     }
   ]
 }

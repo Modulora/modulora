@@ -28,6 +28,7 @@ export interface CurrentUser {
   stripeAccountId: string | null;
   payoutsEnabled: boolean;
   isCurator: boolean;
+  isPlus: boolean;
   editorTheme: string;
 }
 
@@ -66,6 +67,7 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     stripeAccountId: row.stripeAccountId,
     payoutsEnabled: row.payoutsEnabled,
     isCurator: row.isCurator,
+    isPlus: row.isPlus,
     editorTheme: row.editorTheme,
   };
 }

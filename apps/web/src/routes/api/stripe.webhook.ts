@@ -33,6 +33,10 @@ async function handle({ request }: { request: Request }) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as { id: string };
       await fulfilCheckout(session.id);
+    } else if (event.type === "customer.subscription.deleted") {
+      const sub = event.data.object as { id: string };
+      const { endPlus } = await import("@/lib/plus");
+      await endPlus(sub.id);
     } else if (event.type === "account.updated") {
       const account = event.data.object as { id: string; payouts_enabled?: boolean; details_submitted?: boolean };
       const url = process.env.DATABASE_URL;

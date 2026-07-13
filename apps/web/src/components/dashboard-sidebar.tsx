@@ -44,9 +44,10 @@ export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
           <span className="flex-1 truncate">Components</span>
           <span className="text-xs tabular-nums text-muted-foreground">{summary.counts.components}</span>
         </Link>
-        <Link to="/dashboard/bookmarks" className={itemClass}>
+        <Link to="/dashboard/lists" className={itemClass}>
           <Bookmark className="size-4 shrink-0 opacity-70" />
-          <span className="flex-1 truncate">Bookmarks</span>
+          <span className="flex-1 truncate">Lists</span>
+          <span className="rounded-full border border-border/60 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">Plus</span>
         </Link>
         <Link to="/dashboard/purchases" className={itemClass}>
           <ShoppingBag className="size-4 shrink-0 opacity-70" />
