@@ -411,6 +411,11 @@ export async function publishCore(data: PublishInput, request: Request): Promise
       .set({ publishingPolicyVersion: POLICY_VERSION, publishingPolicyAcceptedAt: new Date(), updatedAt: new Date() })
       .where(eq(schema.users.id, user.id));
 
+    // Awaited: dangling promises are cancelled in the Workers runtime, so
+    // fire-and-forget emails silently vanish. sendEmail never throws.
+    const { emailSubmissionReceived } = await import("./email");
+    await emailSubmissionReceived(user.email, title, `@${user.username}/${name}`);
+
     return { ok: true, namespace: user.username, name, version, status: "pending" as const };
   }
 }

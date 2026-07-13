@@ -77,10 +77,15 @@ export const startPlusCheckout = createServerFn({ method: "POST" }).handler(
 export async function fulfilPlusCheckout(userId: string, subscriptionId: string | null): Promise<void> {
   const db = getDb();
   if (!db || !userId) return;
-  await db
+  const [user] = await db
     .update(schema.users)
     .set({ isPlus: true, plusSubscriptionId: subscriptionId, updatedAt: new Date() })
-    .where(eq(schema.users.id, userId));
+    .where(eq(schema.users.id, userId))
+    .returning({ email: schema.users.email });
+  if (user) {
+    const { emailPlusWelcome } = await import("./email");
+    await emailPlusWelcome(user.email);
+  }
 }
 
 /** Subscription ended (canceled/unpaid): drop the entitlement. */

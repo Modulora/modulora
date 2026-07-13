@@ -231,10 +231,12 @@ export async function fulfilCheckout(sessionId: string): Promise<void> {
       .set({ status: "active", startsAt: now, endsAt: ends })
       .where(and(eq(schema.promotions.id, meta.promotionId), eq(schema.promotions.status, "pending")));
   } else if (meta.type === "purchase" && meta.purchaseId) {
-    await db
+    const [paid] = await db
       .update(schema.purchases)
       .set({ status: "paid", stripePaymentIntentId: (session.payment_intent as string) ?? null })
-      .where(and(eq(schema.purchases.id, meta.purchaseId), eq(schema.purchases.status, "pending")));
+      .where(and(eq(schema.purchases.id, meta.purchaseId), eq(schema.purchases.status, "pending")))
+      .returning();
+    if (paid) await sendPurchaseEmails(db, paid.componentId, paid.buyerUserId, paid.sellerUserId, paid.amount, paid.feeAmount);
   } else if (meta.type === "collection-purchase" && meta.collectionPurchaseId) {
     await fulfilCollectionPurchase(meta.collectionPurchaseId, (session.payment_intent as string) ?? null);
   } else if (meta.type === "plus" && meta.userId) {
@@ -412,6 +414,26 @@ export async function fulfilCollectionPurchase(collectionPurchaseId: string, pay
     .returning();
   if (!updated) return;
 
+  // Buyer + seller emails (fire-and-forget), with the collection's info.
+  try {
+    const email = await import("./email");
+    const [collection] = await db
+      .select({ title: schema.collections.title, name: schema.collections.name, namespace: schema.namespaces.name })
+      .from(schema.collections)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.collections.namespaceId))
+      .where(eq(schema.collections.id, updated.collectionId))
+      .limit(1);
+    if (collection) {
+      const ref = `@${collection.namespace}/${collection.name}`;
+      const [buyer] = await db.select({ email: schema.users.email }).from(schema.users).where(eq(schema.users.id, updated.buyerUserId)).limit(1);
+      if (buyer) await email.emailPurchaseBuyer(buyer.email, `${collection.title} (collection)`, updated.amount, ref);
+      const [seller] = await db.select({ email: schema.users.email }).from(schema.users).where(eq(schema.users.id, updated.sellerUserId)).limit(1);
+      if (seller) await email.emailPurchaseSeller(seller.email, `${collection.title} (collection)`, updated.amount - updated.feeAmount);
+    }
+  } catch (error) {
+    console.error("collection purchase emails failed", error);
+  }
+
   const members = await db
     .select({ componentId: schema.collectionItems.componentId })
     .from(schema.collectionItems)
@@ -433,5 +455,36 @@ export async function fulfilCollectionPurchase(collectionPurchaseId: string, pay
         viaCollectionPurchaseId: updated.id,
       })
       .onConflictDoNothing();
+  }
+}
+
+
+/** Buyer receipt + seller notification (fire-and-forget). */
+async function sendPurchaseEmails(
+  db: NonNullable<ReturnType<typeof getDb>>,
+  componentId: string,
+  buyerUserId: string,
+  sellerUserId: string | null,
+  amount: number,
+  feeAmount: number,
+): Promise<void> {
+  try {
+    const email = await import("./email");
+    const [component] = await db
+      .select({ title: schema.components.title, name: schema.components.name, namespace: schema.namespaces.name })
+      .from(schema.components)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+      .where(eq(schema.components.id, componentId))
+      .limit(1);
+    if (!component) return;
+    const ref = `@${component.namespace}/${component.name}`;
+    const [buyer] = await db.select({ email: schema.users.email }).from(schema.users).where(eq(schema.users.id, buyerUserId)).limit(1);
+    if (buyer) await email.emailPurchaseBuyer(buyer.email, component.title, amount, ref);
+    if (sellerUserId) {
+      const [seller] = await db.select({ email: schema.users.email }).from(schema.users).where(eq(schema.users.id, sellerUserId)).limit(1);
+      if (seller) await email.emailPurchaseSeller(seller.email, component.title, amount - feeAmount);
+    }
+  } catch (error) {
+    console.error("purchase emails failed", error);
   }
 }

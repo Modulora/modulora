@@ -148,8 +148,24 @@ export const decideReview = createServerFn({ method: "POST" })
         updatedAt: new Date(),
       })
       .where(and(eq(schema.components.id, data.componentId), eq(schema.components.reviewStatus, "pending")))
-      .returning({ id: schema.components.id });
+      .returning({ id: schema.components.id, name: schema.components.name, title: schema.components.title, namespaceId: schema.components.namespaceId });
     if (updated.length === 0) return { ok: false, error: "Already reviewed or no longer pending." };
+
+    // Notify the creator (fire-and-forget — the decision never blocks on email).
+    const component = updated[0]!;
+    const [owner] = await db
+      .select({ email: schema.users.email, namespace: schema.namespaces.name })
+      .from(schema.namespaces)
+      .innerJoin(schema.users, eq(schema.users.id, schema.namespaces.ownerUserId))
+      .where(eq(schema.namespaces.id, component.namespaceId))
+      .limit(1);
+    if (owner) {
+      const ref = `@${owner.namespace}/${component.name}`;
+      // Awaited: dangling promises are cancelled in the Workers runtime.
+      const email = await import("./email");
+      if (data.decision === "approve") await email.emailReviewApproved(owner.email, component.title, ref);
+      else await email.emailReviewRejected(owner.email, component.title, data.reason);
+    }
 
     return { ok: true };
   });
