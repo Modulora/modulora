@@ -34,9 +34,7 @@ import {
 } from "@/lib/profile";
 import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
 import { addDomain, discoverDomainConnect, listDomains, removeDomain, verifyDomain, type DomainConnectInfo, type DomainRecord } from "@/lib/domains";
-import { DnsRecordsTable } from "@/components/domain/dns-records-table";
-import { OneClickDnsSetup } from "@/components/domain/one-click-dns-setup";
-import type { DnsRecord, Domain } from "@opencoredev/domain-sdk";
+import { DnsRecordCard, OneClickSetup, type DnsRecordInfo } from "@/components/domain-verify";
 import { linkSocial } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/dashboard/settings/")({
@@ -362,13 +360,10 @@ function DomainsSection({ initial }: { initial: DomainRecord[] }) {
             </div>
 
             {!d.verified ? (
-              <div className="mt-3 space-y-3">
+              <div className="mt-4 space-y-3">
                 <DomainConnectPanel record={d} />
-                <div className="rounded-md border border-border/50 bg-secondary/30 p-3">
-                  <p className="mb-2 text-[11px] text-muted-foreground">Add this TXT record at your DNS provider, then Verify:</p>
-                  <DnsRecordsTable records={[txtRecordFor(d)]} />
-                  {status[d.domain] ? <p className="mt-2 text-[11px] text-amber-500">{status[d.domain]}</p> : null}
-                </div>
+                <p className="text-xs text-muted-foreground">Add this record at your DNS provider, then hit Verify. Click a row to copy it.</p>
+                <DnsRecordCard record={txtRecordFor(d, status[d.domain])} />
               </div>
             ) : null}
           </div>
@@ -379,16 +374,14 @@ function DomainsSection({ initial }: { initial: DomainRecord[] }) {
   );
 }
 
-/** Our single ownership-proof record, in domain-sdk's DnsRecord shape. */
-function txtRecordFor(d: DomainRecord): DnsRecord {
+/** Our single ownership-proof record. */
+function txtRecordFor(d: DomainRecord, issue?: string): DnsRecordInfo {
   return {
     type: "TXT",
     name: d.txtName,
     value: d.txtValue,
-    purpose: "ownership",
-    required: true,
     status: d.verified ? "valid" : "pending",
-    description: "Proves you control this domain.",
+    issue,
   };
 }
 
@@ -407,21 +400,20 @@ function DomainConnectPanel({ record }: { record: DomainRecord }) {
     });
     return () => { alive = false; };
   }, [record.domain]);
-  if (!info?.supported || !info.applyUrl) return null;
-  const domain: Domain = {
-    id: record.domain,
-    hostname: record.domain,
-    provider: info.provider ?? "your DNS provider",
-    status: "pending",
-    records: [txtRecordFor(record)],
-    verification: { status: "pending", records: [txtRecordFor(record)] },
-    certificate: { status: "pending" },
-    issues: [],
-  };
+  if (!info) return null;
+  if (!info.supported || !info.applyUrl) {
+    // Honest absence: one-click depends on the DNS provider supporting our
+    // Domain Connect template. Say so instead of silently showing nothing.
+    return info.provider ? (
+      <p className="text-[11px] text-muted-foreground/70">
+        One-click setup isn&apos;t available at {info.provider} yet — add the record manually below.
+      </p>
+    ) : null;
+  }
   return (
-    <OneClickDnsSetup
-      domain={domain}
-      dnsProvider={info.provider ?? "your DNS provider"}
+    <OneClickSetup
+      domain={record.domain}
+      provider={info.provider ?? "your DNS provider"}
       onConnect={() => window.location.assign(info.applyUrl!)}
     />
   );
