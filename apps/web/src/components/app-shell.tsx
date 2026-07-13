@@ -16,6 +16,7 @@ import { LayoutDashboard, LogOut, Settings, Sparkles, User as UserIcon } from "l
 
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CommandSearch } from "@/components/command-search";
 import { GitHubIcon } from "@/components/brand-icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -150,6 +151,8 @@ export function AppShell({
       <main className="mx-auto w-full max-w-[1600px] flex-1 px-6 py-8">
         {children}
       </main>
+
+      <CommandSearch />
 
       <footer className="border-t border-border/60">
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground sm:flex-row">
