@@ -127,6 +127,7 @@ function MyComponents() {
 
 function ReviewBadge({ status }: { status: MyComponent["reviewStatus"] }) {
   const map = {
+    draft: { label: "Draft", cls: "bg-secondary text-muted-foreground" },
     approved: { label: "Live", cls: "bg-emerald-500/10 text-emerald-500" },
     pending: { label: "In review", cls: "bg-amber-500/10 text-amber-500" },
     rejected: { label: "Changes requested", cls: "bg-destructive/10 text-destructive" },

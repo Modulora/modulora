@@ -65,7 +65,7 @@ export interface ReviewListItem {
   namespace: string;
   category: string;
   paid: boolean;
-  status: "pending" | "approved" | "rejected";
+  status: "draft" | "pending" | "approved" | "rejected";
   submittedAt: string;
 }
 

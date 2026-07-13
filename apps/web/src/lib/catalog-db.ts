@@ -441,7 +441,7 @@ export interface MyComponent {
   category: string;
   version: string;
   sourceModel: string;
-  reviewStatus: "pending" | "approved" | "rejected";
+  reviewStatus: "draft" | "pending" | "approved" | "rejected";
   reviewReason: string | null;
   marketplacePrice: number | null;
   updatedAt: string;

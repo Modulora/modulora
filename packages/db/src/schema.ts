@@ -207,7 +207,7 @@ export const components = pgTable(
       withTimezone: true,
     }),
     // Curation: nothing is publicly listed until a curator approves it.
-    reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] })
+    reviewStatus: text("review_status", { enum: ["draft", "pending", "approved", "rejected"] })
       .notNull()
       .default("pending"),
     reviewReason: text("review_reason"),

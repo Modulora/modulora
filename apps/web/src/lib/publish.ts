@@ -7,9 +7,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
+import { normalizeDomain } from "./domains";
 import { isCategoryId } from "./taxonomy";
 import { verifyShadcnParity } from "./parity";
 import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
@@ -46,6 +47,8 @@ export interface PublishInput {
   inspiredBy: string[];
   files: PublishFile[];
   acceptPolicy: boolean;
+  /** Save without submitting for review — no policy gate, skips the queue. */
+  draft?: boolean;
 }
 
 export interface PublishResult {
@@ -108,7 +111,8 @@ export async function publishCore(data: PublishInput, request: Request): Promise
     const user = await getCurrentUser(request);
     if (!user) return { ok: false, error: "You must be signed in." };
     if (!user.username) return { ok: false, error: "Claim a username first." };
-    if (data.acceptPolicy !== true) {
+    const isDraft = data.draft === true;
+    if (!isDraft && data.acceptPolicy !== true) {
       return { ok: false, error: "Accept the publishing policy to submit." };
     }
 
@@ -151,14 +155,38 @@ export async function publishCore(data: PublishInput, request: Request): Promise
     // Digest over the canonical served form (src/ stripped) so the published
     // digest matches what /r/ serves and what the CLI computes on install.
     const digestFiles = installFiles.map((f) => ({ path: stripSrc(f.path), content: f.content }));
-    if (data.pricing !== "paid" && installFiles.length === 0) {
+    if (data.pricing !== "paid" && installFiles.length === 0 && !isDraft) {
       return { ok: false, error: "Add at least one component file under src/components/." };
     }
 
     const isPaid = data.pricing === "paid";
     const purchaseUrl = String(data.purchaseUrl ?? "").trim();
-    if (isPaid && !/^https?:\/\//i.test(purchaseUrl)) {
-      return { ok: false, error: "Paid components need a purchase URL." };
+    if (isPaid && !isDraft) {
+      if (!/^https?:\/\//i.test(purchaseUrl)) {
+        return { ok: false, error: "Paid components need a purchase URL." };
+      }
+      // The purchase URL must live on a domain this creator has verified —
+      // the docs promised this gate; enforce it for real.
+      const host = normalizeDomain(purchaseUrl);
+      const owned = host
+        ? await drizzle(neon(databaseUrl), { schema })
+            .select({ id: schema.verifiedDomains.id })
+            .from(schema.verifiedDomains)
+            .where(
+              and(
+                eq(schema.verifiedDomains.ownerUserId, user.id),
+                eq(schema.verifiedDomains.domain, host),
+                isNotNull(schema.verifiedDomains.verifiedAt),
+              ),
+            )
+            .limit(1)
+        : [];
+      if (owned.length === 0) {
+        return {
+          ok: false,
+          error: `Purchase URL must be on a domain you've verified (${host ?? "invalid URL"}). Verify it in Settings first.`,
+        };
+      }
     }
     const channels = ALL_CHANNELS.filter((channel) => data.distributionChannels?.includes(channel));
     if (channels.length === 0) return { ok: false, error: "Enable at least one distribution channel." };
@@ -241,12 +269,13 @@ export async function publishCore(data: PublishInput, request: Request): Promise
           originalUrl: originalUrl || null,
           inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
-          // Any new release re-enters curation before it is public again.
-          reviewStatus: "pending",
+          // Any new submission re-enters curation before it is public again;
+          // drafts stay out of the queue until the creator submits.
+          reviewStatus: isDraft ? "draft" : "pending",
           reviewReason: null,
           reviewedBy: null,
           reviewedAt: null,
-          submittedAt: new Date(),
+          submittedAt: isDraft ? undefined : new Date(),
           updatedAt: new Date(),
         })
         .where(eq(schema.components.id, componentId));
@@ -268,6 +297,7 @@ export async function publishCore(data: PublishInput, request: Request): Promise
           originalUrl: originalUrl || null,
           inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
+          reviewStatus: isDraft ? "draft" : "pending",
         })
         .returning({ id: schema.components.id });
       componentId = created!.id;
@@ -413,8 +443,10 @@ export async function publishCore(data: PublishInput, request: Request): Promise
 
     // Awaited: dangling promises are cancelled in the Workers runtime, so
     // fire-and-forget emails silently vanish. sendEmail never throws.
-    const { emailSubmissionReceived } = await import("./email");
-    await emailSubmissionReceived(user.email, title, `@${user.username}/${name}`);
+    if (!isDraft) {
+      const { emailSubmissionReceived } = await import("./email");
+      await emailSubmissionReceived(user.email, title, `@${user.username}/${name}`);
+    }
 
     return { ok: true, namespace: user.username, name, version, status: "pending" as const };
   }

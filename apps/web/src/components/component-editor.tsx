@@ -6,7 +6,7 @@
  *   Step 3  Submit   verification summary → curation queue
  * ───────────────────────────────────────────────────────── */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { CATEGORIES } from "@/lib/taxonomy";
 import { publishComponent, type PublishFile } from "@/lib/publish";
 import { setComponentPrice } from "@/lib/marketplace";
+import { listDomains } from "@/lib/domains";
 import { getPayoutStatus } from "@/lib/payouts";
 import { EarningsBreakdown, LicensePicker } from "@/components/money";
 import { demoFiles, isSystemFile, roleFor, scaffoldFiles } from "@/lib/scaffold";
@@ -125,10 +126,19 @@ export function ComponentEditor({
   const [licenseTemplate, setLicenseTemplate] = useState("modulora-commercial-v1");
   const [licenseText, setLicenseText] = useState("");
   const [payoutsEnabled, setPayoutsEnabled] = useState<boolean | null>(null);
+  const [verifiedDomains, setVerifiedDomains] = useState<string[] | null>(null);
   useEffect(() => {
     void getPayoutStatus().then((status) => setPayoutsEnabled(status.payoutsEnabled));
+    void listDomains().then((rows) => setVerifiedDomains(rows.filter((r) => r.verified).map((r) => r.domain)));
   }, []);
   const [purchaseUrl, setPurchaseUrl] = useState(initial?.purchaseUrl ?? "");
+  const purchaseHost = (() => {
+    try {
+      return new URL(purchaseUrl.trim()).hostname.replace(/^www\./, "");
+    } catch {
+      return null;
+    }
+  })();
   const [channels, setChannels] = useState<string[]>(
     initial?.distributionChannels ?? ["shadcn", "modulora-cli"],
   );
@@ -174,9 +184,14 @@ export function ComponentEditor({
     name: effectiveName.length < 2 || !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(effectiveName)
       ? "Lowercase letters, numbers, and hyphens (2–40 chars)."
       : null,
-    purchaseUrl: pricing === "external" && !/^https?:\/\//i.test(purchaseUrl.trim())
-      ? "A purchase URL is required — it must resolve to a domain you've verified."
-      : null,
+    purchaseUrl:
+      pricing !== "external"
+        ? null
+        : !/^https?:\/\//i.test(purchaseUrl.trim())
+          ? "A purchase URL is required."
+          : verifiedDomains !== null && purchaseHost !== null && !verifiedDomains.includes(purchaseHost)
+            ? `${purchaseHost} isn't a domain you've verified.`
+            : null,
     price: pricing === "marketplace" && !(parseFloat(price) >= 1 && parseFloat(price) <= 1000)
       ? "Price must be between $1 and $1000."
       : null,
@@ -228,6 +243,37 @@ export function ComponentEditor({
     const remaining = files.filter((file) => file.path !== path);
     setFiles(remaining);
     if (activePath === path) setActivePath(remaining[0]!.path);
+  }
+
+  const [savingDraft, setSavingDraft] = useState(false);
+  async function onSaveDraft() {
+    setSavingDraft(true);
+    setError(null);
+    const result = await publishComponent({
+      data: {
+        name: effectiveName,
+        title: title.trim() || effectiveName || "Untitled",
+        description: description.trim(),
+        category,
+        version: "",
+        pricing: pricing === "external" ? "paid" : "free",
+        purchaseUrl: purchaseUrl.trim(),
+        distributionChannels: channels.length > 0 ? channels : ["modulora-cli"],
+        shadcnCommand: shadcnCommand.trim(),
+        otherCliCommand: otherCliCommand.trim(),
+        originalUrl: originalUrl.trim(),
+        inspiredBy: inspiredBy.map((url) => url.trim()).filter(Boolean),
+        files,
+        acceptPolicy: false,
+        draft: true,
+      },
+    });
+    setSavingDraft(false);
+    if (!result.ok) {
+      setError(result.error ?? "Could not save the draft.");
+      return;
+    }
+    void navigate({ to: "/dashboard/components" });
   }
 
   async function onPublish() {
@@ -319,6 +365,11 @@ export function ComponentEditor({
 
         <div className="flex items-center gap-3">
           {error ? <span className="max-w-md truncate text-xs text-destructive">{error}</span> : null}
+          {mode === "create" ? (
+            <Button type="button" variant="ghost" size="sm" disabled={savingDraft || !effectiveName} onClick={() => void onSaveDraft()}>
+              {savingDraft ? "Saving…" : "Save draft"}
+            </Button>
+          ) : null}
           {step === "build" ? (
             <Button type="button" onClick={() => setStep("details")} disabled={!canContinueBuild} className="gap-2">
               Continue <ArrowRight className="size-4" />
@@ -387,6 +438,10 @@ export function ComponentEditor({
           setLicenseText={setLicenseText}
           payoutsEnabled={payoutsEnabled}
           errors={fieldErrors}
+          onContinue={() => setStep("submit")}
+          canContinue={canContinueDetails}
+          onSaveDraft={mode === "create" ? () => void onSaveDraft() : undefined}
+          savingDraft={savingDraft}
           channels={channels}
           toggleChannel={toggleChannel}
           shadcnCommand={shadcnCommand}
@@ -712,6 +767,10 @@ function DetailsStep(props: {
   setOriginalUrl: (v: string) => void;
   inspiredBy: string[];
   setInspiredBy: (fn: (v: string[]) => string[]) => void;
+  onContinue: () => void;
+  canContinue: boolean;
+  onSaveDraft?: () => void;
+  savingDraft?: boolean;
 }) {
   const p = props;
   return (
@@ -788,7 +847,13 @@ function DetailsStep(props: {
           <MetaField label="Purchase URL">
             <Input value={p.purchaseUrl} onChange={(e) => p.setPurchaseUrl(e.target.value)} placeholder="https://you.dev/pro" />
             <FieldError show={p.purchaseUrl.length > 0} error={p.errors.purchaseUrl} />
-            <p className="mt-1 text-[11px] text-muted-foreground">Must resolve to a domain you&apos;ve verified in settings.</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Must resolve to a domain you&apos;ve verified —{" "}
+              <Link to="/dashboard/settings" className="underline underline-offset-2 transition-colors hover:text-foreground">
+                verify one in settings
+              </Link>
+              .
+            </p>
           </MetaField>
         ) : null}
 
@@ -846,6 +911,17 @@ function DetailsStep(props: {
             ) : null}
           </div>
         </MetaField>
+
+        <div className="mt-1 flex items-center justify-end gap-2 border-t border-border/50 pt-4">
+          {p.onSaveDraft ? (
+            <Button type="button" variant="ghost" size="sm" disabled={p.savingDraft} onClick={p.onSaveDraft}>
+              {p.savingDraft ? "Saving…" : "Save draft"}
+            </Button>
+          ) : null}
+          <Button type="button" size="sm" className="gap-1.5" disabled={!p.canContinue} onClick={p.onContinue}>
+            Continue <ArrowRight className="size-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
   );
