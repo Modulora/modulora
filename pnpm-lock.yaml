@@ -34,6 +34,9 @@ importers:
       '@hugeicons-pro/core-solid-sharp':
         specifier: ^4.2.2
         version: 4.2.2
+      '@hugeicons/core-free-icons':
+        specifier: ^4.2.2
+        version: 4.2.2
       '@hugeicons/react':
         specifier: ^1.1.9
         version: 1.1.9(react@19.2.7)
@@ -46,6 +49,9 @@ importers:
       '@neondatabase/serverless':
         specifier: ^1.1.0
         version: 1.1.0
+      '@opencoredev/domain-sdk':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@paper-design/shaders-react':
         specifier: ^0.0.77
         version: 0.0.77(@types/react@19.2.17)(react@19.2.7)
@@ -1001,6 +1007,9 @@ packages:
   '@hugeicons-pro/core-solid-sharp@4.2.2':
     resolution: {integrity: sha512-spzfCnhK3piQHB//wAQeBIqPwnAFNxjMLpLKl95cC8W2xMUDvH+YGLLt++ttAjS5VuctqC02wtC8jstxlnbL6g==}
 
+  '@hugeicons/core-free-icons@4.2.2':
+    resolution: {integrity: sha512-fjQW3p6cwoJmwK3oCnV8Z3PC5sHihDvr2jkAHax8cxqp62GaV/D7B/Rnao+JwicW8fmLZUQ6QrzWfoyMFOEQlQ==}
+
   '@hugeicons/react@1.1.9':
     resolution: {integrity: sha512-O+lWSWjbijoAvMCxn4K2bQWCGN5+mP1y5j+X99j23mXMj+s0X25fs71T6t9YJLaBodwmZdaewD27dzS/PiboQw==}
     peerDependencies:
@@ -1264,6 +1273,10 @@ packages:
 
   '@open-draft/deferred-promise@2.2.0':
     resolution: {integrity: sha512-CecwLWx3rhxVQF6V4bAgPS5t+So2sTbPgAzafKkVizyi7tlwpcFpdFqq+wqF2OwNBmqFuu6tOyouTuxgpMfzmA==}
+
+  '@opencoredev/domain-sdk@0.1.0':
+    resolution: {integrity: sha512-htg4MhPsd9grGNnxw1ByCTBshZ0GqFKE8l0RPiK+FeuTAjSEITWCVkdZNWogBenPEGg2gMaMQ5sPuyCI32FX6A==}
+    engines: {node: '>=20'}
 
   '@opentelemetry/semantic-conventions@1.43.0':
     resolution: {integrity: sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg==}
@@ -4981,6 +4994,13 @@ packages:
     resolution: {integrity: sha512-azl+t0z7pw/z958Gy9svOTuzqIk6xq+NSheJzn5MMWtWTFywIacg2wUlzKFGtt3cthx0r2SxMK0yzJOR0IES7Q==}
     engines: {node: '>=14.0.0'}
 
+  tldts-core@7.4.8:
+    resolution: {integrity: sha512-c1P7u0EhACHj7lPy4MJm8iTFEU8+nB0LCtddH0fhP7noaVoXAqafMtOOeX+ulpuPBqnrRgRhw494RICT3mbhnw==}
+
+  tldts@7.4.8:
+    resolution: {integrity: sha512-htwgN/8KRB3z3vnC0BOETVh2m499g5GmyTK9Wq5JBLX3FNz6tSBveAd+fQhzy9hkjif8vy2jwDMR1sGhLtZl2A==}
+    hasBin: true
+
   tmcp@1.19.4:
     resolution: {integrity: sha512-fMoUJ3Gef9iA0yKZNeW2SQCCKTluCwghUyOz/qxPS8XxrQk6Jlw4lgql3S+s6L//FteLeSJ7erKxMWl727mZoQ==}
 
@@ -5954,6 +5974,8 @@ snapshots:
 
   '@hugeicons-pro/core-solid-sharp@4.2.2': {}
 
+  '@hugeicons/core-free-icons@4.2.2': {}
+
   '@hugeicons/react@1.1.9(react@19.2.7)':
     dependencies:
       react: 19.2.7
@@ -6203,6 +6225,10 @@ snapshots:
   '@oozcitak/util@10.0.0': {}
 
   '@open-draft/deferred-promise@2.2.0': {}
+
+  '@opencoredev/domain-sdk@0.1.0':
+    dependencies:
+      tldts: 7.4.8
 
   '@opentelemetry/semantic-conventions@1.43.0': {}
 
@@ -10206,6 +10232,12 @@ snapshots:
   tinyrainbow@2.0.0: {}
 
   tinyspy@4.0.4: {}
+
+  tldts-core@7.4.8: {}
+
+  tldts@7.4.8:
+    dependencies:
+      tldts-core: 7.4.8
 
   tmcp@1.19.4(typescript@5.9.3):
     dependencies:

@@ -156,3 +156,77 @@ export const verifyDomain = createServerFn({ method: "POST" })
 
     return { ok: true, verified: true };
   });
+
+/* ── Domain Connect discovery (one-click DNS setup) ──────────────────
+ * Real discovery per the Domain Connect spec: resolve the domain's
+ * `_domainconnect` TXT record, fetch the provider's settings, then check
+ * whether Modulora's template is onboarded with that DNS provider. The
+ * one-click UI renders only when this returns supported=true — today that
+ * is never, because our template isn't in the registry yet. No fake buttons.
+ */
+const DC_PROVIDER_ID = "modulora.dev";
+const DC_SERVICE_ID = "domain-verification";
+
+export interface DomainConnectInfo {
+  supported: boolean;
+  provider?: string;
+  applyUrl?: string;
+}
+
+export const discoverDomainConnect = createServerFn({ method: "POST" })
+  .inputValidator((data: { domain: string }) => data)
+  .handler(async ({ data }): Promise<DomainConnectInfo> => {
+    const request = getRequest();
+    const user = request ? await getCurrentUser(request) : null;
+    const db = getDb();
+    if (!user || !db) return { supported: false };
+    const domain = normalizeDomain(data.domain);
+    if (!domain) return { supported: false };
+    const [row] = await db
+      .select()
+      .from(schema.verifiedDomains)
+      .where(and(eq(schema.verifiedDomains.ownerUserId, user.id), eq(schema.verifiedDomains.domain, domain)))
+      .limit(1);
+    if (!row) return { supported: false };
+
+    try {
+      // 1. Discovery: _domainconnect TXT → the DNS provider's settings host.
+      const dns = await fetch(
+        `https://dns.google/resolve?name=_domainconnect.${domain}&type=TXT`,
+        { headers: { accept: "application/json" } },
+      );
+      const dnsJson = (await dns.json()) as { Answer?: { type?: number; data?: string }[] };
+      // Answers can include the CNAME chain; the settings host is the TXT (type 16).
+      const settingsHost = dnsJson.Answer?.find((a) => a.type === 16)
+        ?.data?.replace(/"/g, "")
+        .trim()
+        .replace(/\.$/, "");
+      if (!settingsHost) return { supported: false };
+
+      // 2. Provider settings for this domain.
+      const settingsRes = await fetch(`https://${settingsHost}/v2/${domain}/settings`);
+      if (!settingsRes.ok) return { supported: false };
+      const settings = (await settingsRes.json()) as {
+        providerDisplayName?: string;
+        providerName?: string;
+        urlAPI?: string;
+        urlSyncUX?: string;
+      };
+      const provider = settings.providerDisplayName ?? settings.providerName;
+      if (!settings.urlAPI || !settings.urlSyncUX) return { supported: false, provider };
+
+      // 3. Is Modulora's template onboarded with this provider?
+      const template = await fetch(
+        `${settings.urlAPI}/v2/domainTemplates/providers/${DC_PROVIDER_ID}/services/${DC_SERVICE_ID}`,
+      );
+      if (!template.ok) return { supported: false, provider };
+
+      // 4. Synchronous-flow apply URL; the DNS provider shows the user every
+      //    change for review before anything is written.
+      const params = new URLSearchParams({ domain, code: row.token });
+      const applyUrl = `${settings.urlSyncUX}/v2/domainTemplates/providers/${DC_PROVIDER_ID}/services/${DC_SERVICE_ID}/apply?${params}`;
+      return { supported: true, provider, applyUrl };
+    } catch {
+      return { supported: false };
+    }
+  });

@@ -33,7 +33,10 @@ import {
   type ProfileInput,
 } from "@/lib/profile";
 import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
-import { addDomain, listDomains, removeDomain, verifyDomain, type DomainRecord } from "@/lib/domains";
+import { addDomain, discoverDomainConnect, listDomains, removeDomain, verifyDomain, type DomainConnectInfo, type DomainRecord } from "@/lib/domains";
+import { DnsRecordsTable } from "@/components/domain/dns-records-table";
+import { OneClickDnsSetup } from "@/components/domain/one-click-dns-setup";
+import type { DnsRecord, Domain } from "@opencoredev/domain-sdk";
 import { linkSocial } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/dashboard/settings/")({
@@ -359,11 +362,13 @@ function DomainsSection({ initial }: { initial: DomainRecord[] }) {
             </div>
 
             {!d.verified ? (
-              <div className="mt-3 space-y-2 rounded-md border border-border/50 bg-secondary/30 p-3">
-                <p className="text-[11px] text-muted-foreground">Add this TXT record at your DNS provider, then Verify:</p>
-                <TxtRow label="Name" value={d.txtName} />
-                <TxtRow label="Value" value={d.txtValue} />
-                {status[d.domain] ? <p className="text-[11px] text-amber-500">{status[d.domain]}</p> : null}
+              <div className="mt-3 space-y-3">
+                <DomainConnectPanel record={d} />
+                <div className="rounded-md border border-border/50 bg-secondary/30 p-3">
+                  <p className="mb-2 text-[11px] text-muted-foreground">Add this TXT record at your DNS provider, then Verify:</p>
+                  <DnsRecordsTable records={[txtRecordFor(d)]} />
+                  {status[d.domain] ? <p className="mt-2 text-[11px] text-amber-500">{status[d.domain]}</p> : null}
+                </div>
               </div>
             ) : null}
           </div>
@@ -371,6 +376,54 @@ function DomainsSection({ initial }: { initial: DomainRecord[] }) {
         {domains.length === 0 ? <p className="text-xs text-muted-foreground">No domains yet.</p> : null}
       </div>
     </>
+  );
+}
+
+/** Our single ownership-proof record, in domain-sdk's DnsRecord shape. */
+function txtRecordFor(d: DomainRecord): DnsRecord {
+  return {
+    type: "TXT",
+    name: d.txtName,
+    value: d.txtValue,
+    purpose: "ownership",
+    required: true,
+    status: d.verified ? "valid" : "pending",
+    description: "Proves you control this domain.",
+  };
+}
+
+/**
+ * One-click DNS setup via Domain Connect. Discovery is real (see
+ * discoverDomainConnect) — the panel renders only when the user's DNS
+ * provider actually has Modulora's template onboarded, so nobody ever
+ * sees a button that can't work.
+ */
+function DomainConnectPanel({ record }: { record: DomainRecord }) {
+  const [info, setInfo] = useState<DomainConnectInfo | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void discoverDomainConnect({ data: { domain: record.domain } }).then((res) => {
+      if (alive) setInfo(res);
+    });
+    return () => { alive = false; };
+  }, [record.domain]);
+  if (!info?.supported || !info.applyUrl) return null;
+  const domain: Domain = {
+    id: record.domain,
+    hostname: record.domain,
+    provider: info.provider ?? "your DNS provider",
+    status: "pending",
+    records: [txtRecordFor(record)],
+    verification: { status: "pending", records: [txtRecordFor(record)] },
+    certificate: { status: "pending" },
+    issues: [],
+  };
+  return (
+    <OneClickDnsSetup
+      domain={domain}
+      dnsProvider={info.provider ?? "your DNS provider"}
+      onConnect={() => window.location.assign(info.applyUrl!)}
+    />
   );
 }
 

@@ -33,16 +33,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CATEGORIES } from "@/lib/taxonomy";
 import { publishComponent, type PublishFile } from "@/lib/publish";
+import { setComponentPrice } from "@/lib/marketplace";
+import { getPayoutStatus } from "@/lib/payouts";
+import { EarningsBreakdown, LicensePicker } from "@/components/money";
 import { demoFiles, isSystemFile, roleFor, scaffoldFiles } from "@/lib/scaffold";
 import { usePageTheme } from "@/lib/use-page-theme";
 
 const RISE = { offsetY: 8, spring: { type: "spring" as const, stiffness: 340, damping: 28 } };
 
 const CHANNELS = [
-  { id: "shadcn", label: "shadcn CLI" },
-  { id: "modulora-cli", label: "Modulora CLI" },
-  { id: "compatible-cli", label: "Other CLIs" },
+  {
+    id: "modulora-cli",
+    label: "Modulora CLI",
+    note: "Digest-verified installs — these count toward your profit share.",
+  },
+  {
+    id: "shadcn",
+    label: "shadcn CLI · Modulora registry",
+    note: "Served from modulora.dev/r — the command is derived automatically. Installs aren't digest-verified and don't earn profit share.",
+  },
+  {
+    id: "compatible-cli",
+    label: "Your own registry / CLI",
+    note: "You host it; your install command shows on the component page.",
+  },
 ];
+
+type PricingModel = "free" | "marketplace" | "external";
 
 const STEPS = [
   { id: "build", label: "Build", icon: FileCode2 },
@@ -103,7 +120,14 @@ export function ComponentEditor({
   const [nameEdited, setNameEdited] = useState(Boolean(initial?.name));
   const [description, setDescription] = useState(initial?.description ?? "");
   const [category, setCategory] = useState<string>(initial?.category ?? CATEGORIES[0]!.id);
-  const [pricing, setPricing] = useState<"free" | "paid">(initial?.pricing ?? "free");
+  const [pricing, setPricing] = useState<PricingModel>(initial?.pricing === "paid" ? "external" : "free");
+  const [price, setPrice] = useState("");
+  const [licenseTemplate, setLicenseTemplate] = useState("modulora-commercial-v1");
+  const [licenseText, setLicenseText] = useState("");
+  const [payoutsEnabled, setPayoutsEnabled] = useState<boolean | null>(null);
+  useEffect(() => {
+    void getPayoutStatus().then((status) => setPayoutsEnabled(status.payoutsEnabled));
+  }, []);
   const [purchaseUrl, setPurchaseUrl] = useState(initial?.purchaseUrl ?? "");
   const [channels, setChannels] = useState<string[]>(
     initial?.distributionChannels ?? ["shadcn", "modulora-cli"],
@@ -143,24 +167,37 @@ export function ComponentEditor({
     (f) => roleFor(f.path) === "component" && f.content.trim().length > 0,
   );
 
-  const canContinueBuild = hasComponentFile || pricing === "paid";
-  const canContinueDetails =
-    title.trim().length > 0 &&
-    effectiveName.length >= 2 &&
-    channels.length > 0 &&
-    (!channels.includes("shadcn") || shadcnCommand.trim().length > 0) &&
-    (!channels.includes("compatible-cli") || otherCliCommand.trim().length > 0) &&
-    (pricing !== "paid" || /^https?:\/\//i.test(purchaseUrl.trim()));
+  const canContinueBuild = hasComponentFile || pricing === "external";
+  // Per-field validation, live as the user types (#55).
+  const fieldErrors = {
+    title: !title.trim() ? "Title is required." : title.trim().length > 80 ? "Keep it under 80 characters." : null,
+    name: effectiveName.length < 2 || !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(effectiveName)
+      ? "Lowercase letters, numbers, and hyphens (2–40 chars)."
+      : null,
+    purchaseUrl: pricing === "external" && !/^https?:\/\//i.test(purchaseUrl.trim())
+      ? "A purchase URL is required — it must resolve to a domain you've verified."
+      : null,
+    price: pricing === "marketplace" && !(parseFloat(price) >= 1 && parseFloat(price) <= 1000)
+      ? "Price must be between $1 and $1000."
+      : null,
+    license: pricing === "marketplace" && licenseTemplate === "custom" && licenseText.trim().length < 40
+      ? "Custom license terms need at least 40 characters."
+      : null,
+    originalUrl: originalUrl.trim() && !/^https?:\/\//i.test(originalUrl.trim())
+      ? "Must start with http(s) — or leave it empty."
+      : null,
+    otherCli: channels.includes("compatible-cli") && !otherCliCommand.trim()
+      ? "Enter your install command."
+      : null,
+    channels: channels.length === 0 ? "Enable at least one distribution channel." : null,
+    payouts: pricing === "marketplace" && payoutsEnabled === false
+      ? "Selling on Modulora needs payouts connected first."
+      : null,
+  };
+  const canContinueDetails = Object.values(fieldErrors).every((error) => error === null);
 
   function toggleChannel(id: string) {
-    setChannels((current) => {
-      const on = current.includes(id);
-      if (!on && id === "shadcn" && !shadcnCommand.trim()) {
-        const handle = username ?? "you";
-        setShadcnCommand(`npx shadcn@latest add https://modulora.dev/r/@${handle}/${effectiveName || "name"}`);
-      }
-      return on ? current.filter((x) => x !== id) : [...current, id];
-    });
+    setChannels((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
   }
 
   function updateActive(content: string) {
@@ -204,7 +241,7 @@ export function ComponentEditor({
         description: description.trim(),
         category,
         version: "",
-        pricing,
+        pricing: pricing === "external" ? "paid" : "free",
         purchaseUrl: purchaseUrl.trim(),
         distributionChannels: channels,
         shadcnCommand: shadcnCommand.trim(),
@@ -220,6 +257,18 @@ export function ComponentEditor({
     if (!result.ok) {
       setError(result.error ?? "Could not publish.");
       return;
+    }
+    // Marketplace listing at creation: attach the price + license now. The
+    // component is already submitted; a pricing failure is surfaced but
+    // doesn't undo the submission.
+    if (pricing === "marketplace") {
+      const priced = await setComponentPrice({
+        data: { name: result.name!, amount: Math.round(parseFloat(price) * 100), licenseTemplate, licenseText },
+      });
+      if (!priced.ok) {
+        setError(`Submitted for review, but the price wasn't set: ${priced.error ?? "unknown error"}. Set it from your dashboard.`);
+        return;
+      }
     }
     setPublished({ namespace: result.namespace!, name: result.name! });
   }
@@ -330,6 +379,14 @@ export function ComponentEditor({
           setPricing={setPricing}
           purchaseUrl={purchaseUrl}
           setPurchaseUrl={setPurchaseUrl}
+          price={price}
+          setPrice={setPrice}
+          licenseTemplate={licenseTemplate}
+          setLicenseTemplate={setLicenseTemplate}
+          licenseText={licenseText}
+          setLicenseText={setLicenseText}
+          payoutsEnabled={payoutsEnabled}
+          errors={fieldErrors}
           channels={channels}
           toggleChannel={toggleChannel}
           shadcnCommand={shadcnCommand}
@@ -344,6 +401,7 @@ export function ComponentEditor({
       ) : (
         <SubmitStep
           files={files}
+          price={price}
           pricing={pricing}
           channels={channels}
           shadcnCommand={shadcnCommand}
@@ -632,10 +690,18 @@ function DetailsStep(props: {
   setDescription: (v: string) => void;
   category: string;
   setCategory: (v: string) => void;
-  pricing: "free" | "paid";
-  setPricing: (v: "free" | "paid") => void;
+  pricing: PricingModel;
+  setPricing: (v: PricingModel) => void;
   purchaseUrl: string;
   setPurchaseUrl: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+  licenseTemplate: string;
+  setLicenseTemplate: (v: string) => void;
+  licenseText: string;
+  setLicenseText: (v: string) => void;
+  payoutsEnabled: boolean | null;
+  errors: Record<string, string | null>;
   channels: string[];
   toggleChannel: (id: string) => void;
   shadcnCommand: string;
@@ -652,10 +718,12 @@ function DetailsStep(props: {
     <div className="mx-auto w-full max-w-xl">
       <div className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card/35 p-6">
         <MetaField label="Title">
-          <Input value={p.title} onChange={(e) => p.setTitle(e.target.value)} placeholder="Calendar" />
+          <Input value={p.title} onChange={(e) => p.setTitle(e.target.value)} placeholder="Calendar" aria-invalid={Boolean(p.title && p.errors.title)} />
+          <FieldError show={Boolean(p.title)} error={p.errors.title} />
         </MetaField>
         <MetaField label="Name" hint={`@${p.username ?? "you"}/${p.effectiveName || "name"}`}>
           <Input value={p.effectiveName} onChange={(e) => p.setName(e.target.value)} placeholder="calendar" disabled={p.mode === "edit"} />
+          <FieldError show={p.effectiveName.length > 0} error={p.errors.name} />
         </MetaField>
         <MetaField label="Description">
           <textarea
@@ -684,12 +752,43 @@ function DetailsStep(props: {
         <MetaField label="Pricing">
           <div className="flex rounded-md border border-border/60 p-0.5">
             <Segment active={p.pricing === "free"} onClick={() => p.setPricing("free")}>Free</Segment>
-            <Segment active={p.pricing === "paid"} onClick={() => p.setPricing("paid")}>Paid</Segment>
+            <Segment active={p.pricing === "marketplace"} onClick={() => p.setPricing("marketplace")}>Sell on Modulora</Segment>
+            <Segment active={p.pricing === "external"} onClick={() => p.setPricing("external")}>External</Segment>
           </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+            {p.pricing === "free"
+              ? "Open source, hosted here, installable by everyone. Verified installs earn profit share."
+              : p.pricing === "marketplace"
+                ? "Sold on Modulora — buyers pay here and install with our CLI or shadcn. You keep 90%."
+                : "Sold on your own site (one-time or as part of your subscription). Modulora hosts no source and links buyers out."}
+          </p>
         </MetaField>
-        {p.pricing === "paid" ? (
+        {p.pricing === "marketplace" ? (
+          <>
+            <MetaField label="Price">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">$</span>
+                <Input value={p.price} onChange={(e) => p.setPrice(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="29" inputMode="decimal" className="h-9" />
+              </div>
+              <FieldError show={p.price.length > 0} error={p.errors.price} />
+              {p.payoutsEnabled === false ? (
+                <p className="mt-1 text-[11px] text-amber-500">
+                  Connect payouts first — see the Payouts page in your dashboard.
+                </p>
+              ) : null}
+              <EarningsBreakdown dollars={p.price} />
+            </MetaField>
+            <MetaField label="Buyer license">
+              <LicensePicker template={p.licenseTemplate} setTemplate={p.setLicenseTemplate} text={p.licenseText} setText={p.setLicenseText} />
+              <FieldError show={p.licenseTemplate === "custom"} error={p.errors.license} />
+            </MetaField>
+          </>
+        ) : null}
+        {p.pricing === "external" ? (
           <MetaField label="Purchase URL">
-            <Input value={p.purchaseUrl} onChange={(e) => p.setPurchaseUrl(e.target.value)} placeholder="https://you.dev/buy" />
+            <Input value={p.purchaseUrl} onChange={(e) => p.setPurchaseUrl(e.target.value)} placeholder="https://you.dev/pro" />
+            <FieldError show={p.purchaseUrl.length > 0} error={p.errors.purchaseUrl} />
+            <p className="mt-1 text-[11px] text-muted-foreground">Must resolve to a domain you&apos;ve verified in settings.</p>
           </MetaField>
         ) : null}
 
@@ -710,9 +809,7 @@ function DetailsStep(props: {
                     </span>
                     {channel.label}
                   </button>
-                  {on && channel.id === "shadcn" ? (
-                    <Input value={p.shadcnCommand} onChange={(e) => p.setShadcnCommand(e.target.value)} placeholder="npx shadcn@latest add …" className="h-8 font-mono text-[11px]" />
-                  ) : null}
+                  {on ? <p className="pl-6 text-[10px] leading-relaxed text-muted-foreground/70">{channel.note}</p> : null}
                   {on && channel.id === "compatible-cli" ? (
                     <Input value={p.otherCliCommand} onChange={(e) => p.setOtherCliCommand(e.target.value)} placeholder="npx your-cli add …" className="h-8 font-mono text-[11px]" />
                   ) : null}
@@ -722,8 +819,9 @@ function DetailsStep(props: {
           </div>
         </MetaField>
 
-        <MetaField label="Original URL">
+        <MetaField label="Original URL" hint="optional">
           <Input value={p.originalUrl} onChange={(e) => p.setOriginalUrl(e.target.value)} placeholder="https://github.com/you/repo" />
+          <FieldError show={p.originalUrl.length > 0} error={p.errors.originalUrl} />
         </MetaField>
 
         <MetaField label="Inspired by">
@@ -753,6 +851,11 @@ function DetailsStep(props: {
   );
 }
 
+function FieldError({ show, error }: { show: boolean; error: string | null | undefined }) {
+  if (!show || !error) return null;
+  return <p className="mt-1 text-[11px] text-destructive">{error}</p>;
+}
+
 /* ── Step 3: Submit ────────────────────────────────────── */
 
 function SubmitStep({
@@ -764,15 +867,17 @@ function SubmitStep({
   effectiveName,
   acceptPolicy,
   setAcceptPolicy,
+  price,
 }: {
   files: PublishFile[];
-  pricing: "free" | "paid";
+  pricing: PricingModel;
   channels: string[];
   shadcnCommand: string;
   username: string | null;
   effectiveName: string;
   acceptPolicy: boolean;
   setAcceptPolicy: (v: boolean) => void;
+  price?: string;
 }) {
   const installCount = files.filter((f) => roleFor(f.path) === "component").length;
   const demoCount = files.filter((f) => roleFor(f.path) === "demo").length;
@@ -783,7 +888,7 @@ function SubmitStep({
       label: "Curator review",
       detail: "A curator inspects the source and demo before this is listed publicly.",
     },
-    ...(pricing === "free"
+    ...(pricing !== "external"
       ? [
           {
             label: "Content integrity",
@@ -804,9 +909,17 @@ function SubmitStep({
       : [
           {
             label: "Source not assessed",
-            detail: "Paid source is fulfilled by you and is not scanned by Modulora — the listing says so honestly.",
+            detail: "Externally-sold source is fulfilled by you and is not scanned by Modulora — the listing says so honestly.",
           },
         ]),
+    ...(pricing === "marketplace"
+      ? [
+          {
+            label: "Marketplace listing",
+            detail: `Listed at $${price || "?"} once approved. Buyers must accept your license, and every sale is recorded. You keep 90%.`,
+          },
+        ]
+      : []),
   ];
 
   return (
