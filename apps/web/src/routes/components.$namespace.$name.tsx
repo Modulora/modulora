@@ -11,6 +11,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { buyComponent, confirmCheckout } from "@/lib/marketplace";
 import { OwnedTray } from "@/components/owned";
+import { CollectionView } from "@/components/collection-view";
+import { fetchCollectionDetail } from "@/lib/catalog-db";
 import { PriceSeal } from "@/components/money";
 import { Tabs } from "radix-ui";
 import { motion } from "motion/react";
@@ -81,7 +83,13 @@ interface HighlightedFile {
 export const Route = createFileRoute("/components/$namespace/$name")({
   loader: async ({ params }) => {
     const item = await fetchCatalogDetail({ data: { namespace: params.namespace, name: params.name } });
-    if (!item) throw notFound();
+    if (!item) {
+      // No component by that name — it may be a collection (same URL space
+      // as /r/). Rendered in the same page shell with a member rail.
+      const collection = await fetchCollectionDetail({ data: { namespace: params.namespace, name: params.name } });
+      if (!collection) throw notFound();
+      return { kind: "collection" as const, collection, item: null, files: [], viewerTheme: DEFAULT_EDITOR_THEME };
+    }
     // Only open (free) components expose source. Rendered client-side in a
     // read-only editor using the viewer's chosen code theme (settings).
     const viewer = await fetchCurrentUser();
@@ -89,7 +97,7 @@ export const Route = createFileRoute("/components/$namespace/$name")({
       item.sourceModel === "open-source" && item.files
         ? item.files.map((file) => ({ path: file.path, raw: file.content }))
         : [];
-    return { item, files, viewerTheme: viewer?.editorTheme ?? DEFAULT_EDITOR_THEME };
+    return { kind: "component" as const, collection: null, item, files, viewerTheme: viewer?.editorTheme ?? DEFAULT_EDITOR_THEME };
   },
   component: ComponentDetail,
 });
@@ -125,7 +133,12 @@ const EVIDENCE_LABELS: Record<string, string> = {
 };
 
 function ComponentDetail() {
-  const { item, files, viewerTheme } = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  if (data.kind === "collection") return <CollectionView collection={data.collection} />;
+  return <ComponentDetailInner item={data.item} files={data.files} viewerTheme={data.viewerTheme} />;
+}
+
+function ComponentDetailInner({ item, files, viewerTheme }: { item: NonNullable<Awaited<ReturnType<typeof fetchCatalogDetail>>>; files: HighlightedFile[]; viewerTheme: string }) {
   const [stage, setStage] = useState(0);
   const [workspaceTab, setWorkspaceTab] = useState("preview");
   const [installTab, setInstallTab] = useState(

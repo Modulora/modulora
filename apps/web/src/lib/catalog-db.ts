@@ -8,7 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { catalog as demoCatalog, findItem, type CatalogItem } from "../data/catalog";
 import { categoryLabel } from "./taxonomy";
@@ -376,7 +376,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
     const collections: PublicCollection[] = [];
     for (const collection of collectionRows) {
       const members = await database
-        .select({ title: schema.components.title, reviewStatus: schema.components.reviewStatus, visibility: schema.components.visibility })
+        .select({ name: schema.components.name, title: schema.components.title, reviewStatus: schema.components.reviewStatus, visibility: schema.components.visibility })
         .from(schema.collectionItems)
         .innerJoin(schema.components, eq(schema.components.id, schema.collectionItems.componentId))
         .where(eq(schema.collectionItems.collectionId, collection.id));
@@ -391,7 +391,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         name: collection.name,
         title: collection.title,
         description: collection.description,
-        memberTitles: live.map((m) => m.title),
+        members: live.map((m) => ({ name: m.name, title: m.title })),
         price: price?.unitAmount ?? null,
         license: price ? { name: licenseTemplate(price.licenseTemplate).name, text: resolveLicenseText(price.licenseTemplate, price.licenseText) } : null,
         owned: price ? await hasCollectionEntitlement(collection.id, profileViewer?.id ?? null, ns.ownerUserId) : false,
@@ -421,7 +421,7 @@ export interface PublicCollection {
   name: string;
   title: string;
   description: string;
-  memberTitles: string[];
+  members: { name: string; title: string }[];
   price: number | null;
   license: { name: string; text: string } | null;
   owned: boolean;
@@ -556,4 +556,91 @@ export const deleteMyComponent = createServerFn({ method: "POST" })
       .delete(schema.components)
       .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.name, data.name)));
     return { ok: true };
+  });
+
+/** A collection's public detail view: members with files for live previews
+ *  (paid members' files only when the viewer is entitled — locked otherwise). */
+export interface CollectionDetail {
+  namespace: string;
+  name: string;
+  title: string;
+  description: string;
+  price: number | null;
+  license: { name: string; text: string } | null;
+  owned: boolean;
+  members: (CatalogItem & { locked: boolean })[];
+}
+
+export const fetchCollectionDetail = createServerFn({ method: "GET" })
+  .validator((data: { namespace: string; name: string }) => ({
+    namespace: String(data.namespace ?? "").trim().toLowerCase(),
+    name: String(data.name ?? "").trim().toLowerCase(),
+  }))
+  .handler(async ({ data }): Promise<CollectionDetail | null> => {
+    const database = db();
+    if (!database) return null;
+
+    const [row] = await database
+      .select({ collection: schema.collections, ownerUserId: schema.namespaces.ownerUserId })
+      .from(schema.collections)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.collections.namespaceId))
+      .where(and(eq(schema.namespaces.name, data.namespace), eq(schema.collections.name, data.name)))
+      .limit(1);
+    if (!row) return null;
+
+    const request = getRequest();
+    const viewer = request ? await getCurrentUser(request) : null;
+
+    const [price] = await database
+      .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
+      .from(schema.collectionPrices)
+      .where(and(eq(schema.collectionPrices.collectionId, row.collection.id), eq(schema.collectionPrices.active, true)))
+      .limit(1);
+    const owned = price
+      ? await hasCollectionEntitlement(row.collection.id, viewer?.id ?? null, row.ownerUserId)
+      : false;
+
+    const memberRows = await database
+      .select({ component: schema.components, version: schema.componentVersions })
+      .from(schema.collectionItems)
+      .innerJoin(schema.components, eq(schema.components.id, schema.collectionItems.componentId))
+      .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
+      .where(eq(schema.collectionItems.collectionId, row.collection.id))
+      .orderBy(asc(schema.collectionItems.orderIndex));
+
+    const members: (CatalogItem & { locked: boolean })[] = [];
+    for (const member of memberRows) {
+      if (member.component.visibility !== "public" || member.component.reviewStatus !== "approved" || !member.version) continue;
+      const [memberPrice] = await database
+        .select({ id: schema.componentPrices.id })
+        .from(schema.componentPrices)
+        .where(and(eq(schema.componentPrices.componentId, member.component.id), eq(schema.componentPrices.active, true)))
+        .limit(1);
+      const entitled = !memberPrice
+        ? true
+        : owned || (await hasEntitlement(member.component.id, viewer?.id ?? null, row.ownerUserId));
+      const files = entitled
+        ? await database
+            .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
+            .from(schema.componentFiles)
+            .where(eq(schema.componentFiles.componentVersionId, member.version.id))
+            .orderBy(schema.componentFiles.orderIndex)
+        : [];
+      members.push({
+        ...toCatalogItem(data.namespace, member.component, member.version, files.map((f) => ({ path: f.path, content: f.content ?? "" }))),
+        locked: !entitled,
+      });
+    }
+    if (members.length === 0) return null;
+
+    return {
+      namespace: data.namespace,
+      name: row.collection.name,
+      title: row.collection.title,
+      description: row.collection.description,
+      price: price?.unitAmount ?? null,
+      license: price ? { name: licenseTemplate(price.licenseTemplate).name, text: resolveLicenseText(price.licenseTemplate, price.licenseText) } : null,
+      owned,
+      members,
+    };
   });
