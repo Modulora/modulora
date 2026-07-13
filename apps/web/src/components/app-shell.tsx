@@ -12,8 +12,10 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { LayoutDashboard, LogOut, Settings, Sparkles, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, Sparkles, User as UserIcon, MessageSquare } from "lucide-react";
 
+import { FeedbackDialog } from "@/components/feedback-dialog";
+import { submitFeedback } from "@/lib/feedback";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandSearch } from "@/components/command-search";
@@ -190,6 +192,11 @@ function UserMenu({ user }: { user: CurrentUser }) {
   // Prefer the person's name once set; fall back to the plain username.
   const handle = user.name?.trim() ? user.name : (user.username ?? "Account");
 
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
   async function handleSignOut() {
     await signOut();
     await router.invalidate();
@@ -243,12 +250,42 @@ function UserMenu({ user }: { user: CurrentUser }) {
             {user.isPlus ? "Modulora Plus" : "Upgrade to Plus"}
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setFeedbackOpen(true)}>
+          <MessageSquare />
+          Send feedback
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={handleSignOut}>
           <LogOut />
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
+      <FeedbackDialog
+        open={feedbackOpen}
+        onOpenChange={(open) => {
+          setFeedbackOpen(open);
+          if (!open) {
+            setFeedbackDone(false);
+            setFeedbackError(null);
+          }
+        }}
+        busy={feedbackBusy}
+        done={feedbackDone}
+        error={feedbackError}
+        onSubmit={(message) => {
+          setFeedbackBusy(true);
+          setFeedbackError(null);
+          void submitFeedback({ data: { message, page: window.location.pathname } }).then((res) => {
+            setFeedbackBusy(false);
+            if (!res.ok) {
+              setFeedbackError(res.error ?? "Could not send.");
+              return;
+            }
+            setFeedbackDone(true);
+            setTimeout(() => setFeedbackOpen(false), 1200);
+          });
+        }}
+      />
     </DropdownMenu>
   );
 }

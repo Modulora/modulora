@@ -19,6 +19,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
 import { PriceSeal, PromotedBadge } from "@/components/money";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   CalendarDays,
   Gift,
@@ -325,13 +326,52 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <h2 className="truncate text-sm font-medium">{item.title}</h2>
-            {item.evidence.some((record) => record.type === "content-integrity" || record.type === "domain-verified") ? <span className="text-emerald-500"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} /></span> : null}
+            <EvidenceMark evidence={item.evidence} />
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">by {item.namespace}{item.inCollection ? ` in ${item.inCollection}` : ""} · {item.category}</p>
         </div>
         <PriceSeal paid={item.sourceModel !== "open-source"} label={item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"} />
       </div>
     </Link>
+  );
+}
+
+/**
+ * The card check-mark, explained on hover. Scoped evidence only — the
+ * popover lists exactly which records back the mark, never a generic
+ * "verified".
+ */
+const EVIDENCE_LABELS: Record<string, string> = {
+  "publisher-identity": "Publisher identity — published by the authenticated account",
+  "content-integrity": "Content integrity — installs deliver exactly the hashed files",
+  "install-parity": "Install parity — external command output matches the upload",
+  "domain-verified": "Domain verified — creator proved control via DNS",
+  "secret-scan": "Secret scan — published files scanned for credential patterns",
+};
+
+function EvidenceMark({ evidence }: { evidence: { type: string; status: string }[] }) {
+  const backing = evidence.filter((r) => r.status === "passed" && EVIDENCE_LABELS[r.type]);
+  if (!backing.some((r) => r.type === "content-integrity" || r.type === "domain-verified")) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="text-emerald-500"
+          // A hover target inside the card link: explain, don't navigate.
+          onClick={(e) => e.preventDefault()}
+        >
+          <HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-72">
+        <p className="mb-1 font-medium">Scoped evidence — not an endorsement</p>
+        <ul className="flex list-disc flex-col gap-0.5 pl-4 text-left">
+          {backing.map((r) => (
+            <li key={r.type}>{EVIDENCE_LABELS[r.type]}</li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
