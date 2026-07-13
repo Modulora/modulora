@@ -68,6 +68,7 @@ function toCatalogItem(
     category: categoryLabel(component.category),
     distributionChannels: component.distributionChannels ?? undefined,
     files: files.length ? files : undefined,
+    live: true,
     evidence,
   };
 }

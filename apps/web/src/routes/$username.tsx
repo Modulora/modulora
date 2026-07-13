@@ -27,7 +27,7 @@ import { CopyChip } from "@/components/owned";
 import { confirmCheckout } from "@/lib/marketplace";
 import { BuyCollectionDialog } from "@/components/collection-view";
 
-import { ComponentPreview } from "@/components/component-preview";
+import { LiveCardPreview } from "@/components/live-card-preview";
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -239,7 +239,7 @@ function ProfileCard({ item }: { item: CatalogItem }) {
       params={{ namespace: item.namespace, name: item.name }}
       className="group flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40 p-3 transition-colors hover:border-foreground/20 hover:bg-card/70"
     >
-      <ComponentPreview item={item} className="w-full" />
+      <LiveCardPreview item={item} className="w-full" />
       <div className="flex items-start justify-between gap-3 px-1 pb-1 pt-3">
         <div className="min-w-0">
           <h2 className="truncate text-sm font-medium">{item.title}</h2>
@@ -266,7 +266,7 @@ function CollectionCard({ collection, namespace, components }: { collection: imp
         params={{ namespace, name: collection.name }}
         className="group relative block overflow-hidden rounded-lg border border-border/40 transition-colors hover:border-foreground/20"
       >
-        {cover ? <ComponentPreview item={cover} className="w-full" /> : <div className="aspect-[4/3] bg-secondary/30" />}
+        {cover ? <LiveCardPreview item={cover} className="w-full" /> : <div className="aspect-[4/3] bg-secondary/30" />}
         <span className="absolute bottom-2 right-2 rounded-md border border-white/10 bg-black/70 px-2 py-0.5 text-[11px] text-white/90 backdrop-blur-sm">
           {collection.members.length} component{collection.members.length === 1 ? "" : "s"}
         </span>

@@ -42,6 +42,7 @@ import { Route as ApiPublishRouteImport } from './routes/api/publish'
 import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-receipt'
 import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard.settings.index'
 import { Route as DashboardReviewIndexRouteImport } from './routes/dashboard.review.index'
+import { Route as PreviewNamespaceNameRouteImport } from './routes/preview.$namespace.$name'
 import { Route as DashboardSettingsSecurityRouteImport } from './routes/dashboard.settings.security'
 import { Route as DashboardSettingsDangerRouteImport } from './routes/dashboard.settings.danger'
 import { Route as DashboardSettingsAppearanceRouteImport } from './routes/dashboard.settings.appearance'
@@ -216,6 +217,11 @@ const DashboardReviewIndexRoute = DashboardReviewIndexRouteImport.update({
   path: '/review/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const PreviewNamespaceNameRoute = PreviewNamespaceNameRouteImport.update({
+  id: '/preview/$namespace/$name',
+  path: '/preview/$namespace/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardSettingsSecurityRoute =
   DashboardSettingsSecurityRouteImport.update({
     id: '/security',
@@ -299,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review/': typeof DashboardReviewIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
 }
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review': typeof DashboardReviewIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
 }
@@ -384,6 +392,7 @@ export interface FileRoutesById {
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review/': typeof DashboardReviewIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
 }
@@ -429,6 +438,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/preview/$namespace/$name'
     | '/dashboard/review/'
     | '/dashboard/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -470,6 +480,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/preview/$namespace/$name'
     | '/dashboard/review'
     | '/dashboard/settings'
   id:
@@ -513,6 +524,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/preview/$namespace/$name'
     | '/dashboard/review/'
     | '/dashboard/settings/'
   fileRoutesById: FileRoutesById
@@ -542,6 +554,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
+  PreviewNamespaceNameRoute: typeof PreviewNamespaceNameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -777,6 +790,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardReviewIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/preview/$namespace/$name': {
+      id: '/preview/$namespace/$name'
+      path: '/preview/$namespace/$name'
+      fullPath: '/preview/$namespace/$name'
+      preLoaderRoute: typeof PreviewNamespaceNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/settings/security': {
       id: '/dashboard/settings/security'
       path: '/security'
@@ -914,6 +934,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,
+  PreviewNamespaceNameRoute: PreviewNamespaceNameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

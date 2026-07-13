@@ -49,7 +49,7 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = Route.useRouteContext();
 
-  if (CHROME_FREE.has(pathname)) {
+  if (CHROME_FREE.has(pathname) || pathname.startsWith("/preview/")) {
     return (
       <RootDocument>
         <NuqsAdapter>

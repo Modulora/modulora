@@ -77,6 +77,8 @@ export interface CatalogItem {
   ownedPurchase?: import("../lib/purchases").OwnedComponent | null;
   memberOf?: { name: string; title: string }[];
   inCollection?: string | null;
+  /** DB-backed component with real source (live iframe previews). */
+  live?: boolean;
   // Whether the current viewer may install (owner or paid purchase).
   entitled?: boolean;
 }

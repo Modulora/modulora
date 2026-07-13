@@ -37,7 +37,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ComponentPreview } from "@/components/component-preview";
+import { LiveCardPreview } from "@/components/live-card-preview";
 import { Input } from "@/components/ui/input";
 import { fetchCatalog, fetchFeatured } from "@/lib/catalog-db";
 import {
@@ -304,7 +304,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
       params={{ namespace: item.namespace, name: item.name }}
       className={`group flex overflow-hidden rounded-xl border border-border/60 bg-card/40 transition-colors hover:border-foreground/20 hover:bg-card/70 ${list ? "items-center gap-5 p-3" : "flex-col p-3"}`}
     >
-      <ComponentPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} />
+      <LiveCardPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} />
       <div className="flex min-w-0 flex-1 items-start justify-between gap-3 px-1 pb-1 pt-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
