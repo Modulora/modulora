@@ -8,6 +8,18 @@ not secrets (R2 `MEDIA`, custom domain routes) live in `wrangler.jsonc`.
 > Platform features are dev-only for now (see repo issue #29). Set these before
 > flipping any platform feature live.
 
+## Deployment safety before go-live
+
+Cloudflare Workers Builds uses `main` as its production branch. Builds for
+non-production branches are disabled, so pull requests run GitHub CI without
+uploading or deploying Worker versions. Keep that setting disabled until an
+authorized preview-environment plan exists.
+
+Do not retry or enable Cloudflare deployment merely to make a pull-request
+check green. Before go-live, verify the root build command, the
+`apps/web` Wrangler deploy command, production secrets, bindings, and custom
+domains as one explicit release operation.
+
 ## One command
 
 From `apps/web`, with a populated `.env`:
