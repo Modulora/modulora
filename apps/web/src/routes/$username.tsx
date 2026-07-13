@@ -185,7 +185,7 @@ function Profile() {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Lists · curated by @{profile.username}</h2>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             {publicLists.map((list) => (
-              <div key={list.name} className="rounded-xl border border-border/60 bg-card/40 p-4">
+              <div key={list.name} id={`list-${list.name}`} className="scroll-mt-20 rounded-xl border border-border/60 bg-card/40 p-4">
                 <p className="text-sm font-medium">{list.title}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {list.items.map((item) => (

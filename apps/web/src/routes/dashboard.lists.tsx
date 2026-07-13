@@ -1,10 +1,10 @@
 /** Lists (Plus) — named public/private groups of anyone's components. */
 import { useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Globe, ListPlus, Loader2, Lock, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Globe, ListPlus, Loader2, Lock, Plus, Sparkles, Trash2, Check, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createList, deleteList, fetchMyLists } from "@/lib/lists";
+import { createList, deleteList, fetchMyLists, setListVisibility } from "@/lib/lists";
 import { fetchMyBookmarks } from "@/lib/bookmarks";
 
 export const Route = createFileRoute("/dashboard/lists")({
@@ -14,6 +14,8 @@ export const Route = createFileRoute("/dashboard/lists")({
 
 function ListsPage() {
   const { mine, bookmarks } = Route.useLoaderData();
+  const { user } = Route.useRouteContext();
+  const username = user?.username ?? null;
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("private");
@@ -96,16 +98,33 @@ function ListsPage() {
                   {list.visibility}
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={async () => {
-                  await deleteList({ data: { listId: list.id } });
-                  await router.invalidate();
-                }}
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  title={list.visibility === "public" ? "Make private" : "Make public"}
+                  onClick={async () => {
+                    await setListVisibility({ data: { listId: list.id, visibility: list.visibility === "public" ? "private" : "public" } });
+                    await router.invalidate();
+                  }}
+                >
+                  {list.visibility === "public" ? <Lock className="size-3.5" /> : <Globe className="size-3.5" />}
+                  {list.visibility === "public" ? "Make private" : "Make public"}
+                </Button>
+                <CopyListLink list={list} username={username} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Delete list"
+                  onClick={async () => {
+                    await deleteList({ data: { listId: list.id } });
+                    await router.invalidate();
+                  }}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
             </div>
             {list.items.length === 0 ? (
               <p className="mt-2 text-xs text-muted-foreground">Empty — add components from their pages.</p>
@@ -133,5 +152,33 @@ function ListsPage() {
         ) : null}
       </div>
     </div>
+  );
+}
+
+/**
+ * Copy a shareable link to the list's section on the profile. Private
+ * lists have no public page, so the button nudges toward making it
+ * public instead of copying a dead link.
+ */
+function CopyListLink({ list, username }: { list: { name: string; visibility: "public" | "private" }; username: string | null }) {
+  const [copied, setCopied] = useState(false);
+  const isPublic = list.visibility === "public";
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="gap-1.5 text-xs"
+      disabled={!isPublic || !username}
+      title={isPublic ? "Copy link" : "Make the list public to share it"}
+      onClick={() => {
+        if (!username) return;
+        void navigator.clipboard.writeText(`${window.location.origin}/${username}#list-${list.name}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1400);
+      }}
+    >
+      {copied ? <Check className="size-3.5 text-emerald-500" /> : <LinkIcon className="size-3.5" />}
+      {copied ? "Copied" : "Copy link"}
+    </Button>
   );
 }

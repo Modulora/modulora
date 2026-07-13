@@ -15,12 +15,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { isBookmarked, toggleBookmark } from "@/lib/bookmarks";
 import { createList, fetchMyLists, toggleListItem, type MyList } from "@/lib/lists";
+import { NewListDialog } from "@/components/new-list-dialog";
 
 export function SaveMenu({ namespace, name, plus }: { namespace: string; name: string; plus: boolean }) {
   const [saved, setSaved] = useState(false);
   const [lists, setLists] = useState<MyList[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [newListOpen, setNewListOpen] = useState(false);
 
   async function load() {
     if (!plus || loaded) return;
@@ -94,11 +96,7 @@ export function SaveMenu({ namespace, name, plus }: { namespace: string; name: s
               disabled={busy}
               onSelect={(e) => {
                 e.preventDefault();
-                const title = window.prompt("List title:");
-                if (!title) return;
-                const visibility = window.confirm("Make this list public? (OK = public, Cancel = private)") ? "public" : "private";
-                setBusy(true);
-                void createList({ data: { title, visibility } }).then(() => fetchMyLists().then((r) => { setLists(r.lists); setBusy(false); }));
+                setNewListOpen(true);
               }}
             >
               <Plus className="size-4" /> New list…
@@ -106,6 +104,21 @@ export function SaveMenu({ namespace, name, plus }: { namespace: string; name: s
           </>
         )}
       </DropdownMenuContent>
+      <NewListDialog
+        open={newListOpen}
+        onOpenChange={setNewListOpen}
+        busy={busy}
+        onCreate={(title, visibility) => {
+          setBusy(true);
+          void createList({ data: { title, visibility } }).then(() =>
+            fetchMyLists().then((r) => {
+              setLists(r.lists);
+              setBusy(false);
+              setNewListOpen(false);
+            }),
+          );
+        }}
+      />
     </DropdownMenu>
   );
 }

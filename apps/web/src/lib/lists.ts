@@ -117,6 +117,23 @@ export const toggleListItem = createServerFn({ method: "POST" })
     return { ok: true, inList: true };
   });
 
+export const setListVisibility = createServerFn({ method: "POST" })
+  .validator((data: { listId: string; visibility: string }) => ({
+    listId: String(data.listId ?? ""),
+    visibility: data.visibility === "public" ? ("public" as const) : ("private" as const),
+  }))
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const request = getRequest();
+    const user = request ? await getCurrentUser(request) : null;
+    const db = getDb();
+    if (!user || !db) return { ok: false };
+    await db
+      .update(schema.lists)
+      .set({ visibility: data.visibility })
+      .where(and(eq(schema.lists.id, data.listId), eq(schema.lists.userId, user.id)));
+    return { ok: true };
+  });
+
 export const deleteList = createServerFn({ method: "POST" })
   .validator((data: { listId: string }) => ({ listId: String(data.listId ?? "") }))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {

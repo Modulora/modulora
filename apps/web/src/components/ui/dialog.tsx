@@ -62,6 +62,16 @@ function DialogDescription({
   );
 }
 
+function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-footer"
+      className={cn("flex items-center justify-end gap-2 pt-2", className)}
+      {...props}
+    />
+  );
+}
+
 export {
   Dialog,
   DialogTrigger,
@@ -70,4 +80,5 @@ export {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 };
