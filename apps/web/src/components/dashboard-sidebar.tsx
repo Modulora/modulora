@@ -6,6 +6,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Banknote,
   Bookmark,
+  FlaskConical,
   ClipboardCheck,
   ShieldEllipsis,
   BarChart3,
@@ -87,6 +88,10 @@ export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
         <SidebarHeading>Tools</SidebarHeading>
         <SidebarRow icon={KeyRound} label="API key" muted />
         <SidebarRow icon={TerminalSquare} label="Modulora CLI" muted />
+        <Link to="/dashboard/labs" className={itemClass}>
+          <FlaskConical className="size-4 shrink-0 opacity-70" />
+          <span className="flex-1 truncate">Labs</span>
+        </Link>
       </nav>
 
       {summary.roles.curator ? (

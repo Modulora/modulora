@@ -33,6 +33,7 @@ import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purch
 import { Route as DashboardPayoutsRouteImport } from './routes/dashboard.payouts'
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardListsRouteImport } from './routes/dashboard.lists'
+import { Route as DashboardLabsRouteImport } from './routes/dashboard.labs'
 import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
 import { Route as DashboardCollectionsRouteImport } from './routes/dashboard.collections'
@@ -175,6 +176,11 @@ const DashboardListsRoute = DashboardListsRouteImport.update({
   path: '/lists',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardLabsRoute = DashboardLabsRouteImport.update({
+  id: '/labs',
+  path: '/labs',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardEarningsRoute = DashboardEarningsRouteImport.update({
   id: '/earnings',
   path: '/earnings',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/labs': typeof DashboardLabsRoute
   '/dashboard/lists': typeof DashboardListsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/dashboard/payouts': typeof DashboardPayoutsRoute
@@ -353,6 +360,7 @@ export interface FileRoutesByTo {
   '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/labs': typeof DashboardLabsRoute
   '/dashboard/lists': typeof DashboardListsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/dashboard/payouts': typeof DashboardPayoutsRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/labs': typeof DashboardLabsRoute
   '/dashboard/lists': typeof DashboardListsRoute
   '/dashboard/new': typeof DashboardNewRoute
   '/dashboard/payouts': typeof DashboardPayoutsRoute
@@ -449,6 +458,7 @@ export interface FileRouteTypes {
     | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
+    | '/dashboard/labs'
     | '/dashboard/lists'
     | '/dashboard/new'
     | '/dashboard/payouts'
@@ -495,6 +505,7 @@ export interface FileRouteTypes {
     | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
+    | '/dashboard/labs'
     | '/dashboard/lists'
     | '/dashboard/new'
     | '/dashboard/payouts'
@@ -541,6 +552,7 @@ export interface FileRouteTypes {
     | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
+    | '/dashboard/labs'
     | '/dashboard/lists'
     | '/dashboard/new'
     | '/dashboard/payouts'
@@ -764,6 +776,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardListsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/labs': {
+      id: '/dashboard/labs'
+      path: '/labs'
+      fullPath: '/dashboard/labs'
+      preLoaderRoute: typeof DashboardLabsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/earnings': {
       id: '/dashboard/earnings'
       path: '/earnings'
@@ -938,6 +957,7 @@ interface DashboardRouteChildren {
   DashboardCollectionsRoute: typeof DashboardCollectionsRoute
   DashboardComponentsRoute: typeof DashboardComponentsRoute
   DashboardEarningsRoute: typeof DashboardEarningsRoute
+  DashboardLabsRoute: typeof DashboardLabsRoute
   DashboardListsRoute: typeof DashboardListsRoute
   DashboardNewRoute: typeof DashboardNewRoute
   DashboardPayoutsRoute: typeof DashboardPayoutsRoute
@@ -956,6 +976,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCollectionsRoute: DashboardCollectionsRoute,
   DashboardComponentsRoute: DashboardComponentsRoute,
   DashboardEarningsRoute: DashboardEarningsRoute,
+  DashboardLabsRoute: DashboardLabsRoute,
   DashboardListsRoute: DashboardListsRoute,
   DashboardNewRoute: DashboardNewRoute,
   DashboardPayoutsRoute: DashboardPayoutsRoute,

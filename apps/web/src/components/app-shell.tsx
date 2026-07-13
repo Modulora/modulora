@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { LayoutDashboard, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, Sparkles, User as UserIcon } from "lucide-react";
 
 import { Logo } from "@/components/logo";
 import { GitHubIcon } from "@/components/brand-icons";
@@ -229,6 +229,13 @@ function UserMenu({ user }: { user: CurrentUser }) {
           <Link to="/dashboard/settings">
             <Settings />
             Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/pricing">
+            <Sparkles className={user.isPlus ? "text-amber-400" : undefined} />
+            {user.isPlus ? "Modulora Plus" : "Upgrade to Plus"}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

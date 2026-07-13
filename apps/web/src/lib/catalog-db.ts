@@ -323,6 +323,7 @@ export interface PublicProfile {
   githubUsername: string | null;
   xUsername: string | null;
   websiteVerified: boolean;
+  isPlus: boolean;
   joinedAt: string;
 }
 
@@ -414,6 +415,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         githubUsername: user.githubUsername,
         xUsername: user.xUsername,
         websiteVerified,
+        isPlus: user.isPlus,
         joinedAt: user.createdAt.toISOString(),
       },
       components: rows.map((row) => toCatalogItem(row.namespace, row.component, row.version)),

@@ -12,7 +12,7 @@ import { Blocks, CalendarDays, Globe } from "lucide-react";
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
-import { TerminalSquare, Loader2 } from "lucide-react";
+import { TerminalSquare, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -107,7 +107,14 @@ function Profile() {
         </span>
 
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">{profile.name || profile.username}</h1>
+          <span className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">{profile.name || profile.username}</h1>
+            {profile.isPlus ? (
+              <span className="flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-400" title="Modulora Plus subscriber">
+                <Sparkles className="size-2.5" /> Plus
+              </span>
+            ) : null}
+          </span>
           <p className="text-sm text-muted-foreground">@{profile.username}</p>
           {profile.bio ? <p className="mt-3 max-w-2xl text-sm leading-relaxed">{profile.bio}</p> : null}
 
