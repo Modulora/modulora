@@ -46,9 +46,6 @@ degrades gracefully (submission still succeeds, but no message is posted).
 
 ## Not runtime secrets
 
-- `HUGEICONS_TOKEN` — build-time only, used by CI/`.npmrc` to install
-  `@hugeicons-pro/*`. Set it as a CI/build environment variable, not a worker
-  secret.
 - `VITE_SANDPACK_BUNDLER_URL` — build-time only. Points the live preview at the
   self-hosted Sandpack bundler. Prod: `https://sandpack.modulora.dev` (deploy
   the assets worker in `modulora-infra/workers/sandpack`; see Modulora/modulora#44).

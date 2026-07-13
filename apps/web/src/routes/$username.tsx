@@ -11,7 +11,7 @@ import { motion } from "motion/react";
 import { Blocks, CalendarDays, Globe, ExternalLink } from "lucide-react";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
+import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 import { TerminalSquare, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

@@ -17,7 +17,7 @@ import {
   type inferParserType,
 } from "nuqs";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
+import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 import { PriceSeal, PromotedBadge } from "@/components/money";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {

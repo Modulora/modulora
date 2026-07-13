@@ -10,9 +10,8 @@ pnpm install
 cp apps/web/.env.example apps/web/.env   # fill in the values (see below)
 ```
 
-Required for local dev: `DATABASE_URL` (Neon), `BETTER_AUTH_SECRET`,
-`BETTER_AUTH_URL=http://localhost:5173`, and `HUGEICONS_TOKEN` (in `.env`, used
-by `.npmrc` to install `@hugeicons-pro/*`). Payments, OAuth, and webhooks are
+Required for local dev: `DATABASE_URL` (Neon), `BETTER_AUTH_SECRET`, and
+`BETTER_AUTH_URL=http://localhost:5173`. Payments, OAuth, and webhooks are
 optional and activate when their keys are present (`STRIPE_SECRET_KEY`,
 `GITHUB_CLIENT_*`, `TWITTER_CLIENT_*`, etc.).
 

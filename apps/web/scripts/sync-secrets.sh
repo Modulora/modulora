@@ -10,8 +10,7 @@
 #
 # Non-sensitive config (BETTER_AUTH_URL, RESEND_FROM, NODE_ENV) can also live in
 # wrangler.jsonc "vars"; they are included here so a single source (.env) stays
-# authoritative. HUGEICONS_TOKEN is a build-time-only token (CI install), not a
-# runtime secret, so it is intentionally excluded.
+# authoritative.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

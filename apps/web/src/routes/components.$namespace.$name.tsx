@@ -55,7 +55,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
+import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 import { reportComponent, REPORT_REASONS } from "@/lib/report";
 import { fetchCatalogDetail } from "@/lib/catalog-db";
 import { type CatalogItem, type EvidenceRecord } from "../data/catalog";
