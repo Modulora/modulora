@@ -149,5 +149,10 @@ export const verifyDomain = createServerFn({ method: "POST" })
       .update(schema.verifiedDomains)
       .set({ verifiedAt: new Date() })
       .where(eq(schema.verifiedDomains.id, row.id));
+
+    // Awaited: dangling promises are cancelled in the Workers runtime.
+    const { emailDomainVerified } = await import("./email");
+    await emailDomainVerified(user.email, row.domain);
+
     return { ok: true, verified: true };
   });

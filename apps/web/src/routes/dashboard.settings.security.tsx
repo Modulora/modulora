@@ -5,7 +5,7 @@ import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getConnections } from "@/lib/profile";
+import { getConnections, notifyPasswordChanged } from "@/lib/profile";
 import { changePassword, signOut } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/dashboard/settings/security")({
@@ -74,6 +74,8 @@ function PasswordSection() {
     setCurrent("");
     setNext("");
     setDone(true);
+    // Security notification (server-side; failure is non-blocking).
+    void notifyPasswordChanged();
   }
 
   return (

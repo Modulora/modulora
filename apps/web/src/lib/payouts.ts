@@ -108,6 +108,10 @@ export const refreshPayoutStatus = createServerFn({ method: "POST" }).handler(
         .update(schema.users)
         .set({ payoutsEnabled: enabled, updatedAt: new Date() })
         .where(eq(schema.users.id, user.id));
+      if (enabled && !user.payoutsEnabled) {
+        const { emailPayoutsActive } = await import("./email");
+        await emailPayoutsActive(user.email);
+      }
     }
     return { configured: true, connected: true, payoutsEnabled: enabled };
   },

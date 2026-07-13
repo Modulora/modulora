@@ -173,6 +173,12 @@ export const updateProfile = createServerFn({ method: "POST" })
       })
       .where(eq(schema.users.id, user.id));
 
+    if (user.username && data.username !== user.username) {
+      // Awaited: dangling promises are cancelled in the Workers runtime.
+      const { emailUsernameChanged } = await import("./email");
+      await emailUsernameChanged(user.email, user.username, data.username);
+    }
+
     // Keep the owned namespace aligned with the username.
     if (user.username && data.username !== user.username) {
       await db
@@ -212,3 +218,15 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await db.delete(schema.users).where(eq(schema.users.id, user.id));
     return { ok: true };
   });
+
+/** Post-password-change notification (called after a successful change). */
+export const notifyPasswordChanged = createServerFn({ method: "POST" }).handler(
+  async (): Promise<{ ok: boolean }> => {
+    const request = getRequest();
+    const user = request ? await getCurrentUser(request) : null;
+    if (!user) return { ok: false };
+    const { emailPasswordChanged } = await import("./email");
+    await emailPasswordChanged(user.email);
+    return { ok: true };
+  },
+);

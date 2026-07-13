@@ -146,3 +146,54 @@ export function emailPlusWelcome(to: string): Promise<void> {
     cta: { label: "Open Labs", url: `${ORIGIN}/dashboard/labs` },
   });
 }
+
+export function emailPasswordChanged(to: string): Promise<void> {
+  return sendEmail({
+    to,
+    subject: "Your password was changed",
+    heading: "Password changed",
+    body: [
+      `Your Modulora password was just changed. Other sessions were signed out.`,
+      `If this wasn't you, reset your password immediately and check your connected accounts.`,
+    ],
+    cta: { label: "Review security settings", url: "https://modulora.dev/dashboard/settings/security" },
+  });
+}
+
+export function emailDomainVerified(to: string, domain: string): Promise<void> {
+  return sendEmail({
+    to,
+    subject: `Domain verified: ${domain}`,
+    heading: `${domain} is verified`,
+    body: [
+      `The DNS TXT record checked out — ${domain} is now a verified domain on your account.`,
+      `It backs your website badge and lets you sell components from that domain.`,
+    ],
+    cta: { label: "See your settings", url: "https://modulora.dev/dashboard/settings" },
+  });
+}
+
+export function emailUsernameChanged(to: string, oldUsername: string, newUsername: string): Promise<void> {
+  return sendEmail({
+    to,
+    subject: `Username changed: @${oldUsername} → @${newUsername}`,
+    heading: `You're now @${newUsername}`,
+    body: [
+      `Your username changed from @${oldUsername} to @${newUsername}. Your public profile and install refs use the new handle.`,
+      `If this wasn't you, secure your account immediately.`,
+    ],
+    cta: { label: "View your profile", url: `https://modulora.dev/${newUsername}` },
+  });
+}
+
+export function emailPayoutsActive(to: string): Promise<void> {
+  return sendEmail({
+    to,
+    subject: "Payouts are active",
+    heading: "You can get paid now",
+    body: [
+      `Your Stripe account finished verification — payouts are active. Marketplace sales settle to it automatically, and profit-share distributions pay out once your accrued share reaches the threshold.`,
+    ],
+    cta: { label: "Set a price on a component", url: "https://modulora.dev/dashboard/components" },
+  });
+}

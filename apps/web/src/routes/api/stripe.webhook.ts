@@ -42,10 +42,20 @@ async function handle({ request }: { request: Request }) {
       const url = process.env.DATABASE_URL;
       if (url) {
         const db = drizzle(neon(url), { schema });
+        const enabled = Boolean(account.payouts_enabled && account.details_submitted);
+        const [before] = await db
+          .select({ email: schema.users.email, was: schema.users.payoutsEnabled })
+          .from(schema.users)
+          .where(eq(schema.users.stripeAccountId, account.id))
+          .limit(1);
         await db
           .update(schema.users)
-          .set({ payoutsEnabled: Boolean(account.payouts_enabled && account.details_submitted), updatedAt: new Date() })
+          .set({ payoutsEnabled: enabled, updatedAt: new Date() })
           .where(eq(schema.users.stripeAccountId, account.id));
+        if (before && enabled && !before.was) {
+          const { emailPayoutsActive } = await import("@/lib/email");
+          await emailPayoutsActive(before.email);
+        }
       }
     }
   } catch (error) {
