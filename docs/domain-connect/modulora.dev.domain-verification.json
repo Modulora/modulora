@@ -13,7 +13,10 @@
       "type": "TXT",
       "host": "_modulora",
       "data": "modulora-verify=%code%",
-      "ttl": 3600
+      "ttl": 3600,
+      "txtConflictMatchingMode": "Prefix",
+      "txtConflictMatchingPrefix": "modulora-verify="
     }
-  ]
+  ],
+  "syncPubKeyDomain": "modulora.dev"
 }

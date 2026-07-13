@@ -222,8 +222,18 @@ export const discoverDomainConnect = createServerFn({ method: "POST" })
       if (!template.ok) return { supported: false, provider };
 
       // 4. Synchronous-flow apply URL; the DNS provider shows the user every
-      //    change for review before anything is written.
+      //    change for review before anything is written. Our template sets
+      //    syncPubKeyDomain, so the query string is RSA-SHA256 signed and the
+      //    provider verifies it against the public key at _dck1.modulora.dev.
       const params = new URLSearchParams({ domain, code: row.token });
+      const pem = process.env.DOMAIN_CONNECT_SIGNING_KEY?.replace(/\\n/g, "\n");
+      if (pem) {
+        const { createSign } = await import("node:crypto");
+        const signer = createSign("RSA-SHA256");
+        signer.update(params.toString());
+        params.set("sig", signer.sign(pem, "base64"));
+        params.set("key", "_dck1");
+      }
       const applyUrl = `${settings.urlSyncUX}/v2/domainTemplates/providers/${DC_PROVIDER_ID}/services/${DC_SERVICE_ID}/apply?${params}`;
       return { supported: true, provider, applyUrl };
     } catch {
