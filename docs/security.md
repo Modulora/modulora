@@ -1,8 +1,17 @@
 # Modulora Security Model
 
-> Status: threat-model baseline · Updated: 2026-07-11
+> Status: alpha threat model · Updated: 2026-07-13
 
-Modulora is part marketplace, package registry, identity system, and software supply chain. Security is a product requirement, not a badge added after launch. This document defines the minimum posture for creator accounts, component releases, installation, external commercial listings, and platform operations.
+Modulora is a package registry, identity system, external commercial listing
+directory, and software supply chain. Security is a product requirement, not a
+badge added after launch. This document defines the minimum posture for creator
+accounts, component releases, installation, external commercial listings, and
+platform operations.
+
+Direct marketplace custody isn't active during alpha. Modulora doesn't process
+component purchases, hold paid source, grant buyer entitlements, or manage
+refunds and disputes for external sales. Marketplace threat-model sections are
+future gates, not claims about a live alpha capability.
 
 ## Security objectives
 

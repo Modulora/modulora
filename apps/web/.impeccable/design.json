@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-13T00:00:00.000Z",
+  "title": "Design System: Modulora",
+  "extensions": {
+    "colorMeta": {
+      "graphite-canvas": { "role": "neutral", "displayName": "Graphite Canvas", "canonical": "oklch(0.145 0 0)", "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.58 0 0)", "oklch(0.7 0 0)", "oklch(0.84 0 0)", "oklch(0.95 0 0)"] },
+      "ticket-amber": { "role": "secondary", "displayName": "Ticket Amber", "canonical": "oklch(0.769 0.188 70.08)", "tonalRamp": ["oklch(0.24 0.07 75)", "oklch(0.34 0.1 75)", "oklch(0.45 0.13 75)", "oklch(0.56 0.16 75)", "oklch(0.67 0.18 75)", "oklch(0.76 0.16 75)", "oklch(0.86 0.1 75)", "oklch(0.95 0.04 75)"] },
+      "ticket-ink-light": { "role": "secondary", "displayName": "Ticket Ink · Light", "canonical": "oklch(0.55 0.16 70.08)", "tonalRamp": ["oklch(0.24 0.07 75)", "oklch(0.34 0.1 75)", "oklch(0.45 0.13 75)", "oklch(0.55 0.16 75)", "oklch(0.67 0.18 75)", "oklch(0.76 0.16 75)", "oklch(0.86 0.1 75)", "oklch(0.95 0.04 75)"] },
+      "receipt-emerald-light": { "role": "tertiary", "displayName": "Receipt Emerald · Light", "canonical": "oklch(0.52 0.15 162.48)", "tonalRamp": ["oklch(0.2 0.05 160)", "oklch(0.3 0.08 160)", "oklch(0.4 0.11 160)", "oklch(0.52 0.15 160)", "oklch(0.64 0.16 160)", "oklch(0.75 0.13 160)", "oklch(0.86 0.08 160)", "oklch(0.95 0.03 160)"] },
+      "receipt-emerald-dark": { "role": "tertiary", "displayName": "Receipt Emerald · Dark", "canonical": "oklch(0.696 0.17 162.48)", "tonalRamp": ["oklch(0.2 0.05 160)", "oklch(0.3 0.08 160)", "oklch(0.4 0.11 160)", "oklch(0.52 0.14 160)", "oklch(0.64 0.16 160)", "oklch(0.696 0.17 160)", "oklch(0.86 0.08 160)", "oklch(0.95 0.03 160)"] },
+      "code-background": { "role": "neutral", "displayName": "Code Background", "canonical": "oklch(0.12 0 0)", "tonalRamp": ["oklch(0.12 0 0)", "oklch(0.2 0 0)", "oklch(0.3 0 0)", "oklch(0.42 0 0)", "oklch(0.55 0 0)", "oklch(0.68 0 0)", "oklch(0.82 0 0)", "oklch(0.94 0 0)"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Major page headings with restrained product contrast." },
+      "body": { "displayName": "Body", "purpose": "Interface explanations and documentation prose." },
+      "metadata": { "displayName": "Machine Record", "purpose": "Commands, digests, versions, registry names, and timestamps." }
+    },
+    "shadows": [
+      { "name": "control-edge", "value": "0 1px 2px rgb(0 0 0 / 0.05)", "purpose": "A slight physical edge for outline controls and inputs." },
+      { "name": "surface-low", "value": "0 1px 3px rgb(0 0 0 / 0.1)", "purpose": "Standalone cards only when tonal separation is insufficient." }
+    ],
+    "motion": [
+      { "name": "ease-out-exact", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "150ms control and state feedback." },
+      { "name": "press", "value": "scale(0.97)", "purpose": "Immediate tactile confirmation for pressable controls." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The decisive action control: compact, high contrast, and tactile.",
+      "html": "<button class=\"ds-btn-primary\">Publish component</button>",
+      "css": ".ds-btn-primary{height:36px;padding:8px 16px;border:0;border-radius:8px;background:var(--primary);color:var(--primary-foreground);font:500 14px/1.25 'Inter Variable',sans-serif;transition:background-color 150ms cubic-bezier(.23,1,.32,1),transform 150ms cubic-bezier(.23,1,.32,1)}.ds-btn-primary:hover{opacity:.9}.ds-btn-primary:active{transform:scale(.97)}.ds-btn-primary:focus-visible{outline:3px solid color-mix(in oklab,var(--ring) 50%,transparent);outline-offset:2px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "A bounded secondary action that stays subordinate to the primary.",
+      "html": "<button class=\"ds-btn-outline\">View evidence</button>",
+      "css": ".ds-btn-outline{height:36px;padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--background);color:var(--foreground);font:500 14px/1.25 'Inter Variable',sans-serif;box-shadow:0 1px 2px rgb(0 0 0/.05);transition:background-color 150ms cubic-bezier(.23,1,.32,1),transform 150ms cubic-bezier(.23,1,.32,1)}.ds-btn-outline:hover{background:var(--accent)}.ds-btn-outline:active{transform:scale(.97)}.ds-btn-outline:focus-visible{outline:3px solid color-mix(in oklab,var(--ring) 50%,transparent);outline-offset:2px}"
+    },
+    {
+      "name": "Ledger Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A compact field with a visible boundary and synchronized focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search components\" />",
+      "css": ".ds-input{box-sizing:border-box;width:100%;height:36px;padding:4px 12px;border:1px solid var(--input);border-radius:8px;background:transparent;color:var(--foreground);font:400 14px/1.25 'Inter Variable',sans-serif;box-shadow:0 1px 2px rgb(0 0 0/.05);transition:border-color 150ms cubic-bezier(.23,1,.32,1),box-shadow 150ms cubic-bezier(.23,1,.32,1)}.ds-input::placeholder{color:var(--muted-foreground)}.ds-input:focus{outline:0;border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in oklab,var(--ring) 50%,transparent)}"
+    },
+    {
+      "name": "Catalog Navigation",
+      "kind": "nav",
+      "description": "Muted at rest, full ink when active; navigation does not compete with catalog content.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" class=\"ds-nav-link ds-active\">Components</a><a href=\"#\" class=\"ds-nav-link\">Docs</a></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:4px}.ds-nav-link{padding:6px 12px;border-radius:8px;color:var(--muted-foreground);font:400 14px/1.25 'Inter Variable',sans-serif;text-decoration:none;transition:color 150ms cubic-bezier(.23,1,.32,1),background-color 150ms cubic-bezier(.23,1,.32,1)}.ds-nav-link:hover{color:var(--foreground);background:var(--accent)}.ds-nav-link.ds-active{color:var(--foreground)}.ds-nav-link:focus-visible{outline:2px solid var(--ring);outline-offset:2px}"
+    },
+    {
+      "name": "Dashboard Page Header",
+      "kind": "custom",
+      "refersTo": "dashboard-page-header",
+      "description": "The fixed dashboard title, description, icon, and action composition.",
+      "html": "<header class=\"ds-page-header\"><div><h1>Collections</h1><p>Group your components into installable kits.</p></div><button>New collection</button></header>",
+      "css": ".ds-page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;color:var(--foreground);font-family:'Inter Variable',sans-serif}.ds-page-header h1{margin:0;font-size:24px;line-height:1.25;font-weight:600}.ds-page-header p{max-width:48rem;margin:4px 0 0;color:var(--muted-foreground);font-size:14px;line-height:1.45}.ds-page-header button{height:32px;padding:6px 12px;border:0;border-radius:8px;background:var(--primary);color:var(--primary-foreground);font:500 14px/1 'Inter Variable',sans-serif}.ds-page-header button:active{transform:scale(.97)}.ds-page-header button:focus-visible{outline:3px solid color-mix(in oklab,var(--ring) 50%,transparent);outline-offset:2px}"
+    },
+    {
+      "name": "Empty State",
+      "kind": "custom",
+      "refersTo": "empty-state",
+      "description": "A teaching state for product regions without data or matching results.",
+      "html": "<section class=\"ds-empty-state\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 7h12M6 12h12M6 17h7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><strong>No collections yet</strong><p>Bundle related components and users can install the whole set together.</p></section>",
+      "css": ".ds-empty-state{display:flex;flex-direction:column;align-items:center;gap:8px;padding:48px 24px;border:1px dashed var(--border);border-radius:14px;color:var(--foreground);text-align:center;font-family:'Inter Variable',sans-serif}.ds-empty-state svg{width:24px;height:24px;color:var(--muted-foreground)}.ds-empty-state strong{font-size:14px;font-weight:500}.ds-empty-state p{max-width:24rem;margin:0;color:var(--muted-foreground);font-size:12px;line-height:1.55}"
+    },
+    {
+      "name": "Price Ticket",
+      "kind": "chip",
+      "refersTo": "price-ticket",
+      "description": "The signature paid-exchange marker; never evidence or approval.",
+      "html": "<span class=\"ds-price-ticket\">$19</span>",
+      "css": ".ds-price-ticket{display:inline-flex;align-items:center;justify-content:center;padding:4px 14px;border-radius:5px;background:var(--ticket);color:var(--ticket-foreground);font:600 11px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;mask:radial-gradient(3.5px at 0 50%,#0000 97%,#000 100%) left 50%/51% 100% no-repeat,radial-gradient(3.5px at 100% 50%,#0000 97%,#000 100%) right 50%/51% 100% no-repeat}"
+    },
+    {
+      "name": "Evidence Record",
+      "kind": "custom",
+      "description": "A scoped positive record with explicit copy and a non-color status icon.",
+      "html": "<div class=\"ds-evidence\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m5 12 4 4L19 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span><strong>Content integrity</strong><small>Exact files match the published digest</small></span></div>",
+      "css": ".ds-evidence{display:flex;align-items:flex-start;gap:8px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--foreground);font-family:'Inter Variable',sans-serif}.ds-evidence svg{width:16px;height:16px;flex:none;color:var(--receipt)}.ds-evidence span{display:flex;flex-direction:column;gap:3px}.ds-evidence strong{font-size:13px;font-weight:500}.ds-evidence small{font-size:12px;line-height:1.4;color:var(--muted-foreground)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Open Ledger",
+    "overview": "Modulora looks like a public record that is meant to be used, not admired from a distance. Graphite surfaces organize dense component, evidence, licensing, install, and earnings data. Crisp boundaries and compact controls make every action feel accountable. The interface is bold through contrast and specificity rather than oversized type, decoration, or spectacle. The system is tactile and exact. Controls visibly answer presses, selected filters are unmistakable, and meaningful records sit beside the decisions they support.",
+    "keyCharacteristics": ["Dark-first graphite ledger with a complete light inverse.", "Compact, readable information density built around an 8px spacing rhythm.", "Inter for interface clarity; monospace only for commands, digests, versions, and machine records.", "Amber marks priced exchange; emerald marks successful records and earnings.", "Motion is short feedback or state explanation, never page-load choreography.", "Authorship, association, similarity, and review scope remain visible at the point of discovery."],
+    "rules": [
+      { "name": "The Receipt Rule", "body": "Amber describes money; emerald describes a completed or successful record. Neither color is a generic highlight.", "section": "colors" },
+      { "name": "The Scoped Trust Rule", "body": "Approval and evidence always include a label or backing record. Never turn semantic color into a universal verified claim.", "section": "colors" },
+      { "name": "The Authorship Rule", "body": "Creator identity and original-source attribution use full text labels and traceable records. Similarity warnings use neutral review language; they never borrow success green or approval styling.", "section": "colors" },
+      { "name": "The Machine Record Rule", "body": "Monospace means the user can copy, compare, or verify the value. Never use it merely to make the product look technical.", "section": "typography" },
+      { "name": "The Tone-First Rule", "body": "If a border and a wide soft shadow appear on the same card, the hierarchy is wrong.", "section": "elevation" }
+    ],
+    "dos": ["Do place provenance, license, fulfillment, price, and evidence limitations beside install and purchase decisions.", "Do use the graphite tonal ladder before adding borders or shadows.", "Do reserve Ticket Amber for money and Receipt Emerald for successful records and earnings.", "Do show original source, creator authorization, review scope, and report/dispute access beside component identity.", "Do label similarity as a signal for review, never as an automated verdict."],
+    "donts": ["Don't resemble a generic SaaS template: no decorative purple gradients, glass-card surfaces, interchangeable dashboard composition, or vague AI-era copy.", "Don't use a generic verified badge.", "Don't let promotion, Plus, price, or visual emphasis imply approval, safety, review priority, or rank quality.", "Don't imply that listing review proves ownership, originality, security, or freedom from plagiarism.", "Don't create accounts, listings, creator profiles, imported previews, or apparent brand associations without the creator's affirmative authorization."]
+  }
+}

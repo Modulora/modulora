@@ -1,0 +1,11 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "installing",
+    "publishing",
+    "curation",
+    "earning",
+    "cli"
+  ]
+}

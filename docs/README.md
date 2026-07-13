@@ -2,6 +2,14 @@
 
 These documents define the current product, architecture, security, organization, brand, and delivery plan.
 
+## Current alpha boundary
+
+Direct marketplace checkout isn't live. The alpha supports free hosted source,
+verified installs, creator profit share, and external commercial links on
+verified creator domains. External creators own the transaction and fulfillment;
+Modulora doesn't hold paid source, grant buyer entitlements, record purchases,
+or collect a transaction fee.
+
 ## Reading order
 
 1. [`product-strategy.md`](./product-strategy.md) — product thesis, users, scope, business model, GTM, metrics, and decisions.
@@ -34,7 +42,7 @@ When documents overlap, use this precedence:
 - **Authentication candidate:** Better Auth
 - **Deployment:** Cloudflare Workers + Static Assets, Queues, and R2; Neon via Hyperdrive for development
 - **Distribution:** public open-source installs; external creator purchase links for commercial components at launch
-- **Business model:** free public ecosystem, paid promotion after measurable traffic, hosted private registries, optional hosted commerce later
+- **Business model:** free public ecosystem and creator profit share during alpha; paid promotion, private registries, and direct hosted commerce require later gates
 - **Source model:** self-hostable open core plus proprietary Modulora Cloud extensions
 - **GitHub organization:** hybrid public core/spec/CLI split with private cloud/infra
 

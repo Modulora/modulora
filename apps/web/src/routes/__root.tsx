@@ -3,11 +3,17 @@ import {
   Outlet,
   createRootRoute,
   HeadContent,
+  redirect,
   Scripts,
-  Link,
   useRouterState,
 } from "@tanstack/react-router";
+import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
+import { AppShell } from "@/components/app-shell";
+import { fetchSessionContext } from "@/lib/session";
 import appCss from "../styles.css?url";
+
+/* Routes that render as full-screen canvases without the app shell chrome. */
+const CHROME_FREE = new Set(["/", "/signin"]);
 
 export const Route = createRootRoute({
   head: () => ({
@@ -21,58 +27,63 @@ export const Route = createRootRoute({
           "Browse open and premium components from trusted creators. Install with one command—or let your coding agent handle it.",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/logo.png", type: "image/png" },
+    ],
   }),
+  beforeLoad: async ({ location }) => {
+    const { user, gated } = await fetchSessionContext();
+    // Alpha: the whole product requires a signed-in (allowlisted) account.
+    // Only the landing page, sign-in, and legal pages stay public.
+    const PUBLIC = ["/", "/signin", "/privacy", "/terms", "/publishing-policy", "/pricing"];
+    const isPublic = PUBLIC.some((path) =>
+      path === "/" ? location.pathname === "/" : location.pathname === path || location.pathname.startsWith(`${path}/`),
+    );
+    if (gated && !user && !isPublic) {
+      throw redirect({ to: "/signin" });
+    }
+    return { user, gated };
+  },
   component: RootComponent,
 });
 
 function RootComponent() {
-  const pathname = useRouterState({
-    select: (s) => s.location.pathname,
-  });
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = Route.useRouteContext();
 
-  // The homepage is a full-screen waitlist canvas without site chrome.
-  if (pathname === "/") {
+  if (CHROME_FREE.has(pathname) || pathname.startsWith("/preview/")) {
     return (
       <RootDocument>
-        <Outlet />
+        <NuqsAdapter>
+          <Outlet />
+        </NuqsAdapter>
       </RootDocument>
     );
   }
 
   return (
     <RootDocument>
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link to="/" className="text-lg font-bold tracking-tight">
-            Modulora
-          </Link>
-          <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link to="/components" className="hover:text-foreground">
-              Components
-            </Link>
-            <a
-              href="https://github.com/Modulora"
-              className="hover:text-foreground"
-              rel="noreferrer"
-            >
-              GitHub
-            </a>
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-6 py-10">
-        <Outlet />
-      </main>
+      <NuqsAdapter>
+        <AppShell user={user}>
+          <Outlet />
+        </AppShell>
+      </NuqsAdapter>
     </RootDocument>
   );
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Apply the persisted theme before paint. Default: dark. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("theme")==="light")document.documentElement.classList.remove("dark")}catch(e){}`,
+          }}
+        />
       </head>
       <body>
         {children}

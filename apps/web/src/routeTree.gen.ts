@@ -9,24 +9,278 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SandboxTestRouteImport } from './routes/sandbox-test'
+import { Route as ReviewRouteImport } from './routes/review'
+import { Route as PublishingPolicyRouteImport } from './routes/publishing-policy'
+import { Route as ProfitShareRouteImport } from './routes/profit-share'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as DeviceRouteImport } from './routes/device'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as UsernameRouteImport } from './routes/$username'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
+import { Route as RSplatRouteImport } from './routes/r.$'
+import { Route as ISplatRouteImport } from './routes/i.$'
+import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
+import { Route as DocsSplatRouteImport } from './routes/docs.$'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
+import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
+import { Route as DashboardPayoutsRouteImport } from './routes/dashboard.payouts'
+import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
+import { Route as DashboardListsRouteImport } from './routes/dashboard.lists'
+import { Route as DashboardLabsRouteImport } from './routes/dashboard.labs'
+import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
+import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
+import { Route as DashboardCollectionsRouteImport } from './routes/dashboard.collections'
+import { Route as DashboardBookmarksRouteImport } from './routes/dashboard.bookmarks'
+import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
+import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
+import { Route as ApiSearchRouteImport } from './routes/api/search'
+import { Route as ApiPublishRouteImport } from './routes/api/publish'
+import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-receipt'
+import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard.settings.index'
+import { Route as DashboardReviewIndexRouteImport } from './routes/dashboard.review.index'
+import { Route as PreviewNamespaceNameRouteImport } from './routes/preview.$namespace.$name'
+import { Route as DashboardSettingsSecurityRouteImport } from './routes/dashboard.settings.security'
+import { Route as DashboardSettingsDangerRouteImport } from './routes/dashboard.settings.danger'
+import { Route as DashboardSettingsAppearanceRouteImport } from './routes/dashboard.settings.appearance'
+import { Route as DashboardReviewIdRouteImport } from './routes/dashboard.review.$id'
+import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SandboxTestRoute = SandboxTestRouteImport.update({
+  id: '/sandbox-test',
+  path: '/sandbox-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublishingPolicyRoute = PublishingPolicyRouteImport.update({
+  id: '/publishing-policy',
+  path: '/publishing-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfitShareRoute = ProfitShareRouteImport.update({
+  id: '/profit-share',
+  path: '/profit-share',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeviceRoute = DeviceRouteImport.update({
+  id: '/device',
+  path: '/device',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsernameRoute = UsernameRouteImport.update({
+  id: '/$username',
+  path: '/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const ComponentsIndexRoute = ComponentsIndexRouteImport.update({
   id: '/components/',
   path: '/components/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RSplatRoute = RSplatRouteImport.update({
+  id: '/r/$',
+  path: '/r/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ISplatRoute = ISplatRouteImport.update({
+  id: '/i/$',
+  path: '/i/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsChangelogRoute = DocsChangelogRouteImport.update({
+  id: '/docs/changelog',
+  path: '/docs/changelog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsSplatRoute = DocsSplatRouteImport.update({
+  id: '/docs/$',
+  path: '/docs/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPurchasesRoute = DashboardPurchasesRouteImport.update({
+  id: '/purchases',
+  path: '/purchases',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPayoutsRoute = DashboardPayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardNewRoute = DashboardNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardListsRoute = DashboardListsRouteImport.update({
+  id: '/lists',
+  path: '/lists',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardLabsRoute = DashboardLabsRouteImport.update({
+  id: '/labs',
+  path: '/labs',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEarningsRoute = DashboardEarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardComponentsRoute = DashboardComponentsRouteImport.update({
+  id: '/components',
+  path: '/components',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardCollectionsRoute = DashboardCollectionsRouteImport.update({
+  id: '/collections',
+  path: '/collections',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardBookmarksRoute = DashboardBookmarksRouteImport.update({
+  id: '/bookmarks',
+  path: '/bookmarks',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAdminRoute = DashboardAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
+  id: '/api/upload-avatar',
+  path: '/api/upload-avatar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSearchRoute = ApiSearchRouteImport.update({
+  id: '/api/search',
+  path: '/api/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublishRoute = ApiPublishRouteImport.update({
+  id: '/api/publish',
+  path: '/api/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInstallReceiptRoute = ApiInstallReceiptRouteImport.update({
+  id: '/api/install-receipt',
+  path: '/api/install-receipt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardSettingsRoute,
+} as any)
+const DashboardReviewIndexRoute = DashboardReviewIndexRouteImport.update({
+  id: '/review/',
+  path: '/review/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const PreviewNamespaceNameRoute = PreviewNamespaceNameRouteImport.update({
+  id: '/preview/$namespace/$name',
+  path: '/preview/$namespace/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardSettingsSecurityRoute =
+  DashboardSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => DashboardSettingsRoute,
+  } as any)
+const DashboardSettingsDangerRoute = DashboardSettingsDangerRouteImport.update({
+  id: '/danger',
+  path: '/danger',
+  getParentRoute: () => DashboardSettingsRoute,
+} as any)
+const DashboardSettingsAppearanceRoute =
+  DashboardSettingsAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
+    getParentRoute: () => DashboardSettingsRoute,
+  } as any)
+const DashboardReviewIdRoute = DashboardReviewIdRouteImport.update({
+  id: '/review/$id',
+  path: '/review/$id',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEditNameRoute = DashboardEditNameRouteImport.update({
+  id: '/edit/$name',
+  path: '/edit/$name',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ComponentsNamespaceNameRoute = ComponentsNamespaceNameRouteImport.update({
   id: '/components/$namespace/$name',
   path: '/components/$namespace/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -37,52 +291,420 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$username': typeof UsernameRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/device': typeof DeviceRoute
+  '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/profit-share': typeof ProfitShareRoute
+  '/publishing-policy': typeof PublishingPolicyRoute
+  '/review': typeof ReviewRoute
+  '/sandbox-test': typeof SandboxTestRoute
+  '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
+  '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/publish': typeof ApiPublishRoute
+  '/api/search': typeof ApiSearchRoute
+  '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/bookmarks': typeof DashboardBookmarksRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
+  '/dashboard/components': typeof DashboardComponentsRoute
+  '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/labs': typeof DashboardLabsRoute
+  '/dashboard/lists': typeof DashboardListsRoute
+  '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/payouts': typeof DashboardPayoutsRoute
+  '/dashboard/purchases': typeof DashboardPurchasesRoute
+  '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
+  '/docs/$': typeof DocsSplatRoute
+  '/docs/changelog': typeof DocsChangelogRoute
+  '/i/$': typeof ISplatRoute
+  '/r/$': typeof RSplatRoute
   '/components/': typeof ComponentsIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
+  '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review/$id': typeof DashboardReviewIdRoute
+  '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
+  '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
+  '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
+  '/dashboard/review/': typeof DashboardReviewIndexRoute
+  '/dashboard/settings/': typeof DashboardSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$username': typeof UsernameRoute
+  '/device': typeof DeviceRoute
+  '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/profit-share': typeof ProfitShareRoute
+  '/publishing-policy': typeof PublishingPolicyRoute
+  '/review': typeof ReviewRoute
+  '/sandbox-test': typeof SandboxTestRoute
+  '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
+  '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/publish': typeof ApiPublishRoute
+  '/api/search': typeof ApiSearchRoute
+  '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/bookmarks': typeof DashboardBookmarksRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
+  '/dashboard/components': typeof DashboardComponentsRoute
+  '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/labs': typeof DashboardLabsRoute
+  '/dashboard/lists': typeof DashboardListsRoute
+  '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/payouts': typeof DashboardPayoutsRoute
+  '/dashboard/purchases': typeof DashboardPurchasesRoute
+  '/docs/$': typeof DocsSplatRoute
+  '/docs/changelog': typeof DocsChangelogRoute
+  '/i/$': typeof ISplatRoute
+  '/r/$': typeof RSplatRoute
   '/components': typeof ComponentsIndexRoute
+  '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
+  '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review/$id': typeof DashboardReviewIdRoute
+  '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
+  '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
+  '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
+  '/dashboard/review': typeof DashboardReviewIndexRoute
+  '/dashboard/settings': typeof DashboardSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$username': typeof UsernameRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/device': typeof DeviceRoute
+  '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/profit-share': typeof ProfitShareRoute
+  '/publishing-policy': typeof PublishingPolicyRoute
+  '/review': typeof ReviewRoute
+  '/sandbox-test': typeof SandboxTestRoute
+  '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
+  '/api/install-receipt': typeof ApiInstallReceiptRoute
+  '/api/publish': typeof ApiPublishRoute
+  '/api/search': typeof ApiSearchRoute
+  '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/bookmarks': typeof DashboardBookmarksRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
+  '/dashboard/components': typeof DashboardComponentsRoute
+  '/dashboard/earnings': typeof DashboardEarningsRoute
+  '/dashboard/labs': typeof DashboardLabsRoute
+  '/dashboard/lists': typeof DashboardListsRoute
+  '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/payouts': typeof DashboardPayoutsRoute
+  '/dashboard/purchases': typeof DashboardPurchasesRoute
+  '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
+  '/docs/$': typeof DocsSplatRoute
+  '/docs/changelog': typeof DocsChangelogRoute
+  '/i/$': typeof ISplatRoute
+  '/r/$': typeof RSplatRoute
   '/components/': typeof ComponentsIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
+  '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review/$id': typeof DashboardReviewIdRoute
+  '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
+  '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
+  '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
+  '/dashboard/review/': typeof DashboardReviewIndexRoute
+  '/dashboard/settings/': typeof DashboardSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/components/' | '/api/auth/$' | '/components/$namespace/$name'
+    | '/'
+    | '/$username'
+    | '/dashboard'
+    | '/device'
+    | '/pricing'
+    | '/privacy'
+    | '/profit-share'
+    | '/publishing-policy'
+    | '/review'
+    | '/sandbox-test'
+    | '/settings'
+    | '/signin'
+    | '/terms'
+    | '/api/install-receipt'
+    | '/api/publish'
+    | '/api/search'
+    | '/api/upload-avatar'
+    | '/dashboard/admin'
+    | '/dashboard/analytics'
+    | '/dashboard/bookmarks'
+    | '/dashboard/collections'
+    | '/dashboard/components'
+    | '/dashboard/earnings'
+    | '/dashboard/labs'
+    | '/dashboard/lists'
+    | '/dashboard/new'
+    | '/dashboard/payouts'
+    | '/dashboard/purchases'
+    | '/dashboard/settings'
+    | '/docs/$'
+    | '/docs/changelog'
+    | '/i/$'
+    | '/r/$'
+    | '/components/'
+    | '/dashboard/'
+    | '/api/auth/$'
+    | '/api/stripe/webhook'
+    | '/components/$namespace/$name'
+    | '/dashboard/edit/$name'
+    | '/dashboard/review/$id'
+    | '/dashboard/settings/appearance'
+    | '/dashboard/settings/danger'
+    | '/dashboard/settings/security'
+    | '/preview/$namespace/$name'
+    | '/dashboard/review/'
+    | '/dashboard/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/components' | '/api/auth/$' | '/components/$namespace/$name'
+  to:
+    | '/'
+    | '/$username'
+    | '/device'
+    | '/pricing'
+    | '/privacy'
+    | '/profit-share'
+    | '/publishing-policy'
+    | '/review'
+    | '/sandbox-test'
+    | '/settings'
+    | '/signin'
+    | '/terms'
+    | '/api/install-receipt'
+    | '/api/publish'
+    | '/api/search'
+    | '/api/upload-avatar'
+    | '/dashboard/admin'
+    | '/dashboard/analytics'
+    | '/dashboard/bookmarks'
+    | '/dashboard/collections'
+    | '/dashboard/components'
+    | '/dashboard/earnings'
+    | '/dashboard/labs'
+    | '/dashboard/lists'
+    | '/dashboard/new'
+    | '/dashboard/payouts'
+    | '/dashboard/purchases'
+    | '/docs/$'
+    | '/docs/changelog'
+    | '/i/$'
+    | '/r/$'
+    | '/components'
+    | '/dashboard'
+    | '/api/auth/$'
+    | '/api/stripe/webhook'
+    | '/components/$namespace/$name'
+    | '/dashboard/edit/$name'
+    | '/dashboard/review/$id'
+    | '/dashboard/settings/appearance'
+    | '/dashboard/settings/danger'
+    | '/dashboard/settings/security'
+    | '/preview/$namespace/$name'
+    | '/dashboard/review'
+    | '/dashboard/settings'
   id:
     | '__root__'
     | '/'
+    | '/$username'
+    | '/dashboard'
+    | '/device'
+    | '/pricing'
+    | '/privacy'
+    | '/profit-share'
+    | '/publishing-policy'
+    | '/review'
+    | '/sandbox-test'
+    | '/settings'
+    | '/signin'
+    | '/terms'
+    | '/api/install-receipt'
+    | '/api/publish'
+    | '/api/search'
+    | '/api/upload-avatar'
+    | '/dashboard/admin'
+    | '/dashboard/analytics'
+    | '/dashboard/bookmarks'
+    | '/dashboard/collections'
+    | '/dashboard/components'
+    | '/dashboard/earnings'
+    | '/dashboard/labs'
+    | '/dashboard/lists'
+    | '/dashboard/new'
+    | '/dashboard/payouts'
+    | '/dashboard/purchases'
+    | '/dashboard/settings'
+    | '/docs/$'
+    | '/docs/changelog'
+    | '/i/$'
+    | '/r/$'
     | '/components/'
+    | '/dashboard/'
     | '/api/auth/$'
+    | '/api/stripe/webhook'
     | '/components/$namespace/$name'
+    | '/dashboard/edit/$name'
+    | '/dashboard/review/$id'
+    | '/dashboard/settings/appearance'
+    | '/dashboard/settings/danger'
+    | '/dashboard/settings/security'
+    | '/preview/$namespace/$name'
+    | '/dashboard/review/'
+    | '/dashboard/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  UsernameRoute: typeof UsernameRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
+  DeviceRoute: typeof DeviceRoute
+  PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProfitShareRoute: typeof ProfitShareRoute
+  PublishingPolicyRoute: typeof PublishingPolicyRoute
+  ReviewRoute: typeof ReviewRoute
+  SandboxTestRoute: typeof SandboxTestRoute
+  SettingsRoute: typeof SettingsRoute
+  SigninRoute: typeof SigninRoute
+  TermsRoute: typeof TermsRoute
+  ApiInstallReceiptRoute: typeof ApiInstallReceiptRoute
+  ApiPublishRoute: typeof ApiPublishRoute
+  ApiSearchRoute: typeof ApiSearchRoute
+  ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
+  DocsSplatRoute: typeof DocsSplatRoute
+  DocsChangelogRoute: typeof DocsChangelogRoute
+  ISplatRoute: typeof ISplatRoute
+  RSplatRoute: typeof RSplatRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
+  PreviewNamespaceNameRoute: typeof PreviewNamespaceNameRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sandbox-test': {
+      id: '/sandbox-test'
+      path: '/sandbox-test'
+      fullPath: '/sandbox-test'
+      preLoaderRoute: typeof SandboxTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publishing-policy': {
+      id: '/publishing-policy'
+      path: '/publishing-policy'
+      fullPath: '/publishing-policy'
+      preLoaderRoute: typeof PublishingPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profit-share': {
+      id: '/profit-share'
+      path: '/profit-share'
+      fullPath: '/profit-share'
+      preLoaderRoute: typeof ProfitShareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/device': {
+      id: '/device'
+      path: '/device'
+      fullPath: '/device'
+      preLoaderRoute: typeof DeviceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$username': {
+      id: '/$username'
+      path: '/$username'
+      fullPath: '/$username'
+      preLoaderRoute: typeof UsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/components/': {
       id: '/components/'
@@ -91,11 +713,214 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComponentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/r/$': {
+      id: '/r/$'
+      path: '/r/$'
+      fullPath: '/r/$'
+      preLoaderRoute: typeof RSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/i/$': {
+      id: '/i/$'
+      path: '/i/$'
+      fullPath: '/i/$'
+      preLoaderRoute: typeof ISplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/changelog': {
+      id: '/docs/changelog'
+      path: '/docs/changelog'
+      fullPath: '/docs/changelog'
+      preLoaderRoute: typeof DocsChangelogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/$': {
+      id: '/docs/$'
+      path: '/docs/$'
+      fullPath: '/docs/$'
+      preLoaderRoute: typeof DocsSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/purchases': {
+      id: '/dashboard/purchases'
+      path: '/purchases'
+      fullPath: '/dashboard/purchases'
+      preLoaderRoute: typeof DashboardPurchasesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/payouts': {
+      id: '/dashboard/payouts'
+      path: '/payouts'
+      fullPath: '/dashboard/payouts'
+      preLoaderRoute: typeof DashboardPayoutsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/new': {
+      id: '/dashboard/new'
+      path: '/new'
+      fullPath: '/dashboard/new'
+      preLoaderRoute: typeof DashboardNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/lists': {
+      id: '/dashboard/lists'
+      path: '/lists'
+      fullPath: '/dashboard/lists'
+      preLoaderRoute: typeof DashboardListsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/labs': {
+      id: '/dashboard/labs'
+      path: '/labs'
+      fullPath: '/dashboard/labs'
+      preLoaderRoute: typeof DashboardLabsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/earnings': {
+      id: '/dashboard/earnings'
+      path: '/earnings'
+      fullPath: '/dashboard/earnings'
+      preLoaderRoute: typeof DashboardEarningsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/components': {
+      id: '/dashboard/components'
+      path: '/components'
+      fullPath: '/dashboard/components'
+      preLoaderRoute: typeof DashboardComponentsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/collections': {
+      id: '/dashboard/collections'
+      path: '/collections'
+      fullPath: '/dashboard/collections'
+      preLoaderRoute: typeof DashboardCollectionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/bookmarks': {
+      id: '/dashboard/bookmarks'
+      path: '/bookmarks'
+      fullPath: '/dashboard/bookmarks'
+      preLoaderRoute: typeof DashboardBookmarksRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/analytics': {
+      id: '/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/admin': {
+      id: '/dashboard/admin'
+      path: '/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/api/upload-avatar': {
+      id: '/api/upload-avatar'
+      path: '/api/upload-avatar'
+      fullPath: '/api/upload-avatar'
+      preLoaderRoute: typeof ApiUploadAvatarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/search': {
+      id: '/api/search'
+      path: '/api/search'
+      fullPath: '/api/search'
+      preLoaderRoute: typeof ApiSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/publish': {
+      id: '/api/publish'
+      path: '/api/publish'
+      fullPath: '/api/publish'
+      preLoaderRoute: typeof ApiPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/install-receipt': {
+      id: '/api/install-receipt'
+      path: '/api/install-receipt'
+      fullPath: '/api/install-receipt'
+      preLoaderRoute: typeof ApiInstallReceiptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/settings/': {
+      id: '/dashboard/settings/'
+      path: '/'
+      fullPath: '/dashboard/settings/'
+      preLoaderRoute: typeof DashboardSettingsIndexRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
+    '/dashboard/review/': {
+      id: '/dashboard/review/'
+      path: '/review'
+      fullPath: '/dashboard/review/'
+      preLoaderRoute: typeof DashboardReviewIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/preview/$namespace/$name': {
+      id: '/preview/$namespace/$name'
+      path: '/preview/$namespace/$name'
+      fullPath: '/preview/$namespace/$name'
+      preLoaderRoute: typeof PreviewNamespaceNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/settings/security': {
+      id: '/dashboard/settings/security'
+      path: '/security'
+      fullPath: '/dashboard/settings/security'
+      preLoaderRoute: typeof DashboardSettingsSecurityRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
+    '/dashboard/settings/danger': {
+      id: '/dashboard/settings/danger'
+      path: '/danger'
+      fullPath: '/dashboard/settings/danger'
+      preLoaderRoute: typeof DashboardSettingsDangerRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
+    '/dashboard/settings/appearance': {
+      id: '/dashboard/settings/appearance'
+      path: '/appearance'
+      fullPath: '/dashboard/settings/appearance'
+      preLoaderRoute: typeof DashboardSettingsAppearanceRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
+    '/dashboard/review/$id': {
+      id: '/dashboard/review/$id'
+      path: '/review/$id'
+      fullPath: '/dashboard/review/$id'
+      preLoaderRoute: typeof DashboardReviewIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/edit/$name': {
+      id: '/dashboard/edit/$name'
+      path: '/edit/$name'
+      fullPath: '/dashboard/edit/$name'
+      preLoaderRoute: typeof DashboardEditNameRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/components/$namespace/$name': {
       id: '/components/$namespace/$name'
       path: '/components/$namespace/$name'
       fullPath: '/components/$namespace/$name'
       preLoaderRoute: typeof ComponentsNamespaceNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -108,11 +933,92 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardSettingsRouteChildren {
+  DashboardSettingsAppearanceRoute: typeof DashboardSettingsAppearanceRoute
+  DashboardSettingsDangerRoute: typeof DashboardSettingsDangerRoute
+  DashboardSettingsSecurityRoute: typeof DashboardSettingsSecurityRoute
+  DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
+}
+
+const DashboardSettingsRouteChildren: DashboardSettingsRouteChildren = {
+  DashboardSettingsAppearanceRoute: DashboardSettingsAppearanceRoute,
+  DashboardSettingsDangerRoute: DashboardSettingsDangerRoute,
+  DashboardSettingsSecurityRoute: DashboardSettingsSecurityRoute,
+  DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
+}
+
+const DashboardSettingsRouteWithChildren =
+  DashboardSettingsRoute._addFileChildren(DashboardSettingsRouteChildren)
+
+interface DashboardRouteChildren {
+  DashboardAdminRoute: typeof DashboardAdminRoute
+  DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
+  DashboardBookmarksRoute: typeof DashboardBookmarksRoute
+  DashboardCollectionsRoute: typeof DashboardCollectionsRoute
+  DashboardComponentsRoute: typeof DashboardComponentsRoute
+  DashboardEarningsRoute: typeof DashboardEarningsRoute
+  DashboardLabsRoute: typeof DashboardLabsRoute
+  DashboardListsRoute: typeof DashboardListsRoute
+  DashboardNewRoute: typeof DashboardNewRoute
+  DashboardPayoutsRoute: typeof DashboardPayoutsRoute
+  DashboardPurchasesRoute: typeof DashboardPurchasesRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRouteWithChildren
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardEditNameRoute: typeof DashboardEditNameRoute
+  DashboardReviewIdRoute: typeof DashboardReviewIdRoute
+  DashboardReviewIndexRoute: typeof DashboardReviewIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAdminRoute: DashboardAdminRoute,
+  DashboardAnalyticsRoute: DashboardAnalyticsRoute,
+  DashboardBookmarksRoute: DashboardBookmarksRoute,
+  DashboardCollectionsRoute: DashboardCollectionsRoute,
+  DashboardComponentsRoute: DashboardComponentsRoute,
+  DashboardEarningsRoute: DashboardEarningsRoute,
+  DashboardLabsRoute: DashboardLabsRoute,
+  DashboardListsRoute: DashboardListsRoute,
+  DashboardNewRoute: DashboardNewRoute,
+  DashboardPayoutsRoute: DashboardPayoutsRoute,
+  DashboardPurchasesRoute: DashboardPurchasesRoute,
+  DashboardSettingsRoute: DashboardSettingsRouteWithChildren,
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardEditNameRoute: DashboardEditNameRoute,
+  DashboardReviewIdRoute: DashboardReviewIdRoute,
+  DashboardReviewIndexRoute: DashboardReviewIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  UsernameRoute: UsernameRoute,
+  DashboardRoute: DashboardRouteWithChildren,
+  DeviceRoute: DeviceRoute,
+  PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProfitShareRoute: ProfitShareRoute,
+  PublishingPolicyRoute: PublishingPolicyRoute,
+  ReviewRoute: ReviewRoute,
+  SandboxTestRoute: SandboxTestRoute,
+  SettingsRoute: SettingsRoute,
+  SigninRoute: SigninRoute,
+  TermsRoute: TermsRoute,
+  ApiInstallReceiptRoute: ApiInstallReceiptRoute,
+  ApiPublishRoute: ApiPublishRoute,
+  ApiSearchRoute: ApiSearchRoute,
+  ApiUploadAvatarRoute: ApiUploadAvatarRoute,
+  DocsSplatRoute: DocsSplatRoute,
+  DocsChangelogRoute: DocsChangelogRoute,
+  ISplatRoute: ISplatRoute,
+  RSplatRoute: RSplatRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,
+  PreviewNamespaceNameRoute: PreviewNamespaceNameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

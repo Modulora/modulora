@@ -1,6 +1,14 @@
 # Modulora Delivery Roadmap
 
-> Status: planning baseline · Updated: 2026-07-11
+> Status: alpha delivery plan · Updated: 2026-07-13
+
+## Current scope decision
+
+Direct marketplace checkout is shelved for alpha. External commercial links on
+verified creator domains remain in scope, as do creator profit-share payouts
+for verified CLI installs. Any future first-party checkout must pass the later
+commerce, licensing, support, tax, refund, dispute, and security gates in this
+roadmap before the feature flag can be enabled.
 
 Modulora is a large security-sensitive platform. The roadmap is organized around evidence and release gates rather than optimistic feature dates. Each phase must produce a usable vertical slice and prove the assumptions required for the next one.
 
@@ -131,6 +139,8 @@ Do not optimize page views, raw copied commands, or unverified install pings as 
 - Baseline secret, dependency, license, and static analysis that does not execute creator code.
 - Public shadcn-compatible item endpoint pinned to exact versions.
 - Public evidence API and component version history.
+- Authenticated publishing from both the web editor and the CLI (`modulora login` + `modulora publish`) against one core publish endpoint. Creators choose distribution channels per component (e.g. shadcn-only, opting out of the Modulora CLI channel).
+- Versioned creator publishing terms and submission-policy acceptance stored with user, component version, timestamp, and selected distribution channels.
 
 ### Security gate
 
@@ -139,6 +149,8 @@ Do not optimize page views, raw copied commands, or unverified install pings as 
 - Malicious manifest, path traversal, Unicode-confusable, oversized input, and secret-leak fixtures pass.
 - Release revocation reaches website/API clients promptly.
 - Evidence labels and limitations pass copy/security review.
+- Creator Terms of Service, publishing agreement, submission/prohibited-code policy, DMCA process, commercial-listing policy, privacy terms, and profit-share/payout terms receive legal review.
+- Submission API fails closed without acceptance of the current required policy version; public publishing remains disabled until legal approval.
 
 ### Product gate
 
@@ -173,7 +185,7 @@ modulora verify
 - Apache-2.0 CLI and installer engine in separate repository.
 - shadcn-compatible adapter without forking shadcn's schema.
 - Secure npm publishing using protected environments and trusted publishing/OIDC.
-- Read-only MCP and SKILL.md adapters after CLI API stabilizes.
+- Read-only MCP server (`@modulora/mcp` or `modulora mcp`) exposing catalog search, component metadata/registry-item, and install commands to AI agents — public/visible items only, closed-source never leaks source. Ships after the CLI read API stabilizes.
 - Privacy-preserving install telemetry that is opt-in or transparently disclosed.
 
 ### Security gate
@@ -290,6 +302,10 @@ Do not sell promotion merely to claim revenue before creators can receive measur
 
 - External creator purchase links remain free with no platform take rate.
 - Test a 10% fee only when Modulora handles checkout, entitlement, delivery, updates, and disputes.
+- Once the platform produces distributable profit, allocate it as an initial policy of **30% creator pool / 10% open-source sustainability fund / 60% retained by Modulora**. Allocate the creator pool by verified CLI installs; initial payout threshold hypothesis: $50 with balances rolling forward.
+- Direct the OSS fund to libraries Modulora materially depends on. Publish recipients, rationale, conflicts, and amounts quarterly; unclaimed allocations roll into the next OSS distribution.
+- Distributable profit subtracts ordinary, necessary platform costs, including market-reasonable salaries, contractor payments, payroll taxes, and benefits attributable to Modulora. Founder distributions, unrelated payroll, above-market compensation, and retroactive adjustments cannot reduce the pools.
+- Publish allocation percentages, cost-allocation policy, anti-fraud rules, cadence, and worked examples before activation.
 
 ### Gate
 

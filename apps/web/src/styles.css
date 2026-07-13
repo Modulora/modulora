@@ -1,7 +1,42 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  /* Light palette. The site defaults to dark (html.dark, set pre-paint). */
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.17 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.17 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.17 0 0);
+  --primary: oklch(0.2 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.94 0 0);
+  --secondary-foreground: oklch(0.2 0 0);
+  --muted: oklch(0.94 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.94 0 0);
+  --accent-foreground: oklch(0.2 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --receipt: oklch(0.52 0.15 162.48);
+  --receipt-foreground: oklch(0.15 0 0);
+  --ticket: oklch(0.769 0.188 70.08);
+  --ticket-foreground: oklch(0.15 0 0);
+  --ticket-ink: oklch(0.55 0.16 70.08);
+  --code-background: oklch(0.12 0 0);
+  --code-foreground: oklch(0.9 0 0);
+  --border: oklch(0.88 0 0);
+  --input: oklch(0.88 0 0);
+  --ring: oklch(0.6 0 0);
+  --radius: 0.625rem;
+  --motion-control-duration: 150ms;
+  --ease-out-exact: cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: light;
+}
+
+.dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.97 0 0);
   --card: oklch(0.185 0 0);
@@ -17,10 +52,17 @@
   --accent: oklch(0.24 0 0);
   --accent-foreground: oklch(0.97 0 0);
   --destructive: oklch(0.55 0.2 25);
+  --receipt: oklch(0.696 0.17 162.48);
+  --receipt-foreground: oklch(0.15 0 0);
+  --ticket: oklch(0.769 0.188 70.08);
+  --ticket-foreground: oklch(0.15 0 0);
+  --ticket-ink: oklch(0.769 0.188 70.08);
+  --code-background: oklch(0.12 0 0);
+  --code-foreground: oklch(0.9 0 0);
   --border: oklch(0.28 0 0);
   --input: oklch(0.28 0 0);
   --ring: oklch(0.5 0 0);
-  --radius: 0.625rem;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -39,6 +81,13 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-receipt: var(--receipt);
+  --color-receipt-foreground: var(--receipt-foreground);
+  --color-ticket: var(--ticket);
+  --color-ticket-foreground: var(--ticket-foreground);
+  --color-ticket-ink: var(--ticket-ink);
+  --color-code-background: var(--code-background);
+  --color-code-foreground: var(--code-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -52,4 +101,95 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: oklch(0.82 0 0 / 0.24);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Preserve compact desktop density while meeting touch-target guidance on
+   coarse-pointer devices. Button variants keep their visual size; the hit
+   area expands only where touch is the primary input. */
+@media (pointer: coarse) {
+  [data-slot="button"] {
+    min-height: 44px;
+  }
+  [data-slot="button"][data-size^="icon"] {
+    min-width: 44px;
+  }
+}
+
+/* Ticket badge: a little ticket — rounded rect with semicircular notches
+   punched into the left and right edges. Each mask layer covers one half of
+   the element and punches its own notch, so the notches never double-punch
+   the middle. The mask clips children too, so the paper-noise overlay stays
+   inside the silhouette. */
+.ticket-pill {
+  --ticket-notch: 3.5px;
+  border-radius: 5px;
+  mask:
+    radial-gradient(var(--ticket-notch) at 0% 50%, #0000 97%, #000 100%) left 50% / 51% 100% no-repeat,
+    radial-gradient(var(--ticket-notch) at 100% 50%, #0000 97%, #000 100%) right 50% / 51% 100% no-repeat;
+}
+
+/* Paper-noise overlay: SVG fractal grain + a whisper of top sheen. */
+.ticket-texture {
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0) 50%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+}
+
+/* Docs prose: hand-rolled typography for MDX content (no plugin). */
+.docs-prose {
+  font-size: 0.925rem;
+  line-height: 1.75;
+  color: var(--color-foreground);
+}
+.docs-prose h2 {
+  margin: 2.25rem 0 0.75rem;
+  scroll-margin-top: 5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.docs-prose h3 {
+  margin: 1.75rem 0 0.5rem;
+  scroll-margin-top: 5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.docs-prose p { margin: 0.75rem 0; color: color-mix(in oklab, var(--color-foreground) 82%, var(--color-muted-foreground)); }
+.docs-prose a { color: var(--color-foreground); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, var(--color-foreground) 35%, transparent); }
+.docs-prose a:hover { text-decoration-color: var(--color-foreground); }
+.docs-prose ul, .docs-prose ol { margin: 0.75rem 0; padding-left: 1.4rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.docs-prose ul { list-style: disc; }
+.docs-prose ol { list-style: decimal; }
+.docs-prose li { color: color-mix(in oklab, var(--color-foreground) 82%, var(--color-muted-foreground)); }
+.docs-prose li::marker { color: var(--color-muted-foreground); }
+.docs-prose code { font-family: var(--font-mono, ui-monospace), monospace; font-size: 0.85em; background: color-mix(in oklab, var(--color-secondary) 70%, transparent); border: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); border-radius: 5px; padding: 0.1rem 0.35rem; }
+.docs-prose pre { margin: 1rem 0; overflow-x: auto; border: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); border-radius: 10px; background: #0b0b0b; padding: 1rem 1.15rem; font-size: 0.825rem; line-height: 1.65; }
+.docs-prose pre code { background: none; border: none; padding: 0; font-size: inherit; }
+.docs-prose table { margin: 1rem 0; width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.docs-prose th { text-align: left; font-weight: 500; color: var(--color-muted-foreground); border-bottom: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); padding: 0.5rem 0.75rem; }
+.docs-prose td { border-bottom: 1px solid color-mix(in oklab, var(--color-border) 40%, transparent); padding: 0.5rem 0.75rem; }
+.docs-prose blockquote { margin: 1rem 0; border-left: 2px solid var(--color-border); padding-left: 1rem; color: var(--color-muted-foreground); }
+.docs-prose hr { margin: 2rem 0; border-color: color-mix(in oklab, var(--color-border) 60%, transparent); }
+
+/* Preview loading: Modulora logo breathing in/out. */
+@keyframes logo-breathe {
+  0%, 100% { opacity: 0.12; }
+  50% { opacity: 0.85; }
 }

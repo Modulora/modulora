@@ -1,6 +1,19 @@
 # Modulora Architecture
 
-> Status: planning baseline · Updated: 2026-07-11
+> Status: alpha architecture · Updated: 2026-07-13
+
+## Alpha commerce boundary
+
+The direct marketplace is disabled for alpha. Modulora doesn't process
+component or collection checkout, issue buyer entitlements, maintain a purchase
+library, or deliver paid source. External commercial listings point to verified
+creator domains, and creators retain responsibility for every transaction and
+fulfillment obligation.
+
+Marketplace tables and code paths can remain dormant for later evaluation, but
+public catalog and registry reads must ignore dormant prices while
+`VITE_DIRECT_MARKETPLACE_ENABLED` is false. Profit-share payout onboarding and
+distributions are independent of marketplace checkout.
 
 ## Architectural goals
 

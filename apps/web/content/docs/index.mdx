@@ -1,0 +1,46 @@
+---
+title: What is Modulora?
+description: A provenance-first component registry — every install is verifiable.
+---
+
+Modulora is an open-source registry for React components where **provenance is
+the product**. Creators upload their own source; Modulora hosts it in the
+shadcn registry-item shape, reviews it before it lists, and publishes a
+content digest so every install can be verified byte-for-byte.
+
+{/* prettier-ignore */}
+
+> [!NOTE]
+> Alpha scope excludes direct marketplace checkout. Open components install
+> through Modulora. Commercial listings can link to a verified creator domain,
+> where the creator handles the entire transaction and fulfillment.
+
+## What makes it different
+
+- **Verifiable installs.** Every release publishes a SHA-256 content digest.
+  The CLI recomputes it locally on install and refuses to write on a mismatch.
+- **Honest evidence.** Listings show scoped, provable records — publisher
+  identity, content integrity, install parity, secret scan — each with its
+  limitations stated. There is no generic "verified" badge.
+- **Curated.** Nothing lists publicly until a curator reviews it. Review is
+  not a safety guarantee, and the site says so.
+- **No install scripts, ever.** Installs copy exactly the published files.
+
+## For component authors
+
+Publish from the web editor with a live preview, keep your license, and earn
+through the creator profit share, weighted by verified installs. External
+sales can link to a verified creator domain; direct Modulora checkout is
+shelved for alpha. See [how earning works](/profit-share).
+
+## For app developers and agents
+
+```bash
+# Verified install via the Modulora CLI
+npx modulora add @creator/component
+
+# Or with shadcn
+npx shadcn@latest add https://modulora.dev/r/@creator/component
+```
+
+Read on: [Installing components](/docs/installing) · [Publishing](/docs/publishing) · [CLI reference](/docs/cli)

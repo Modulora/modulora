@@ -12,18 +12,20 @@ export type SourceModel =
   | "hosted-commercial";
 
 export type EvidenceType =
-  | "owner-verified"
-  | "source-linked"
-  | "artifact-signed"
+  | "publisher-identity"
+  | "content-integrity"
+  | "install-parity"
+  | "domain-verified"
   | "secret-scan"
+  | "source-not-assessed"
+  | "deprecated"
+  | "revoked"
+  // reserved for future automated checks:
   | "dependency-scan"
   | "license-scan"
   | "static-analysis"
   | "build-checked"
-  | "human-reviewed"
-  | "source-not-assessed"
-  | "deprecated"
-  | "revoked";
+  | "human-reviewed";
 
 export interface EvidenceRecord {
   type: EvidenceType;
@@ -33,6 +35,17 @@ export interface EvidenceRecord {
   scope?: string;
   toolVersion?: string;
   limitations?: string;
+}
+
+export type DistributionChannel =
+  | "shadcn"
+  | "modulora-cli"
+  | "compatible-cli";
+
+export interface ComponentFile {
+  /** Target path in the consumer's project. */
+  path: string;
+  content: string;
 }
 
 export interface CatalogItem {
@@ -54,7 +67,26 @@ export interface CatalogItem {
   title: string;
   description: string;
   category: string;
+  distributionChannels?: DistributionChannel[];
+  /** shadcn-style type label (Button, Dialog, …). */
+  componentType?: string;
+  /** Creator-provided install command for their own registry/CLI. */
+  otherCliCommand?: string;
+  installCount?: number;
+  files?: ComponentFile[];
   evidence: EvidenceRecord[];
+  // Marketplace: an active price (minor units) gates the source behind purchase.
+  marketplacePrice?: number | null;
+  marketplaceLicense?: { name: string; text: string } | null;
+  ownedPurchase?: import("../lib/purchases").OwnedComponent | null;
+  memberOf?: { name: string; title: string }[];
+  inCollection?: string | null;
+  /** DB-backed component with real source (live iframe previews). */
+  live?: boolean;
+  /** Creator-provided install command (their own registry), when set. */
+  creatorShadcnCommand?: string;
+  // Whether the current viewer may install (owner or paid purchase).
+  entitled?: boolean;
 }
 
 export const catalog: CatalogItem[] = [
@@ -76,28 +108,143 @@ export const catalog: CatalogItem[] = [
     description:
       "An accessible date picker with range selection, keyboard navigation, and timezone-safe defaults.",
     category: "Date & Time",
+    distributionChannels: ["shadcn", "modulora-cli", "compatible-cli"],
+    files: [
+      {
+        path: "components/ui/calendar.tsx",
+        content: `import * as React from "react"
+import { cn } from "@/lib/utils"
+import { useCalendar } from "./use-calendar"
+import "./calendar.css"
+
+export interface CalendarProps {
+  value?: Date
+  onChange?: (date: Date) => void
+  className?: string
+}
+
+export function Calendar({ value, onChange, className }: CalendarProps) {
+  const { days, month, year, select, selected } = useCalendar(value)
+
+  return (
+    <div className={cn("cal", className)} role="grid" aria-label={\`\${month} \${year}\`}>
+      <header className="cal__head">
+        <span>{month} {year}</span>
+      </header>
+      <div className="cal__grid">
+        {days.map((day) => (
+          <button
+            key={day.toISOString()}
+            type="button"
+            aria-pressed={selected(day)}
+            className="cal__day"
+            onClick={() => {
+              select(day)
+              onChange?.(day)
+            }}
+          >
+            {day.getDate()}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+`,
+      },
+      {
+        path: "components/ui/use-calendar.ts",
+        content: `import * as React from "react"
+
+export function useCalendar(initial?: Date) {
+  const [selectedDate, setSelectedDate] = React.useState(initial ?? new Date())
+  const view = selectedDate
+
+  const days = React.useMemo(() => {
+    const first = new Date(view.getFullYear(), view.getMonth(), 1)
+    const total = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate()
+    return Array.from({ length: total }, (_, i) =>
+      new Date(first.getFullYear(), first.getMonth(), i + 1),
+    )
+  }, [view])
+
+  return {
+    days,
+    month: view.toLocaleString("en", { month: "long" }),
+    year: view.getFullYear(),
+    selected: (day: Date) => day.toDateString() === selectedDate.toDateString(),
+    select: setSelectedDate,
+  }
+}
+`,
+      },
+      {
+        path: "components/ui/calendar.css",
+        content: `.cal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 16rem;
+}
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.cal__day {
+  aspect-ratio: 1;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cal__day[aria-pressed="true"] {
+  background: var(--foreground);
+  color: var(--background);
+}
+`,
+      },
+      {
+        path: "lib/utils.ts",
+        content: `import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+`,
+      },
+    ],
     evidence: [
       {
-        type: "owner-verified",
+        type: "publisher-identity",
         status: "passed",
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:00Z",
-        scope: "GitHub App installation for northstar-ui/components",
+        scope: "Published by the authenticated account @northstar.",
+        limitations: "Confirms who published this release, not the safety of its code.",
       },
       {
-        type: "artifact-signed",
+        type: "content-integrity",
         status: "passed",
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:05Z",
+        toolVersion: "sha256",
+        scope: "Install delivers exactly these files — digest sha256:demo…",
+        limitations:
+          "The Modulora CLI copies files and never runs install scripts; it verifies this digest before writing.",
       },
       {
         type: "secret-scan",
         status: "passed",
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:10Z",
-        toolVersion: "gitleaks-8.24.0",
+        toolVersion: "modulora-secretscan-0.1",
         limitations:
-          "Pattern-based scan of release files only; cannot prove absence of unknown or obfuscated secrets.",
+          "Pattern-based scan of published files only; cannot prove the absence of unknown or obfuscated secrets.",
       },
     ],
   },
@@ -114,19 +261,21 @@ export const catalog: CatalogItem[] = [
     purchase: {
       url: "https://northstar.dev/pro-table",
       domain: "northstar.dev",
-      priceLabel: "$49 one-time",
+      priceLabel: "$49",
     },
     title: "Pro Table",
     description:
       "A virtualized data table with filtering, grouping, and spreadsheet-style editing. Purchased and fulfilled by the creator.",
     category: "Data Display",
+    distributionChannels: [],
     evidence: [
       {
-        type: "owner-verified",
+        type: "domain-verified",
         status: "passed",
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:00Z",
-        scope: "Domain verification for northstar.dev",
+        scope: "DNS TXT record proves control of northstar.dev; the purchase link resolves there.",
+        limitations: "Proves control of the domain, not the safety of the delivered source.",
       },
       {
         type: "source-not-assessed",
@@ -134,7 +283,8 @@ export const catalog: CatalogItem[] = [
         issuer: "modulora-platform",
         timestamp: "2026-07-11T18:00:00Z",
         scope:
-          "Commercial source is not available to Modulora and has not been scanned or reviewed.",
+          "Paid source is fulfilled by the creator and is not available to Modulora.",
+        limitations: "Modulora has not received, scanned, or reviewed this source.",
       },
     ],
   },

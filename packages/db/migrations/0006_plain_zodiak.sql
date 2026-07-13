@@ -1,0 +1,1 @@
+ALTER TABLE "component_files" ADD COLUMN "role" text DEFAULT 'component' NOT NULL;

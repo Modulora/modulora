@@ -1,0 +1,83 @@
+---
+title: CLI reference
+description: Every modulora command, flag, and exit code.
+---
+
+Install: `npm install -g modulora` (Node 20+). All commands work against
+`https://modulora.dev` by default; set `MODULORA_REGISTRY_URL` to override.
+
+## `modulora info <ref>`
+
+Show a component's metadata, files, and published digest.
+
+```bash
+modulora info @creator/component
+modulora info @creator/component@1.2.0 --json
+```
+
+## `modulora add <ref>`
+
+Install after verifying the content digest.
+
+```bash
+modulora add @creator/component --dry-run   # plan only, writes nothing
+modulora add @creator/component             # verify → plan → write
+```
+
+| Flag | Effect |
+| --- | --- |
+| `--dry-run` | Show the plan and verification result; write nothing. |
+| `--yes`, `-y` | Don't prompt before overwriting existing files. |
+| `--force` | Write even if the digest is unverifiable or mismatches. |
+| `--json` | Machine-readable plan/result for agents and CI. |
+| `--cwd <dir>` | Target project directory. |
+
+Digest mismatch → exit `1` and no writes. Files land under `src/` when the
+project has one. After a successful install the CLI reports an install
+receipt (best-effort, never blocks) — receipts power creator attribution.
+
+## `modulora check <ref>`
+
+Verify a component installed **without** the Modulora CLI (e.g. via
+`shadcn add`) against the published release — no lockfile needed. Verifies
+the upstream digest, then compares on-disk bytes. `--save` adopts a clean
+install into `modulora.lock`. Exit 1 when files differ.
+
+## `modulora login` / `whoami` / `logout`
+
+Device-flow sign-in: the CLI shows a code, you approve it in the browser.
+The token is stored at `~/.config/modulora/auth.json` (0600), per registry
+origin; `MODULORA_TOKEN` overrides for CI. Sign-in is required for publishing
+and other account-scoped commands. Public alpha installs don't require an
+account; direct paid entitlements aren't live.
+
+## Exit codes
+
+`0` success · `1` failure (including digest mismatch) · `130` user aborted.
+
+## `modulora publish`
+
+Publish a component from a local `registry-item.json` manifest — the same
+pipeline and curator review as the web editor. Requires `modulora login`;
+accept the publishing policy interactively or with `--accept-policy` (CI).
+See [Publishing](/docs/publishing) for the manifest shape.
+
+## `modulora mcp`
+
+A read-only [MCP](https://modelcontextprotocol.io) server over stdio, for AI
+agents and editors:
+
+```json
+{
+  "mcpServers": {
+    "modulora": { "command": "npx", "args": ["modulora", "mcp"] }
+  }
+}
+```
+
+Tools: `search_components` (public catalog), `get_component` (registry item +
+published digest; paid components return price + purchase URL, never source),
+`get_install_command` (verified CLI path + shadcn fallback).
+
+Read-only by design — any write goes through the same `modulora add`
+plan/approval path a human uses.
