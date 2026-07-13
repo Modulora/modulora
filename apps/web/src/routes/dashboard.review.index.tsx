@@ -73,6 +73,9 @@ function ReviewQueue() {
           <CheckCircle2 className="mb-3 size-8 text-emerald-500" />
           <p className="text-sm font-medium">Queue is clear</p>
           <p className="text-sm text-muted-foreground">Nothing is waiting for review.</p>
+          <a href="/docs/curation" className="mt-2 text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground">
+            What curators check — and how roles work
+          </a>
         </div>
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">

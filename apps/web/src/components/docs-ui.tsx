@@ -8,7 +8,7 @@
  * page ends with prev/next cards so reading has a direction.
  */
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Banknote, BookOpen, Download, History, TerminalSquare, UploadCloud, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Banknote, BookOpen, Download, History, TerminalSquare, UploadCloud, type LucideIcon, ShieldCheck } from "lucide-react";
 import type * as PageTree from "fumadocs-core/page-tree";
 import { findNeighbour } from "fumadocs-core/page-tree";
 import type { TOCItemType } from "fumadocs-core/toc";
@@ -18,6 +18,7 @@ const PAGE_ICONS: Record<string, LucideIcon> = {
   "/docs": BookOpen,
   "/docs/installing": Download,
   "/docs/publishing": UploadCloud,
+  "/docs/curation": ShieldCheck,
   "/docs/earning": Banknote,
   "/docs/cli": TerminalSquare,
   "/docs/changelog": History,
