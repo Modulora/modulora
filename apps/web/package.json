@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "docs:generate": "fumadocs-mdx source.config.ts",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
