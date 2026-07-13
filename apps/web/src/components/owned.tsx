@@ -4,6 +4,7 @@
  * PurchasesList: the owned-components library.
  */
 import { useState } from "react";
+import { LiveCardPreview } from "@/components/live-card-preview";
 import { BadgeCheck, Bot, Check, Copy, FileText, TerminalSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -139,7 +140,11 @@ function PurchaseRow({ owned }: { owned: OwnedComponent }) {
   });
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/35 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
+      <LiveCardPreview
+        item={{ namespace: owned.namespace, name: owned.name, title: owned.title, live: true }}
+        className="w-28 shrink-0 max-sm:hidden"
+      />
+      <div className="min-w-0 sm:flex-1">
         <div className="flex items-center gap-2">
           <a href={`/components/${owned.namespace}/${owned.name}`} className="truncate text-sm font-medium hover:underline">
             {owned.title}

@@ -9,12 +9,20 @@ import { Logo } from "@/components/logo";
 import { usePageTheme } from "@/lib/use-page-theme";
 import type { CatalogItem } from "@/data/catalog";
 
+/** The minimum a live iframe preview needs — dashboards pass this. */
+export interface LivePreviewItem {
+  namespace: string;
+  name: string;
+  title: string;
+  live: true;
+}
+
 export function LiveCardPreview({
   item,
   theme,
   className,
 }: {
-  item: CatalogItem;
+  item: CatalogItem | LivePreviewItem;
   /** Defaults to the site's current light/dark mode. */
   theme?: "light" | "dark";
   className?: string;
@@ -70,7 +78,7 @@ export function LiveCardPreview({
     };
   }, [live]);
 
-  if (!live) return <ComponentPreview item={item} theme={resolved} className={className} />;
+  if (!live) return <ComponentPreview item={item as CatalogItem} theme={resolved} className={className} />;
 
   return (
     <div

@@ -22,6 +22,7 @@ import {
 import { deleteMyComponent, fetchMyComponents, type MyComponent } from "@/lib/catalog-db";
 import { confirmCheckout, setComponentPrice, startPromotion } from "@/lib/marketplace";
 import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
+import { LiveCardPreview } from "@/components/live-card-preview";
 import { Input } from "@/components/ui/input";
 import { Tag } from "lucide-react";
 
@@ -230,6 +231,10 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
 
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-card/40 p-4">
+      <LiveCardPreview
+        item={{ namespace: username, name: component.name, title: component.title, live: true }}
+        className="w-28 shrink-0 max-sm:hidden"
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h2 className="truncate font-medium">{component.title}</h2>

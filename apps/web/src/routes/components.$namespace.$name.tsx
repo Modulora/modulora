@@ -47,7 +47,7 @@ import { ComponentPreview } from "@/components/component-preview";
 import { ComponentSandbox } from "@/components/component-sandbox";
 import { PreviewToolbar } from "@/components/preview-toolbar";
 import { demoFiles as pickDemoFiles } from "@/lib/scaffold";
-import { ShadcnIcon } from "@/components/brand-icons";
+import { ShadcnIcon, XIcon } from "@/components/brand-icons";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -230,6 +230,15 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
             <p className="mt-2 max-w-3xl text-muted-foreground">{item.description}</p>
           </div>
           <div className="flex items-center gap-3">
+          <a
+            href={`https://x.com/intent/post?text=${encodeURIComponent(`${item.title} by @${item.namespace} on Modulora\n\nhttps://modulora.dev/components/${item.namespace}/${item.name}`)}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Share on X"
+            className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <XIcon className="size-3.5" />
+          </a>
           <SaveMenu namespace={item.namespace} name={item.name} plus={viewerPlus} />
           <PriceSeal
             size="md"

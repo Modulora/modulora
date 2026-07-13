@@ -37,6 +37,7 @@ import { setComponentPrice } from "@/lib/marketplace";
 import { listDomains } from "@/lib/domains";
 import { getPayoutStatus } from "@/lib/payouts";
 import { EarningsBreakdown, LicensePicker } from "@/components/money";
+import { XIcon } from "@/components/brand-icons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { demoFiles, isSystemFile, roleFor, scaffoldFiles } from "@/lib/scaffold";
 import { usePageTheme } from "@/lib/use-page-theme";
@@ -1098,9 +1099,22 @@ function SubmittedCard({ published, onDone }: { published: { namespace: string; 
           before it&apos;s listed publicly — you&apos;ll see the status in your components.
         </p>
       </div>
-      <Button type="button" variant="outline" onClick={onDone}>
-        View my components
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="outline" onClick={onDone}>
+          View my components
+        </Button>
+        <Button asChild variant="ghost" className="gap-1.5">
+          <a
+            href={`https://x.com/intent/post?text=${encodeURIComponent(
+              `Just published @${published.namespace}/${published.name} on Modulora — provenance-first UI components.\n\nhttps://modulora.dev/components/${published.namespace}/${published.name}`,
+            )}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <XIcon className="size-3.5" /> Share on X
+          </a>
+        </Button>
+      </div>
     </div>
   );
 }
