@@ -332,7 +332,7 @@ export function ComponentEditor({
         initial={{ opacity: 0, y: RISE.offsetY }}
         animate={ready ? { opacity: 1, y: 0 } : {}}
         transition={RISE.spring}
-        className="flex items-center justify-between gap-4"
+        className="sticky top-14 z-30 -mx-2 flex items-center justify-between gap-4 rounded-lg bg-background/80 px-2 py-2 backdrop-blur-md"
       >
         <button
           type="button"
