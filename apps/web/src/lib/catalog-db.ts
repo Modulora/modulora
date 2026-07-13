@@ -397,6 +397,9 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         name: collection.name,
         title: collection.title,
         description: collection.description,
+        external: collection.externalUrl
+          ? { url: collection.externalUrl, domain: domainOf(collection.externalUrl) ?? "" }
+          : null,
         members: live.map((m) => ({ name: m.name, title: m.title })),
         cliInstallable: live.some((m) => (m.distributionChannels ?? []).includes("modulora-cli")),
         price: price?.unitAmount ?? null,
@@ -433,6 +436,8 @@ export interface PublicCollection {
   members: { name: string; title: string }[];
   cliInstallable: boolean;
   price: number | null;
+  /** Sold on the creator's own site — mutually exclusive with price. */
+  external: { url: string; domain: string } | null;
   license: { name: string; text: string } | null;
   owned: boolean;
 }
@@ -578,6 +583,8 @@ export interface CollectionDetail {
   title: string;
   description: string;
   price: number | null;
+  /** Sold on the creator's own site — mutually exclusive with price. */
+  external: { url: string; domain: string } | null;
   license: { name: string; text: string } | null;
   owned: boolean;
   members: (CatalogItem & { locked: boolean })[];
@@ -651,6 +658,9 @@ export const fetchCollectionDetail = createServerFn({ method: "GET" })
       title: row.collection.title,
       description: row.collection.description,
       price: price?.unitAmount ?? null,
+      external: row.collection.externalUrl
+        ? { url: row.collection.externalUrl, domain: domainOf(row.collection.externalUrl) ?? "" }
+        : null,
       license: price ? { name: licenseTemplate(price.licenseTemplate).name, text: resolveLicenseText(price.licenseTemplate, price.licenseText) } : null,
       owned,
       members,

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { deleteCollection, fetchMyCollections, saveCollection, type MyCollection } from "@/lib/collections";
 import { fetchMyComponents } from "@/lib/catalog-db";
-import { setCollectionPrice } from "@/lib/marketplace";
+import { setCollectionExternalUrl, setCollectionPrice } from "@/lib/marketplace";
 import { getPayoutStatus } from "@/lib/payouts";
 import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
 
@@ -201,7 +201,9 @@ function CollectionDialog({ eligible, existing }: { eligible: { name: string; ti
 function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCollection; payoutsEnabled: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"modulora" | "external">(collection.externalUrl ? "external" : "modulora");
   const [dollars, setDollars] = useState(collection.price != null ? String(collection.price / 100) : "");
+  const [externalUrl, setExternalUrl] = useState(collection.externalUrl ?? "");
   const [licenseTemplate, setLicenseTemplate] = useState("modulora-commercial-v1");
   const [licenseText, setLicenseText] = useState("");
   const [pending, setPending] = useState(false);
@@ -220,21 +222,68 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
     setOpen(false);
   }
 
+  async function saveExternal(url: string | null) {
+    setPending(true);
+    setError(null);
+    const res = await setCollectionExternalUrl({ data: { name: collection.name, url } });
+    setPending(false);
+    if (!res.ok) {
+      setError(res.error ?? "Could not save.");
+      return;
+    }
+    await router.invalidate();
+    setOpen(false);
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          {collection.price != null ? <PriceSeal paid label={`$${collection.price / 100}`} /> : "Sell"}
+          {collection.price != null ? (
+            <PriceSeal paid label={`$${collection.price / 100}`} />
+          ) : collection.externalUrl ? (
+            <PriceSeal paid label="external" />
+          ) : (
+            "Sell"
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Sell {collection.title}</DialogTitle>
           <DialogDescription>
-            One price for the whole collection. Buyers get every current member — the purchase snapshots entitlements, so later edits don't change what they bought. You keep 90%.
+            {mode === "modulora"
+              ? "One price for the whole collection. Buyers get every current member — the purchase snapshots entitlements, so later edits don't change what they bought. You keep 90%."
+              : "List the collection as sold on your own site. Modulora hosts no source, records no purchase, and takes no fee — buyers are linked out. The URL must be on a domain you've verified."}
           </DialogDescription>
         </DialogHeader>
-        {!payoutsEnabled ? (
+        <div className="mt-3 flex rounded-md border border-border/60 p-0.5">
+          {(["modulora", "external"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              aria-pressed={mode === m}
+              onClick={() => setMode(m)}
+              className={`flex-1 rounded px-3 py-1.5 text-xs transition-colors ${mode === m ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              {m === "modulora" ? "Sell on Modulora" : "Sold on your site"}
+            </button>
+          ))}
+        </div>
+        {mode === "external" ? (
+          <div className="mt-4 flex flex-col gap-3">
+            <Input value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} placeholder="https://you.dev/pro" className="h-9" />
+            {error ? <p className="text-xs text-destructive">{error}</p> : null}
+            <div className="flex gap-2">
+              <Button type="button" className="flex-1" disabled={pending || !/^https?:\/\//i.test(externalUrl.trim())} onClick={() => void saveExternal(externalUrl.trim())}>
+                {pending ? <Loader2 className="size-4 animate-spin" /> : null} Save listing
+              </Button>
+              {collection.externalUrl ? (
+                <Button type="button" variant="outline" disabled={pending} onClick={() => void saveExternal(null)}>Remove</Button>
+              ) : null}
+            </div>
+          </div>
+        ) : !payoutsEnabled ? (
           <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-500">
             Connect payouts first — see the Payouts page.
           </div>

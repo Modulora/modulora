@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { Blocks, CalendarDays, Globe } from "lucide-react";
+import { Blocks, CalendarDays, Globe, ExternalLink } from "lucide-react";
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
@@ -315,9 +315,27 @@ function CollectionCard({ collection, namespace, components }: { collection: imp
           </Link>
           {collection.description ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{collection.description}</p> : null}
         </div>
-        <PriceSeal paid={collection.price != null} label={collection.price != null ? `$${collection.price / 100}` : undefined} />
+        <PriceSeal
+          paid={collection.price != null || collection.external != null}
+          label={
+            collection.price != null
+              ? `$${collection.price / 100}`
+              : collection.external
+                ? `on ${collection.external.domain}`
+                : undefined
+          }
+        />
       </div>
-      {(collection.price == null || collection.owned) && collection.cliInstallable ? (
+      {collection.external ? (
+        <a
+          href={collection.external.url}
+          rel="noreferrer"
+          className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+        >
+          Sold by the creator on {collection.external.domain}
+          <ExternalLink className="size-3.5 shrink-0" />
+        </a>
+      ) : (collection.price == null || collection.owned) && collection.cliInstallable ? (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 px-3 py-2">
           <code className="truncate font-mono text-xs text-muted-foreground">{installCommand}</code>
           <CopyChip label="Copy" text={installCommand} icon={TerminalSquare} />

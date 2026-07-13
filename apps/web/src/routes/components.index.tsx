@@ -135,9 +135,15 @@ function Catalog() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  const items = useMemo(
-    () => catalog.filter((item) => matches(item, search)),
-    [catalog, search],
+  const items = useMemo(() => {
+    const filtered = catalog.filter((item) => matches(item, search));
+    // Promoted listings sit inline with everything else — first, deduped,
+    // marked by the card itself. Paid placement changes position, never trust.
+    const promotedKeys = new Set(featured.map((f) => `${f.namespace}/${f.name}`));
+    const promoted = filtered.filter((item) => promotedKeys.has(`${item.namespace}/${item.name}`));
+    const rest = filtered.filter((item) => !promotedKeys.has(`${item.namespace}/${item.name}`));
+    return [...promoted.map((item) => ({ ...item, promoted: true })), ...rest];
+  }, [catalog, featured, search],
   );
   const advancedCount = [search.source, search.license, search.evidence].filter(Boolean).length;
 
@@ -275,27 +281,6 @@ function Catalog() {
           </div>
         </motion.div>
 
-        {featured.length > 0 && !hasActiveSearch(search) ? (
-          <motion.div
-            initial={{ opacity: 0, y: RISE.offsetY }}
-            animate={{ opacity: stage >= 3 ? 1 : 0, y: stage >= 3 ? 0 : RISE.offsetY }}
-            transition={RISE.spring}
-            className="mb-8"
-          >
-            <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
-              <Sparkles className="size-3.5" /> Featured
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {featured.map((item) => (
-                <div key={`f-${item.namespace}/${item.name}`} className="relative">
-                  <span className="absolute right-3 top-3 z-10 rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur">Promoted</span>
-                  <GalleryItem item={item} list={false} />
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        ) : null}
-
         {items.length ? (
           <div className={search.layout === "grid" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3"}>
             {items.map((item, index) => (
@@ -305,7 +290,16 @@ function Catalog() {
                 animate={{ opacity: stage >= 3 ? 1 : 0, y: stage >= 3 ? 0 : RISE.offsetY }}
                 transition={{ ...RISE.spring, delay: index * RISE.stagger }}
               >
-                <GalleryItem item={item} list={search.layout === "list"} />
+                {"promoted" in item && item.promoted ? (
+                  <div className="relative rounded-[calc(var(--radius)+2px)] ring-1 ring-border">
+                    <span className="absolute right-5 top-5 z-10 rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-500 backdrop-blur">
+                      Promoted
+                    </span>
+                    <GalleryItem item={item} list={search.layout === "list"} />
+                  </div>
+                ) : (
+                  <GalleryItem item={item} list={search.layout === "list"} />
+                )}
               </motion.div>
             ))}
           </div>

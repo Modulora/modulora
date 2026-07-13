@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { FileLock2, Loader2, TerminalSquare } from "lucide-react";
+import { FileLock2, Loader2, TerminalSquare, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -54,12 +54,37 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
             <h1 className="text-3xl font-bold tracking-tight">{collection.title}</h1>
             {collection.description ? <p className="mt-2 max-w-3xl text-muted-foreground">{collection.description}</p> : null}
           </div>
-          <PriceSeal size="md" paid={collection.price != null} label={collection.price != null ? `$${collection.price / 100}` : undefined} />
+          <PriceSeal
+            size="md"
+            paid={collection.price != null || collection.external != null}
+            label={
+              collection.price != null
+                ? `$${collection.price / 100}`
+                : collection.external
+                  ? `on ${collection.external.domain}`
+                  : undefined
+            }
+          />
         </div>
       </header>
 
       <div className="mt-6">
-        {purchasable ? (
+        {collection.external ? (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4">
+            <div>
+              <p className="text-sm font-medium">Available from the creator</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Sold and fulfilled on {collection.external.domain}. Modulora hosts no source for this
+                collection and records no purchase — installs aren&apos;t digest-verified.
+              </p>
+            </div>
+            <Button asChild>
+              <a href={collection.external.url} rel="noreferrer">
+                Get it on {collection.external.domain} <ExternalLink />
+              </a>
+            </Button>
+          </div>
+        ) : purchasable ? (
           <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4">
             <div>
               <p className="text-sm font-medium">Buy the collection</p>

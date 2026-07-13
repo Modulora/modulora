@@ -34,6 +34,7 @@ export interface MyCollection {
   title: string;
   description: string;
   price: number | null;
+  externalUrl: string | null;
   items: { componentId: string; name: string; title: string; reviewStatus: string }[];
 }
 
@@ -70,7 +71,7 @@ export const fetchMyCollections = createServerFn({ method: "GET" }).handler(
         .from(schema.collectionPrices)
         .where(and(eq(schema.collectionPrices.collectionId, collection.id), eq(schema.collectionPrices.active, true)))
         .limit(1);
-      out.push({ id: collection.id, name: collection.name, title: collection.title, description: collection.description, price: price?.unitAmount ?? null, items });
+      out.push({ id: collection.id, name: collection.name, title: collection.title, description: collection.description, price: price?.unitAmount ?? null, externalUrl: collection.externalUrl ?? null, items });
     }
     return out;
   },

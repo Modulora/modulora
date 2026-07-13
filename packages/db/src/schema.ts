@@ -453,6 +453,9 @@ export const collections = pgTable(
     name: text("name").notNull(), // url-safe, unique per namespace
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
+    // External sale: the collection is sold on the creator's own site
+    // (must be a verified domain). Mutually exclusive with a Modulora price.
+    externalUrl: text("external_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

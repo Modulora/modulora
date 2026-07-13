@@ -13,7 +13,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { getStripe, applicationFee } from "./stripe";
@@ -305,6 +305,10 @@ export const setCollectionPrice = createServerFn({ method: "POST" })
 
     await db.update(schema.collectionPrices).set({ active: false, updatedAt: new Date() }).where(eq(schema.collectionPrices.collectionId, row.id));
     if (data.amount !== null) {
+      // Mutually exclusive with an external listing.
+      await db.update(schema.collections).set({ externalUrl: null, updatedAt: new Date() }).where(eq(schema.collections.id, row.id));
+    }
+    if (data.amount !== null) {
       await db.insert(schema.collectionPrices).values({
         collectionId: row.id,
         unitAmount: data.amount,
@@ -314,6 +318,61 @@ export const setCollectionPrice = createServerFn({ method: "POST" })
         licenseText: data.licenseTemplate === "custom" ? data.licenseText : null,
       });
     }
+    return { ok: true };
+  });
+
+/**
+ * List a collection as sold on the creator's own site. The URL must be on
+ * a domain the creator has verified; setting it deactivates any Modulora
+ * price (mutually exclusive). Pass null to clear.
+ */
+export const setCollectionExternalUrl = createServerFn({ method: "POST" })
+  .validator((data: { name: string; url: string | null }) => ({
+    name: String(data.name ?? "").trim().toLowerCase(),
+    url: data.url === null ? null : String(data.url).trim(),
+  }))
+  .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
+    const request = getRequest();
+    const user = request ? await getCurrentUser(request) : null;
+    if (!user?.username) return { ok: false, error: "Sign in first." };
+    const db = getDb();
+    if (!db) return { ok: false, error: "Database is not configured." };
+
+    if (data.url !== null) {
+      if (!/^https?:\/\//i.test(data.url)) return { ok: false, error: "Enter a full URL (https://…)." };
+      const { normalizeDomain } = await import("./domains");
+      const host = normalizeDomain(data.url);
+      const owned = host
+        ? await db
+            .select({ id: schema.verifiedDomains.id })
+            .from(schema.verifiedDomains)
+            .where(
+              and(
+                eq(schema.verifiedDomains.ownerUserId, user.id),
+                eq(schema.verifiedDomains.domain, host),
+                isNotNull(schema.verifiedDomains.verifiedAt),
+              ),
+            )
+            .limit(1)
+        : [];
+      if (owned.length === 0) {
+        return { ok: false, error: `URL must be on a domain you've verified (${host ?? "invalid URL"}).` };
+      }
+    }
+
+    const [row] = await db
+      .select({ id: schema.collections.id })
+      .from(schema.collections)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.collections.namespaceId))
+      .where(and(eq(schema.namespaces.name, user.username), eq(schema.collections.name, data.name)))
+      .limit(1);
+    if (!row) return { ok: false, error: "Collection not found." };
+
+    if (data.url !== null) {
+      // Mutually exclusive with a Modulora price.
+      await db.update(schema.collectionPrices).set({ active: false, updatedAt: new Date() }).where(eq(schema.collectionPrices.collectionId, row.id));
+    }
+    await db.update(schema.collections).set({ externalUrl: data.url, updatedAt: new Date() }).where(eq(schema.collections.id, row.id));
     return { ok: true };
   });
 
