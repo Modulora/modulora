@@ -68,6 +68,8 @@ export interface CatalogItem {
   description: string;
   category: string;
   distributionChannels?: DistributionChannel[];
+  /** Creator-provided install command for their own registry/CLI. */
+  otherCliCommand?: string;
   installCount?: number;
   files?: ComponentFile[];
   evidence: EvidenceRecord[];

@@ -69,6 +69,7 @@ function toCatalogItem(
     category: categoryLabel(component.category),
     distributionChannels: component.distributionChannels ?? undefined,
     creatorShadcnCommand: component.shadcnCommand ?? undefined,
+    otherCliCommand: component.otherCliCommand ?? undefined,
     files: files.length ? files : undefined,
     live: true,
     evidence,

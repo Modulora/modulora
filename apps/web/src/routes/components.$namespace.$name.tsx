@@ -191,6 +191,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
       shadcn: `npx shadcn@latest add https://modulora.dev/r/@${item.namespace}/${item.name}@${item.version}`,
       "modulora-cli": `npx modulora add @${item.namespace}/${item.name}@${item.version}`,
       prompt: `Install @${item.namespace}/${item.name}@${item.version} from Modulora. Verify the published digest before changing files and show me the install plan first.`,
+      "own-registry": item.otherCliCommand ?? "",
     }),
     [item],
   );
@@ -200,6 +201,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
     : [
         ...(item.distributionChannels?.includes("shadcn") ? ["shadcn"] : []),
         ...(item.distributionChannels?.includes("modulora-cli") ? ["modulora-cli"] : []),
+        ...(item.distributionChannels?.includes("compatible-cli") && item.otherCliCommand ? ["own-registry"] : []),
         "prompt",
       ];
 
@@ -590,7 +592,7 @@ function InstallTray({ tabs, active, onActive, commands }: { tabs: string[]; act
               className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-accent data-[state=active]:text-foreground [&_svg]:size-3.5"
             >
               <InstallTabIcon tab={tab} />
-              {tab === "modulora-cli" ? "Modulora CLI" : tab === "shadcn" ? "shadcn" : "Prompt"}
+              {tab === "modulora-cli" ? "Modulora CLI" : tab === "shadcn" ? "shadcn" : tab === "own-registry" ? "Creator's registry" : "Prompt"}
             </Tabs.Trigger>
           ))}
         </Tabs.List>
@@ -604,6 +606,7 @@ function InstallTray({ tabs, active, onActive, commands }: { tabs: string[]; act
 function InstallTabIcon({ tab }: { tab: string }) {
   if (tab === "shadcn") return <ShadcnIcon />;
   if (tab === "modulora-cli") return <Logo />;
+  if (tab === "own-registry") return <ExternalLink />;
   return <Sparkles />;
 }
 
