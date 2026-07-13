@@ -198,7 +198,14 @@ function ComponentDetail() {
         className="flex flex-col gap-2"
       >
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/$username" params={{ username: item.namespace }} className="hover:text-foreground">{item.namespace}</Link>
+          <span>
+            by <Link to="/$username" params={{ username: item.namespace }} className="text-foreground/80 hover:text-foreground">{item.namespace}</Link>
+            {item.memberOf?.length ? (
+              <>
+                {" "}in <Link to="/$username" params={{ username: item.namespace }} className="text-foreground/80 hover:text-foreground">{item.memberOf[0]!.title}</Link>
+              </>
+            ) : null}
+          </span>
           <span>·</span><span>v{item.version}</span><span>·</span><span>React</span>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">

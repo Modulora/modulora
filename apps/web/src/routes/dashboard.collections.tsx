@@ -18,18 +18,22 @@ import {
 } from "@/components/ui/dialog";
 import { deleteCollection, fetchMyCollections, saveCollection, type MyCollection } from "@/lib/collections";
 import { fetchMyComponents } from "@/lib/catalog-db";
+import { setCollectionPrice } from "@/lib/marketplace";
+import { getPayoutStatus } from "@/lib/payouts";
+import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
 
 export const Route = createFileRoute("/dashboard/collections")({
   loader: async () => ({
     collections: await fetchMyCollections(),
     components: await fetchMyComponents(),
+    payouts: await getPayoutStatus(),
   }),
   component: CollectionsPage,
 });
 
 function CollectionsPage() {
-  const { collections, components } = Route.useLoaderData();
-  const eligible = components.filter((c) => c.marketplacePrice == null);
+  const { collections, components, payouts } = Route.useLoaderData();
+  const eligible = components;
 
   return (
     <div className="w-full max-w-3xl">
@@ -53,14 +57,14 @@ function CollectionsPage() {
             </p>
           </div>
         ) : (
-          collections.map((collection) => <CollectionRow key={collection.id} collection={collection} eligible={eligible.map((c) => ({ name: c.name, title: c.title }))} />)
+          collections.map((collection) => <CollectionRow key={collection.id} collection={collection} eligible={eligible.map((c) => ({ name: c.name, title: c.title }))} payoutsEnabled={payouts.payoutsEnabled} />)
         )}
       </div>
     </div>
   );
 }
 
-function CollectionRow({ collection, eligible }: { collection: MyCollection; eligible: { name: string; title: string }[] }) {
+function CollectionRow({ collection, eligible, payoutsEnabled }: { collection: MyCollection; eligible: { name: string; title: string }[]; payoutsEnabled: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   return (
@@ -76,6 +80,7 @@ function CollectionRow({ collection, eligible }: { collection: MyCollection; eli
           <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{collection.name}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <CollectionSellDialog collection={collection} payoutsEnabled={payoutsEnabled} />
           <CollectionDialog eligible={eligible} existing={collection} />
           <Button
             variant="ghost"
@@ -186,6 +191,72 @@ function CollectionDialog({ eligible, existing }: { eligible: { name: string; ti
             {existing ? "Save changes" : "Create collection"}
           </Button>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+/** Bundle pricing — mirrors the component Sell dialog (price, license, breakdown). */
+function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCollection; payoutsEnabled: boolean }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [dollars, setDollars] = useState(collection.price != null ? String(collection.price / 100) : "");
+  const [licenseTemplate, setLicenseTemplate] = useState("modulora-commercial-v1");
+  const [licenseText, setLicenseText] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save(amount: number | null) {
+    setPending(true);
+    setError(null);
+    const res = await setCollectionPrice({ data: { name: collection.name, amount, licenseTemplate, licenseText } });
+    setPending(false);
+    if (!res.ok) {
+      setError(res.error ?? "Could not save.");
+      return;
+    }
+    await router.invalidate();
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          {collection.price != null ? <PriceSeal paid label={`$${collection.price / 100}`} /> : "Sell"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Sell {collection.title}</DialogTitle>
+          <DialogDescription>
+            One price for the whole collection. Buyers get every current member — the purchase snapshots entitlements, so later edits don't change what they bought. You keep 90%.
+          </DialogDescription>
+        </DialogHeader>
+        {!payoutsEnabled ? (
+          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-500">
+            Connect payouts first — see the Payouts page.
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">$</span>
+              <Input value={dollars} onChange={(e) => setDollars(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="99" className="h-9" inputMode="decimal" />
+            </div>
+            <EarningsBreakdown dollars={dollars} />
+            <LicensePicker template={licenseTemplate} setTemplate={setLicenseTemplate} text={licenseText} setText={setLicenseText} />
+            {error ? <p className="text-xs text-destructive">{error}</p> : null}
+            <div className="flex gap-2">
+              <Button type="button" className="flex-1" disabled={pending || !dollars} onClick={() => save(Math.round(parseFloat(dollars) * 100))}>
+                {pending ? <Loader2 className="size-4 animate-spin" /> : null} Save price
+              </Button>
+              {collection.price != null ? (
+                <Button type="button" variant="outline" disabled={pending} onClick={() => save(null)}>Make free</Button>
+              ) : null}
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

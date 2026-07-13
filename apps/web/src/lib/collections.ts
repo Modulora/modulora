@@ -33,6 +33,7 @@ export interface MyCollection {
   name: string;
   title: string;
   description: string;
+  price: number | null;
   items: { componentId: string; name: string; title: string; reviewStatus: string }[];
 }
 
@@ -64,7 +65,12 @@ export const fetchMyCollections = createServerFn({ method: "GET" }).handler(
         .innerJoin(schema.components, eq(schema.components.id, schema.collectionItems.componentId))
         .where(eq(schema.collectionItems.collectionId, collection.id))
         .orderBy(asc(schema.collectionItems.orderIndex));
-      out.push({ id: collection.id, name: collection.name, title: collection.title, description: collection.description, items });
+      const [price] = await db
+        .select({ unitAmount: schema.collectionPrices.unitAmount })
+        .from(schema.collectionPrices)
+        .where(and(eq(schema.collectionPrices.collectionId, collection.id), eq(schema.collectionPrices.active, true)))
+        .limit(1);
+      out.push({ id: collection.id, name: collection.name, title: collection.title, description: collection.description, price: price?.unitAmount ?? null, items });
     }
     return out;
   },
@@ -106,16 +112,6 @@ export const saveCollection = createServerFn({ method: "POST" })
     const memberIds = data.componentNames.map((name) => byName.get(name)).filter((id): id is string => Boolean(id));
     if (memberIds.length !== data.componentNames.length) return { ok: false, error: "Collections can only contain your own components." };
 
-    // Free members only for now: the combined /r/ payload must never leak
-    // purchase-gated source, and a mixed install would 402 mid-run.
-    for (const componentId of memberIds) {
-      const [price] = await db
-        .select({ id: schema.componentPrices.id })
-        .from(schema.componentPrices)
-        .where(and(eq(schema.componentPrices.componentId, componentId), eq(schema.componentPrices.active, true)))
-        .limit(1);
-      if (price) return { ok: false, error: "Collections support free components for now — remove priced ones." };
-    }
 
     // Upsert by (namespace, name).
     const [existing] = await db

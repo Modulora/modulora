@@ -75,6 +75,8 @@ export interface CatalogItem {
   marketplacePrice?: number | null;
   marketplaceLicense?: { name: string; text: string } | null;
   ownedPurchase?: import("../lib/purchases").OwnedComponent | null;
+  memberOf?: { name: string; title: string }[];
+  inCollection?: string | null;
   // Whether the current viewer may install (owner or paid purchase).
   entitled?: boolean;
 }

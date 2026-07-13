@@ -12,6 +12,19 @@ import { Blocks, CalendarDays, Globe } from "lucide-react";
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
+import { TerminalSquare, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { PriceSeal } from "@/components/money";
+import { CopyChip } from "@/components/owned";
+import { buyCollection, confirmCheckout } from "@/lib/marketplace";
 
 import { ComponentPreview } from "@/components/component-preview";
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
@@ -54,8 +67,21 @@ function xHandleOf(url: string): string {
 }
 
 function Profile() {
-  const { profile, components } = Route.useLoaderData();
+  const { profile, components, collections } = Route.useLoaderData();
   const [stage, setStage] = useState(0);
+
+  // Returning from a collection checkout: confirm + clean the URL.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const sid = params.get("purchase");
+    if (sid) {
+      void confirmCheckout({ data: { sessionId: sid } }).then(() => {
+        window.history.replaceState(null, "", window.location.pathname);
+        window.location.reload();
+      });
+    }
+  }, []);
   useEffect(() => {
     const timers = [setTimeout(() => setStage(1), 60), setTimeout(() => setStage(2), 160)];
     return () => timers.forEach(clearTimeout);
@@ -124,6 +150,22 @@ function Profile() {
           </TooltipProvider>
         </div>
       </motion.header>
+
+      {collections.length > 0 ? (
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: stage >= 2 ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+          className="mt-10"
+        >
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Collections</h2>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            {collections.map((collection) => (
+              <CollectionCard key={collection.name} collection={collection} namespace={profile.username} />
+            ))}
+          </div>
+        </motion.section>
+      ) : null}
 
       <div className="mt-10">
         {components.length === 0 ? (
@@ -207,5 +249,89 @@ function ProfileCard({ item }: { item: CatalogItem }) {
         </Badge>
       </div>
     </Link>
+  );
+}
+
+
+function CollectionCard({ collection, namespace }: { collection: import("@/lib/catalog-db").PublicCollection; namespace: string }) {
+  const installCommand = `npx modulora add @${namespace}/${collection.name}`;
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/40 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="truncate font-medium">{collection.title}</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {collection.memberTitles.length} component{collection.memberTitles.length === 1 ? "" : "s"}
+            {collection.description ? ` · ${collection.description}` : ""}
+          </p>
+        </div>
+        <PriceSeal paid={collection.price != null} label={collection.price != null ? `$${collection.price / 100}` : undefined} />
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {collection.memberTitles.slice(0, 6).map((title) => (
+          <span key={title} className="rounded-md border border-border/60 px-2 py-0.5 text-xs text-muted-foreground">{title}</span>
+        ))}
+        {collection.memberTitles.length > 6 ? (
+          <span className="px-1 py-0.5 text-xs text-muted-foreground">+{collection.memberTitles.length - 6} more</span>
+        ) : null}
+      </div>
+      {collection.price == null || collection.owned ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 px-3 py-2">
+          <code className="truncate font-mono text-xs text-muted-foreground">{installCommand}</code>
+          <CopyChip label="Copy" text={installCommand} icon={TerminalSquare} />
+        </div>
+      ) : (
+        <BuyCollectionButton namespace={namespace} collection={collection} />
+      )}
+      {collection.owned ? (
+        <p className="text-[11px] text-emerald-500">You own this collection.</p>
+      ) : null}
+    </div>
+  );
+}
+
+function BuyCollectionButton({ namespace, collection }: { namespace: string; collection: import("@/lib/catalog-db").PublicCollection }) {
+  const [agreed, setAgreed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onBuy() {
+    setBusy(true);
+    setError(null);
+    const res = await buyCollection({ data: { namespace, name: collection.name, acceptLicense: agreed } });
+    if (res.ok && res.url) {
+      window.location.href = res.url;
+      return;
+    }
+    setError(res.error ?? "Could not start checkout.");
+    setBusy(false);
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button size="sm" className="self-start">Buy collection ${(collection.price ?? 0) / 100}</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>License terms</DialogTitle>
+          <DialogDescription>
+            {collection.license?.name ?? "Seller license"} — covers every component in the collection. Your agreement is recorded with the purchase.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-border/60 bg-secondary/20 p-3">
+          <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-muted-foreground">{collection.license?.text || "No license text provided."}</pre>
+        </div>
+        <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm">
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-4 accent-foreground" />
+          <span>I agree to the seller&apos;s license terms for this collection.</span>
+        </label>
+        {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
+        <Button onClick={onBuy} disabled={busy || !agreed} className="mt-3 w-full gap-2">
+          {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+          Agree &amp; buy
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }

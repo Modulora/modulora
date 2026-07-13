@@ -14,7 +14,7 @@ import { catalog as demoCatalog, findItem, type CatalogItem } from "../data/cata
 import { categoryLabel } from "./taxonomy";
 import { getCurrentUser } from "./session";
 import { normalizeDomain } from "./domains";
-import { hasEntitlement } from "./marketplace";
+import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
 import { licenseTemplate, resolveLicenseText } from "./license";
 
 function db() {
@@ -105,7 +105,20 @@ export const fetchCatalog = createServerFn({ method: "GET" }).handler(
       .where(and(eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved")))
       .orderBy(desc(schema.components.createdAt));
 
-    const dbItems = rows.map((row) => toCatalogItem(row.namespace, row.component, row.version));
+    // Collection membership per component (first collection shown on cards).
+    const memberships = await database
+      .select({ componentId: schema.collectionItems.componentId, title: schema.collections.title })
+      .from(schema.collectionItems)
+      .innerJoin(schema.collections, eq(schema.collections.id, schema.collectionItems.collectionId));
+    const collectionByComponent = new Map<string, string>();
+    for (const m of memberships) {
+      if (!collectionByComponent.has(m.componentId)) collectionByComponent.set(m.componentId, m.title);
+    }
+
+    const dbItems = rows.map((row) => ({
+      ...toCatalogItem(row.namespace, row.component, row.version),
+      inCollection: collectionByComponent.get(row.component.id) ?? null,
+    }));
     return [...dbItems, ...demoCatalog];
   },
 );
@@ -249,7 +262,14 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       }
     }
 
-    return { ...item, marketplacePrice, marketplaceLicense, entitled, ownedPurchase };
+    // Collection membership: "by maker · in <collection>".
+    const memberOf = await database
+      .select({ name: schema.collections.name, title: schema.collections.title })
+      .from(schema.collectionItems)
+      .innerJoin(schema.collections, eq(schema.collections.id, schema.collectionItems.collectionId))
+      .where(eq(schema.collectionItems.componentId, row.component.id));
+
+    return { ...item, marketplacePrice, marketplaceLicense, entitled, ownedPurchase, memberOf };
   });
 
 /** Curator-only: load a component's full detail by id, regardless of status. */
@@ -306,7 +326,7 @@ export interface PublicProfile {
 /** Public profile + a creator's approved, public components. */
 export const fetchPublicProfile = createServerFn({ method: "GET" })
   .validator((data: { username: string }) => ({ username: String(data.username ?? "").trim().toLowerCase() }))
-  .handler(async ({ data }): Promise<{ profile: PublicProfile; components: CatalogItem[] } | null> => {
+  .handler(async ({ data }): Promise<{ profile: PublicProfile; components: CatalogItem[]; collections: PublicCollection[] } | null> => {
     const database = db();
     if (!database || !data.username) return null;
 
@@ -344,6 +364,40 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved")))
       .orderBy(desc(schema.components.createdAt));
 
+    // Collections: listed with their approved-member count, bundle price,
+    // license, and whether the signed-in viewer already owns the bundle.
+    const request = getRequest();
+    const profileViewer = request ? await getCurrentUser(request) : null;
+    const collectionRows = await database
+      .select()
+      .from(schema.collections)
+      .where(eq(schema.collections.namespaceId, ns.id))
+      .orderBy(desc(schema.collections.updatedAt));
+    const collections: PublicCollection[] = [];
+    for (const collection of collectionRows) {
+      const members = await database
+        .select({ title: schema.components.title, reviewStatus: schema.components.reviewStatus, visibility: schema.components.visibility })
+        .from(schema.collectionItems)
+        .innerJoin(schema.components, eq(schema.components.id, schema.collectionItems.componentId))
+        .where(eq(schema.collectionItems.collectionId, collection.id));
+      const live = members.filter((m) => m.reviewStatus === "approved" && m.visibility === "public");
+      if (live.length === 0) continue;
+      const [price] = await database
+        .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
+        .from(schema.collectionPrices)
+        .where(and(eq(schema.collectionPrices.collectionId, collection.id), eq(schema.collectionPrices.active, true)))
+        .limit(1);
+      collections.push({
+        name: collection.name,
+        title: collection.title,
+        description: collection.description,
+        memberTitles: live.map((m) => m.title),
+        price: price?.unitAmount ?? null,
+        license: price ? { name: licenseTemplate(price.licenseTemplate).name, text: resolveLicenseText(price.licenseTemplate, price.licenseText) } : null,
+        owned: price ? await hasCollectionEntitlement(collection.id, profileViewer?.id ?? null, ns.ownerUserId) : false,
+      });
+    }
+
     return {
       profile: {
         username: user.username ?? data.username,
@@ -359,8 +413,19 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         joinedAt: user.createdAt.toISOString(),
       },
       components: rows.map((row) => toCatalogItem(row.namespace, row.component, row.version)),
+      collections,
     };
   });
+
+export interface PublicCollection {
+  name: string;
+  title: string;
+  description: string;
+  memberTitles: string[];
+  price: number | null;
+  license: { name: string; text: string } | null;
+  owned: boolean;
+}
 
 export interface MyComponent {
   name: string;

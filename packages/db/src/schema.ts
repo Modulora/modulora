@@ -382,6 +382,9 @@ export const purchases = pgTable(
     licenseTemplate: text("license_template"),
     licenseTextSnapshot: text("license_text_snapshot"),
     licenseAcceptedAt: timestamp("license_accepted_at", { withTimezone: true }),
+    // Set when this entitlement came from buying a collection (amount 0;
+    // the money lives on the collection_purchases row).
+    viaCollectionPurchaseId: uuid("via_collection_purchase_id"),
     stripeCheckoutSessionId: text("stripe_checkout_session_id"),
     stripePaymentIntentId: text("stripe_payment_intent_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -461,6 +464,60 @@ export const collectionItems = pgTable(
     orderIndex: integer("order_index").notNull().default(0),
   },
   (t) => [uniqueIndex("collection_items_unique").on(t.collectionId, t.componentId)],
+);
+
+/** Bundle pricing for a collection — mirrors component_prices. */
+export const collectionPrices = pgTable(
+  "collection_prices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    collectionId: uuid("collection_id")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    unitAmount: integer("unit_amount").notNull(),
+    currency: text("currency").notNull().default("usd"),
+    active: boolean("active").notNull().default(true),
+    licenseTemplate: text("license_template").notNull().default("modulora-commercial-v1"),
+    licenseText: text("license_text"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("collection_prices_active").on(t.collectionId).where(sql`${t.active}`)],
+);
+
+/**
+ * Buying a collection buys the bundle: one sale row here, plus a snapshot
+ * of per-member purchase rows (purchases.via_collection_purchase_id) at
+ * fulfillment time — later membership edits never change what was bought.
+ */
+export const collectionPurchases = pgTable(
+  "collection_purchases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    collectionId: uuid("collection_id")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    buyerUserId: text("buyer_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    sellerUserId: text("seller_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "set null" }),
+    amount: integer("amount").notNull(),
+    feeAmount: integer("fee_amount").notNull().default(0),
+    currency: text("currency").notNull().default("usd"),
+    status: text("status", { enum: ["pending", "paid", "refunded"] }).notNull().default("pending"),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    licenseTemplate: text("license_template"),
+    licenseTextSnapshot: text("license_text_snapshot"),
+    licenseAcceptedAt: timestamp("license_accepted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("collection_purchases_buyer").on(t.buyerUserId, t.collectionId).where(sql`${t.status} = 'paid'`),
+    index("collection_purchases_collection").on(t.collectionId),
+  ],
 );
 
 /**

@@ -235,6 +235,8 @@ export async function fulfilCheckout(sessionId: string): Promise<void> {
       .update(schema.purchases)
       .set({ status: "paid", stripePaymentIntentId: (session.payment_intent as string) ?? null })
       .where(and(eq(schema.purchases.id, meta.purchaseId), eq(schema.purchases.status, "pending")));
+  } else if (meta.type === "collection-purchase" && meta.collectionPurchaseId) {
+    await fulfilCollectionPurchase(meta.collectionPurchaseId, (session.payment_intent as string) ?? null);
   }
 }
 
@@ -258,4 +260,175 @@ export async function hasEntitlement(componentId: string, userId: string | null,
     .where(and(eq(schema.purchases.componentId, componentId), eq(schema.purchases.buyerUserId, userId), eq(schema.purchases.status, "paid")))
     .limit(1);
   return Boolean(row);
+}
+
+/* ── Collections: bundle pricing + purchase ─────────────── */
+
+export const setCollectionPrice = createServerFn({ method: "POST" })
+  .validator((data: { name: string; amount: number | null; licenseTemplate?: string; licenseText?: string }) => ({
+    name: String(data.name ?? "").trim().toLowerCase(),
+    amount: data.amount === null ? null : Math.round(Number(data.amount)),
+    licenseTemplate: String(data.licenseTemplate ?? "modulora-commercial-v1"),
+    licenseText: String(data.licenseText ?? "").trim().slice(0, 20000),
+  }))
+  .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
+    const request = getRequest();
+    const user = request ? await getCurrentUser(request) : null;
+    if (!user?.username) return { ok: false, error: "Sign in first." };
+    if (data.amount !== null && !user.payoutsEnabled) {
+      return { ok: false, error: "Set up payouts before selling." };
+    }
+    if (data.amount !== null && (data.amount < 100 || data.amount > 500000)) {
+      return { ok: false, error: "Price must be between $1 and $5000." };
+    }
+    if (data.amount !== null && !LICENSE_TEMPLATES.some((t) => t.id === data.licenseTemplate)) {
+      return { ok: false, error: "Unknown license template." };
+    }
+    if (data.amount !== null && data.licenseTemplate === "custom" && data.licenseText.length < 40) {
+      return { ok: false, error: "Custom license terms must be at least 40 characters." };
+    }
+    const db = getDb();
+    if (!db) return { ok: false, error: "Database is not configured." };
+
+    const [row] = await db
+      .select({ id: schema.collections.id })
+      .from(schema.collections)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.collections.namespaceId))
+      .where(and(eq(schema.namespaces.name, user.username), eq(schema.collections.name, data.name)))
+      .limit(1);
+    if (!row) return { ok: false, error: "Collection not found." };
+
+    await db.update(schema.collectionPrices).set({ active: false, updatedAt: new Date() }).where(eq(schema.collectionPrices.collectionId, row.id));
+    if (data.amount !== null) {
+      await db.insert(schema.collectionPrices).values({
+        collectionId: row.id,
+        unitAmount: data.amount,
+        currency: "usd",
+        active: true,
+        licenseTemplate: data.licenseTemplate,
+        licenseText: data.licenseTemplate === "custom" ? data.licenseText : null,
+      });
+    }
+    return { ok: true };
+  });
+
+export async function hasCollectionEntitlement(collectionId: string, viewerId: string | null, ownerUserId: string | null): Promise<boolean> {
+  if (viewerId && ownerUserId && viewerId === ownerUserId) return true;
+  if (!viewerId) return false;
+  const db = getDb();
+  if (!db) return false;
+  const [row] = await db
+    .select({ id: schema.collectionPurchases.id })
+    .from(schema.collectionPurchases)
+    .where(and(eq(schema.collectionPurchases.collectionId, collectionId), eq(schema.collectionPurchases.buyerUserId, viewerId), eq(schema.collectionPurchases.status, "paid")))
+    .limit(1);
+  return Boolean(row);
+}
+
+export const buyCollection = createServerFn({ method: "POST" })
+  .validator((data: { namespace: string; name: string; acceptLicense?: boolean }) => ({
+    namespace: String(data.namespace ?? "").trim().toLowerCase(),
+    name: String(data.name ?? "").trim().toLowerCase(),
+    acceptLicense: Boolean(data.acceptLicense),
+  }))
+  .handler(async ({ data }): Promise<{ ok: boolean; url?: string; error?: string }> => {
+    const stripe = getStripe();
+    if (!stripe) return { ok: false, error: "Payments are not configured." };
+    const request = getRequest();
+    const user = request ? await getCurrentUser(request) : null;
+    if (!user) return { ok: false, error: "Sign in to buy." };
+    const db = getDb();
+    if (!db) return { ok: false, error: "Database is not configured." };
+
+    const [row] = await db
+      .select({ collection: schema.collections, sellerId: schema.namespaces.ownerUserId, price: schema.collectionPrices })
+      .from(schema.collections)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.collections.namespaceId))
+      .leftJoin(schema.collectionPrices, and(eq(schema.collectionPrices.collectionId, schema.collections.id), eq(schema.collectionPrices.active, true)))
+      .where(and(eq(schema.namespaces.name, data.namespace), eq(schema.collections.name, data.name)))
+      .limit(1);
+    if (!row?.price || !row.sellerId) return { ok: false, error: "This collection isn't for sale." };
+    if (row.sellerId === user.id) return { ok: false, error: "You own this collection." };
+    if (!data.acceptLicense) return { ok: false, error: "You must agree to the seller's license terms first." };
+
+    const [seller] = await db.select({ stripeAccountId: schema.users.stripeAccountId, payoutsEnabled: schema.users.payoutsEnabled }).from(schema.users).where(eq(schema.users.id, row.sellerId)).limit(1);
+    if (!seller?.stripeAccountId || !seller.payoutsEnabled) return { ok: false, error: "The seller can't accept payments yet." };
+
+    if (await hasCollectionEntitlement(row.collection.id, user.id, null)) return { ok: false, error: "You already own this." };
+
+    const amount = row.price.unitAmount;
+    const fee = applicationFee(amount);
+    const [purchase] = await db
+      .insert(schema.collectionPurchases)
+      .values({
+        collectionId: row.collection.id,
+        buyerUserId: user.id,
+        sellerUserId: row.sellerId,
+        amount,
+        feeAmount: fee,
+        currency: "usd",
+        status: "pending",
+        licenseTemplate: row.price.licenseTemplate,
+        licenseTextSnapshot: resolveLicenseText(row.price.licenseTemplate, row.price.licenseText),
+        licenseAcceptedAt: new Date(),
+      })
+      .returning({ id: schema.collectionPurchases.id });
+
+    const origin = originOf();
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      success_url: `${origin}/${data.namespace}?purchase={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/${data.namespace}`,
+      line_items: [
+        { quantity: 1, price_data: { currency: "usd", unit_amount: amount, product_data: { name: `${row.collection.title} (collection)` } } },
+      ],
+      payment_intent_data: {
+        application_fee_amount: fee,
+        transfer_data: { destination: seller.stripeAccountId },
+      },
+      metadata: { type: "collection-purchase", collectionPurchaseId: purchase!.id },
+    });
+
+    await db.update(schema.collectionPurchases).set({ stripeCheckoutSessionId: session.id }).where(eq(schema.collectionPurchases.id, purchase!.id));
+    return { ok: true, url: session.url ?? undefined };
+  });
+
+/**
+ * Fulfil a collection purchase: mark the bundle paid and snapshot a paid
+ * entitlement row for every CURRENT member component (amount 0 — the money
+ * lives on the collection_purchases row). Later membership edits never
+ * change what was bought.
+ */
+export async function fulfilCollectionPurchase(collectionPurchaseId: string, paymentIntentId: string | null): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  const [updated] = await db
+    .update(schema.collectionPurchases)
+    .set({ status: "paid", stripePaymentIntentId: paymentIntentId })
+    .where(and(eq(schema.collectionPurchases.id, collectionPurchaseId), eq(schema.collectionPurchases.status, "pending")))
+    .returning();
+  if (!updated) return;
+
+  const members = await db
+    .select({ componentId: schema.collectionItems.componentId })
+    .from(schema.collectionItems)
+    .where(eq(schema.collectionItems.collectionId, updated.collectionId));
+  for (const member of members) {
+    await db
+      .insert(schema.purchases)
+      .values({
+        componentId: member.componentId,
+        buyerUserId: updated.buyerUserId,
+        sellerUserId: updated.sellerUserId,
+        amount: 0,
+        feeAmount: 0,
+        currency: updated.currency,
+        status: "paid",
+        licenseTemplate: updated.licenseTemplate,
+        licenseTextSnapshot: updated.licenseTextSnapshot,
+        licenseAcceptedAt: updated.licenseAcceptedAt,
+        viaCollectionPurchaseId: updated.id,
+      })
+      .onConflictDoNothing();
+  }
 }

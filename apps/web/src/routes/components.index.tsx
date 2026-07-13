@@ -311,7 +311,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
             <h2 className="truncate text-sm font-medium">{item.title}</h2>
             {item.evidence.some((record) => record.type === "content-integrity" || record.type === "domain-verified") ? <span className="text-emerald-500"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} /></span> : null}
           </div>
-          <p className="mt-1 truncate text-xs text-muted-foreground">{item.namespace} · {item.category}</p>
+          <p className="mt-1 truncate text-xs text-muted-foreground">by {item.namespace}{item.inCollection ? ` in ${item.inCollection}` : ""} · {item.category}</p>
         </div>
         <PriceSeal paid={item.sourceModel !== "open-source"} label={item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"} />
       </div>

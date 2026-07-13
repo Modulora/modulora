@@ -12,7 +12,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
-import { hasEntitlement } from "./marketplace";
+import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
 
 export interface ParsedRegistryPath {
   namespace: string;
@@ -66,7 +66,7 @@ interface RegistryItem {
     contentSha256: string | null;
     version: string;
     kind?: "collection";
-    items?: { ref: string; version: string; contentSha256: string | null }[];
+    items?: { ref: string; version: string; contentSha256: string | null; paid?: boolean }[];
   };
 }
 
@@ -81,6 +81,7 @@ async function resolveCollection(
   db: ReturnType<typeof drizzle<typeof schema>>,
   parsed: ParsedRegistryPath,
   notFound: { status: "not-found" },
+  request?: Request,
 ): Promise<RegistryResolution> {
   const [collection] = await db
     .select({ collection: schema.collections })
@@ -89,6 +90,26 @@ async function resolveCollection(
     .where(and(eq(schema.namespaces.name, parsed.namespace), eq(schema.collections.name, parsed.name)))
     .limit(1);
   if (!collection) return notFound;
+
+  // A priced collection is a product: the whole bundle requires the bundle
+  // entitlement (buying it also snapshots per-member entitlements).
+  const [bundlePrice] = await db
+    .select({ unitAmount: schema.collectionPrices.unitAmount, currency: schema.collectionPrices.currency })
+    .from(schema.collectionPrices)
+    .where(and(eq(schema.collectionPrices.collectionId, collection.collection.id), eq(schema.collectionPrices.active, true)))
+    .limit(1);
+  if (bundlePrice) {
+    const bundleViewer = request ? await getCurrentUser(request) : null;
+    const [bundleOwner] = await db
+      .select({ ownerUserId: schema.namespaces.ownerUserId })
+      .from(schema.namespaces)
+      .where(eq(schema.namespaces.name, parsed.namespace))
+      .limit(1);
+    const entitled = await hasCollectionEntitlement(collection.collection.id, bundleViewer?.id ?? null, bundleOwner?.ownerUserId ?? null);
+    if (!entitled) {
+      return { status: "payment-required", price: bundlePrice.unitAmount, currency: bundlePrice.currency };
+    }
+  }
 
   const members = await db
     .select({ component: schema.components, version: schema.componentVersions })
@@ -107,12 +128,37 @@ async function resolveCollection(
   );
   if (servable.length === 0) return notFound;
 
+  // Entitlement per priced member: files only for buyers/owner; everyone
+  // still sees the member listed (paid: true) so the CLI can report it.
+  const viewer = request ? await getCurrentUser(request) : null;
+  const [owner] = await db
+    .select({ ownerUserId: schema.namespaces.ownerUserId })
+    .from(schema.namespaces)
+    .where(eq(schema.namespaces.name, parsed.namespace))
+    .limit(1);
+
   const files: { path: string; content: string; type: string }[] = [];
   const seenPaths = new Set<string>();
   const deps = new Set<string>();
-  const items: { ref: string; version: string; contentSha256: string | null }[] = [];
+  const items: { ref: string; version: string; contentSha256: string | null; paid?: boolean }[] = [];
 
   for (const member of servable) {
+    const [price] = await db
+      .select({ id: schema.componentPrices.id })
+      .from(schema.componentPrices)
+      .where(and(eq(schema.componentPrices.componentId, member.component.id), eq(schema.componentPrices.active, true)))
+      .limit(1);
+    const paid = Boolean(price);
+    const entitled = !paid || (await hasEntitlement(member.component.id, viewer?.id ?? null, owner?.ownerUserId ?? null));
+    if (!entitled) {
+      items.push({
+        ref: `@${parsed.namespace}/${member.component.name}`,
+        version: member.version!.version,
+        contentSha256: member.version!.contentSha256 ?? null,
+        paid: true,
+      });
+      continue;
+    }
     const memberFiles = await db
       .select({ path: schema.componentFiles.path, content: schema.componentFiles.content, role: schema.componentFiles.role })
       .from(schema.componentFiles)
@@ -138,13 +184,14 @@ async function resolveCollection(
       ref: `@${parsed.namespace}/${member.component.name}`,
       version: member.version!.version,
       contentSha256: member.version!.contentSha256 ?? null,
+      ...(paid ? { paid: true } : {}),
     });
   }
-  if (files.length === 0) return notFound;
+  if (items.length === 0) return notFound;
 
   return {
     status: "ok",
-    gated: false,
+    gated: items.some((item) => item.paid),
     item: {
       $schema: "https://ui.shadcn.com/schema/registry-item.json",
       name: collection.collection.name,
@@ -182,7 +229,7 @@ export async function resolveRegistryItem(
 
   if (!row) {
     // No component by that name — it may be a collection.
-    return resolveCollection(db, parsed, notFound);
+    return resolveCollection(db, parsed, notFound, request);
   }
   const c = row.component;
   // Only serve components that are public, approved, and open-source.
