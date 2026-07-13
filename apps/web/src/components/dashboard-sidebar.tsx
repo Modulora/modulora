@@ -5,6 +5,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Banknote,
+  Bookmark,
   ClipboardCheck,
   ShieldEllipsis,
   BarChart3,
@@ -42,6 +43,10 @@ export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
           <Blocks className="size-4 shrink-0 opacity-70" />
           <span className="flex-1 truncate">Components</span>
           <span className="text-xs tabular-nums text-muted-foreground">{summary.counts.components}</span>
+        </Link>
+        <Link to="/dashboard/bookmarks" className={itemClass}>
+          <Bookmark className="size-4 shrink-0 opacity-70" />
+          <span className="flex-1 truncate">Bookmarks</span>
         </Link>
         <Link to="/dashboard/purchases" className={itemClass}>
           <ShoppingBag className="size-4 shrink-0 opacity-70" />

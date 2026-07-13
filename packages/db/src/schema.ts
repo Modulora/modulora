@@ -466,6 +466,22 @@ export const collectionItems = pgTable(
   (t) => [uniqueIndex("collection_items_unique").on(t.collectionId, t.componentId)],
 );
 
+/** Personal bookmarks — save any component. Never affects earnings or rank. */
+export const bookmarks = pgTable(
+  "bookmarks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("bookmarks_unique").on(t.userId, t.componentId)],
+);
+
 /** Bundle pricing for a collection — mirrors component_prices. */
 export const collectionPrices = pgTable(
   "collection_prices",

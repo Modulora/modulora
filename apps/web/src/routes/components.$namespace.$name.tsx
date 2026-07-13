@@ -14,6 +14,7 @@ import { OwnedTray } from "@/components/owned";
 import { CollectionView } from "@/components/collection-view";
 import { fetchCollectionDetail } from "@/lib/catalog-db";
 import { PriceSeal } from "@/components/money";
+import { BookmarkButton } from "@/components/bookmark-button";
 import { Tabs } from "radix-ui";
 import { motion } from "motion/react";
 import {
@@ -226,11 +227,14 @@ function ComponentDetailInner({ item, files, viewerTheme }: { item: NonNullable<
             <h1 className="text-3xl font-bold tracking-tight">{item.title}</h1>
             <p className="mt-2 max-w-3xl text-muted-foreground">{item.description}</p>
           </div>
+          <div className="flex items-center gap-3">
+          <BookmarkButton namespace={item.namespace} name={item.name} />
           <PriceSeal
             size="md"
             paid={isPaid || item.marketplacePrice != null}
             label={isPaid ? item.purchase?.priceLabel ?? "Paid" : item.marketplacePrice != null ? formatPrice(item.marketplacePrice) : "Free"}
           />
+          </div>
         </div>
       </motion.header>
 
