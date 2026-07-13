@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { DnsRecordCard, OneClickSetup } from "./domain-verify";
+import type { Meta, StoryObj } from "@storybook/tanstack-react";
+import { DnsRecordCard } from "./domain-verify";
 
 const record = {
   type: "TXT",
@@ -32,28 +32,4 @@ export const WithIssue: Story = {
       issue: "A TXT record was found but its value doesn't match — update it, then Verify again.",
     },
   },
-};
-
-/** One-click Domain Connect handoff — only rendered when discovery confirms provider support. */
-export const OneClick: Story = {
-  render: () => (
-    <OneClickSetup domain="makerlabs.dev" provider="GoDaddy" onConnect={() => {}} />
-  ),
-};
-
-export const OneClickConnecting: Story = {
-  render: () => (
-    <OneClickSetup domain="makerlabs.dev" provider="GoDaddy" connecting onConnect={() => {}} />
-  ),
-};
-
-export const OneClickFailed: Story = {
-  render: () => (
-    <OneClickSetup
-      domain="makerlabs.dev"
-      provider="GoDaddy"
-      error="GoDaddy rejected the authorization — try again or add the record manually."
-      onConnect={() => {}}
-    />
-  ),
 };

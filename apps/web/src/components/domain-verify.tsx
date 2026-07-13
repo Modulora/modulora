@@ -8,8 +8,8 @@
  *   never show a button that can't work.
  */
 import { useState } from "react";
-import { ArrowUpRight, Check, Copy, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check, Copy, ShieldCheck } from "lucide-react";
+import { ProviderButton, ProviderLogo, resolveDnsProvider } from "@/components/dns-providers";
 
 /* ── Record card ─────────────────────────────────────────── */
 
@@ -100,11 +100,16 @@ export function OneClickSetup({
   connecting?: boolean;
   error?: string;
 }) {
+  const brand = resolveDnsProvider(provider);
   return (
     <div className="rounded-lg border border-border/60 bg-secondary/20 p-4">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-emerald-500/10">
-          <ShieldCheck className="size-4 text-emerald-500" />
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary/60">
+          {brand ? (
+            <ProviderLogo provider={brand} className="size-4.5" />
+          ) : (
+            <ShieldCheck className="size-4 text-emerald-500" />
+          )}
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">Set up DNS automatically</p>
@@ -113,10 +118,14 @@ export function OneClickSetup({
             at {provider} before anything is applied.
           </p>
           {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
-          <Button type="button" size="sm" className="mt-3 gap-1.5" disabled={connecting} onClick={onConnect}>
-            {connecting ? "Connecting…" : `Continue to ${provider}`}
-            <ArrowUpRight className="size-3.5" />
-          </Button>
+          <div className="mt-3">
+            <ProviderButton
+              provider={brand}
+              label={connecting ? "Connecting…" : `Continue to ${provider}`}
+              disabled={connecting}
+              onClick={onConnect}
+            />
+          </div>
         </div>
       </div>
     </div>
