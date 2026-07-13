@@ -8,7 +8,7 @@
  * page ends with prev/next cards so reading has a direction.
  */
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Banknote, BookOpen, Download, TerminalSquare, UploadCloud, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Banknote, BookOpen, Download, History, TerminalSquare, UploadCloud, type LucideIcon } from "lucide-react";
 import type * as PageTree from "fumadocs-core/page-tree";
 import { findNeighbour } from "fumadocs-core/page-tree";
 import type { TOCItemType } from "fumadocs-core/toc";
@@ -20,7 +20,11 @@ const PAGE_ICONS: Record<string, LucideIcon> = {
   "/docs/publishing": UploadCloud,
   "/docs/earning": Banknote,
   "/docs/cli": TerminalSquare,
+  "/docs/changelog": History,
 };
+
+/** Pages that live outside the MDX collection but belong in the sidebar. */
+const EXTRA_PAGES = [{ url: "/docs/changelog", name: "CLI changelog" }];
 
 export function DocsShell({
   tree,
@@ -41,6 +45,21 @@ export function DocsShell({
             Documentation
           </p>
           <TreeNodes nodes={tree.children} activeUrl={activeUrl} renderLink={renderLink} />
+          {EXTRA_PAGES.map((page) => {
+            const Icon = PAGE_ICONS[page.url] ?? BookOpen;
+            return (
+              <span key={page.url}>
+                {renderLink(
+                  page.url,
+                  page.url === activeUrl,
+                  <>
+                    <Icon className="size-4 shrink-0 opacity-70" />
+                    <span className="flex-1 truncate">{page.name}</span>
+                  </>,
+                )}
+              </span>
+            );
+          })}
         </nav>
       </aside>
       <div className="min-w-0">{children}</div>

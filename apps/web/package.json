@@ -39,6 +39,7 @@
     "fumadocs-core": "^16.11.3",
     "fumadocs-mdx": "^15.1.0",
     "lucide-react": "^0.545.0",
+    "marked": "^18.0.6",
     "motion": "^12.42.2",
     "nuqs": "^2.9.0",
     "pg": "^8.22.0",
