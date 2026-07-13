@@ -67,6 +67,7 @@ function toCatalogItem(
     description: component.description,
     category: categoryLabel(component.category),
     distributionChannels: component.distributionChannels ?? undefined,
+    creatorShadcnCommand: component.shadcnCommand ?? undefined,
     files: files.length ? files : undefined,
     live: true,
     evidence,
@@ -377,7 +378,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
     const collections: PublicCollection[] = [];
     for (const collection of collectionRows) {
       const members = await database
-        .select({ name: schema.components.name, title: schema.components.title, reviewStatus: schema.components.reviewStatus, visibility: schema.components.visibility })
+        .select({ name: schema.components.name, title: schema.components.title, reviewStatus: schema.components.reviewStatus, visibility: schema.components.visibility, distributionChannels: schema.components.distributionChannels })
         .from(schema.collectionItems)
         .innerJoin(schema.components, eq(schema.components.id, schema.collectionItems.componentId))
         .where(eq(schema.collectionItems.collectionId, collection.id));
@@ -393,6 +394,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         title: collection.title,
         description: collection.description,
         members: live.map((m) => ({ name: m.name, title: m.title })),
+        cliInstallable: live.some((m) => (m.distributionChannels ?? []).includes("modulora-cli")),
         price: price?.unitAmount ?? null,
         license: price ? { name: licenseTemplate(price.licenseTemplate).name, text: resolveLicenseText(price.licenseTemplate, price.licenseText) } : null,
         owned: price ? await hasCollectionEntitlement(collection.id, profileViewer?.id ?? null, ns.ownerUserId) : false,
@@ -423,6 +425,7 @@ export interface PublicCollection {
   title: string;
   description: string;
   members: { name: string; title: string }[];
+  cliInstallable: boolean;
   price: number | null;
   license: { name: string; text: string } | null;
   owned: boolean;

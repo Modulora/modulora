@@ -79,6 +79,8 @@ export interface CatalogItem {
   inCollection?: string | null;
   /** DB-backed component with real source (live iframe previews). */
   live?: boolean;
+  /** Creator-provided install command (their own registry), when set. */
+  creatorShadcnCommand?: string;
   // Whether the current viewer may install (owner or paid purchase).
   entitled?: boolean;
 }

@@ -143,6 +143,7 @@ async function resolveCollection(
   const items: { ref: string; version: string; contentSha256: string | null; paid?: boolean }[] = [];
 
   for (const member of servable) {
+    const channels = member.component.distributionChannels ?? [];
     const [price] = await db
       .select({ id: schema.componentPrices.id })
       .from(schema.componentPrices)
@@ -166,6 +167,9 @@ async function resolveCollection(
       .orderBy(schema.componentFiles.orderIndex);
     for (const file of memberFiles) {
       if (file.role !== "component") continue;
+      // Channel opt-outs respected: shadcn-served files only for members
+      // that enabled the shadcn channel.
+      if (!channels.includes("shadcn")) continue;
       const path = stripSrc(file.path);
       if (seenPaths.has(path)) continue;
       seenPaths.add(path);
@@ -180,14 +184,16 @@ async function resolveCollection(
         }
       } catch { /* ignore */ }
     }
-    items.push({
-      ref: `@${parsed.namespace}/${member.component.name}`,
-      version: member.version!.version,
-      contentSha256: member.version!.contentSha256 ?? null,
-      ...(paid ? { paid: true } : {}),
-    });
+    if (channels.includes("modulora-cli")) {
+      items.push({
+        ref: `@${parsed.namespace}/${member.component.name}`,
+        version: member.version!.version,
+        contentSha256: member.version!.contentSha256 ?? null,
+        ...(paid ? { paid: true } : {}),
+      });
+    }
   }
-  if (items.length === 0) return notFound;
+  if (items.length === 0 && files.length === 0) return notFound;
 
   return {
     status: "ok",

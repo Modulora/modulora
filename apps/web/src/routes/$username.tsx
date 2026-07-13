@@ -280,14 +280,14 @@ function CollectionCard({ collection, namespace, components }: { collection: imp
         </div>
         <PriceSeal paid={collection.price != null} label={collection.price != null ? `$${collection.price / 100}` : undefined} />
       </div>
-      {collection.price == null || collection.owned ? (
+      {(collection.price == null || collection.owned) && collection.cliInstallable ? (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 px-3 py-2">
           <code className="truncate font-mono text-xs text-muted-foreground">{installCommand}</code>
           <CopyChip label="Copy" text={installCommand} icon={TerminalSquare} />
         </div>
-      ) : (
+      ) : collection.price != null && !collection.owned ? (
         <BuyCollectionDialog collection={{ namespace, name: collection.name, price: collection.price, license: collection.license }} />
-      )}
+      ) : null}
       {collection.owned ? <p className="px-1 text-[11px] text-emerald-500">You own this collection.</p> : null}
     </div>
   );

@@ -27,6 +27,15 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
   const installCommand = `npx modulora add @${collection.namespace}/${collection.name}`;
   const demoPath = member.files?.find((f) => f.path.startsWith("src/demos/"))?.path ?? "src/demos/default.tsx";
   const purchasable = collection.price != null && !collection.owned;
+  // Collections are a grouping, not a funnel into our CLI: the bundle
+  // command shows only when members actually opt into the Modulora CLI.
+  // Creators with their own registries keep their own commands per member.
+  const bundleInstallable = collection.members.some((m) => m.distributionChannels?.includes("modulora-cli"));
+  const memberCommand = member.creatorShadcnCommand?.trim()
+    ? member.creatorShadcnCommand
+    : member.distributionChannels?.includes("modulora-cli")
+      ? `npx modulora add @${member.namespace}/${member.name}`
+      : `npx shadcn@latest add https://modulora.dev/r/@${member.namespace}/${member.name}`;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-10">
@@ -58,12 +67,12 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
             </div>
             <BuyCollectionDialog collection={collection} />
           </div>
-        ) : (
+        ) : bundleInstallable ? (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card/35 px-4 py-3">
             <code className="truncate font-mono text-xs text-muted-foreground">{installCommand}</code>
             <CopyChip label="Copy" text={installCommand} icon={TerminalSquare} />
           </div>
-        )}
+        ) : null}
         {collection.owned ? <p className="mt-2 text-xs text-emerald-500">You own this collection.</p> : null}
       </div>
 
@@ -114,6 +123,12 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
               className="h-[32rem]"
             />
           )}
+          {!member.locked ? (
+            <div className="flex items-center justify-between gap-3 border-t border-border/60 px-4 py-2.5">
+              <code className="truncate font-mono text-xs text-muted-foreground">{memberCommand}</code>
+              <CopyChip label="Copy" text={memberCommand} icon={TerminalSquare} />
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
