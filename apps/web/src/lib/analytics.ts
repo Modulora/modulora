@@ -11,6 +11,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { and, desc, eq, sql as dsql } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
+import { hasFeature } from "./flags";
 
 export interface ComponentAnalytics {
   name: string;
@@ -90,5 +91,69 @@ export const fetchCreatorAnalytics = createServerFn({ method: "GET" }).handler(
       },
       components: rows,
     };
+  },
+);
+
+/** Daily time series (last 30 days) — the Plus-early "deeper analytics". */
+export interface AnalyticsSeriesPoint {
+  date: string; // YYYY-MM-DD
+  views: number;
+  installs: number;
+  sales: number;
+}
+
+export const fetchAnalyticsSeries = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ enabled: boolean; series: AnalyticsSeriesPoint[] }> => {
+    const request = getRequest();
+    const user = request ? await getCurrentUser(request) : null;
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!user?.username || !databaseUrl) return { enabled: false, series: [] };
+    if (!hasFeature(user, "deep-analytics")) return { enabled: false, series: [] };
+    const db = drizzle(neon(databaseUrl), { schema });
+
+    const [ns] = await db
+      .select({ id: schema.namespaces.id })
+      .from(schema.namespaces)
+      .where(eq(schema.namespaces.name, user.username))
+      .limit(1);
+    if (!ns) return { enabled: true, series: [] };
+
+    const since = new Date(Date.now() - 30 * 86400_000);
+    const day = (col: unknown) => dsql<string>`to_char(date_trunc('day', ${col}), 'YYYY-MM-DD')`;
+
+    const viewRows = await db
+      .select({ date: day(schema.componentViews.createdAt), total: dsql<number>`count(*)::int` })
+      .from(schema.componentViews)
+      .innerJoin(schema.components, eq(schema.components.id, schema.componentViews.componentId))
+      .where(and(eq(schema.components.namespaceId, ns.id), dsql`${schema.componentViews.createdAt} >= ${since}`))
+      .groupBy(day(schema.componentViews.createdAt));
+    const installRows = await db
+      .select({ date: day(schema.installReceipts.createdAt), total: dsql<number>`count(*)::int` })
+      .from(schema.installReceipts)
+      .innerJoin(schema.components, eq(schema.components.id, schema.installReceipts.componentId))
+      .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.installReceipts.verified, true), dsql`${schema.installReceipts.createdAt} >= ${since}`))
+      .groupBy(day(schema.installReceipts.createdAt));
+    const saleRows = await db
+      .select({ date: day(schema.purchases.createdAt), total: dsql<number>`count(*)::int` })
+      .from(schema.purchases)
+      .innerJoin(schema.components, eq(schema.components.id, schema.purchases.componentId))
+      .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.purchases.status, "paid"), dsql`${schema.purchases.createdAt} >= ${since}`))
+      .groupBy(day(schema.purchases.createdAt));
+
+    const views = new Map(viewRows.map((r) => [r.date, r.total]));
+    const installs = new Map(installRows.map((r) => [r.date, r.total]));
+    const sales = new Map(saleRows.map((r) => [r.date, r.total]));
+
+    const series: AnalyticsSeriesPoint[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
+      series.push({
+        date,
+        views: views.get(date) ?? 0,
+        installs: installs.get(date) ?? 0,
+        sales: sales.get(date) ?? 0,
+      });
+    }
+    return { enabled: true, series };
   },
 );

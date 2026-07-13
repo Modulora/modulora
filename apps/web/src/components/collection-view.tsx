@@ -19,9 +19,11 @@ import { ComponentSandbox } from "@/components/component-sandbox";
 import { PriceSeal } from "@/components/money";
 import { CopyChip } from "@/components/owned";
 import { buyCollection } from "@/lib/marketplace";
+import { usePageTheme } from "@/lib/use-page-theme";
 import type { CollectionDetail } from "@/lib/catalog-db";
 
 export function CollectionView({ collection }: { collection: CollectionDetail }) {
+  const pageTheme = usePageTheme();
   const [selected, setSelected] = useState(0);
   const member = collection.members[selected]!;
   const installCommand = `npx modulora add @${collection.namespace}/${collection.name}`;
@@ -101,7 +103,7 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
           </Link>
         </nav>
 
-        <div className="overflow-hidden rounded-xl border border-border/60 bg-[#0d0d0d]">
+        <div className={`overflow-hidden rounded-xl border border-border/60 ${pageTheme === "dark" ? "bg-[#0d0d0d]" : "bg-[#f5f5f3]"}`}>
           {member.locked ? (
             <div className="flex h-[32rem] flex-col items-center justify-center gap-3 text-center">
               <span className="flex size-11 items-center justify-center rounded-full border border-white/15 bg-black/60">
@@ -119,7 +121,7 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
               key={member.name}
               files={(member.files ?? []).map((f) => ({ path: f.path, content: f.content }))}
               selectedDemo={demoPath}
-              theme="dark"
+              theme={pageTheme}
               className="h-[32rem]"
             />
           )}

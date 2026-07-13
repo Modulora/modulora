@@ -15,6 +15,7 @@ import { motion } from "motion/react";
 import { LayoutDashboard, LogOut, Settings, Sparkles, User as UserIcon } from "lucide-react";
 
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { GitHubIcon } from "@/components/brand-icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -161,6 +162,7 @@ export function AppShell({
             <Link to="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>
             <Link to="/terms" className="transition-colors hover:text-foreground">Terms</Link>
             <a href="https://github.com/Modulora" target="_blank" rel="noreferrer" className="transition-colors hover:text-foreground">GitHub</a>
+            <ThemeToggle />
           </nav>
         </div>
       </footer>

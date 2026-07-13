@@ -26,7 +26,7 @@ export const FLAGS: FeatureFlag[] = [
     key: "deep-analytics",
     title: "Deeper analytics",
     description: "Time-series charts for views, installs, and sales.",
-    stage: "off",
+    stage: "plus-early",
   },
   {
     key: "labs",
