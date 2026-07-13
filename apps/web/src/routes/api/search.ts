@@ -7,6 +7,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, desc, eq, ilike, or, sql as dsql } from "drizzle-orm";
 import { schema } from "@modulora/db";
+import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 import { alphaGateActive } from "@/lib/access";
 import { getCurrentUser } from "@/lib/session";
 
@@ -72,8 +73,8 @@ async function handle({ request }: { request: Request }) {
     description: row.description,
     category: row.category,
     // Paid = marketplace price or external-commercial listing.
-    paid: row.price != null || row.sourceModel !== "open-source",
-    price: row.price,
+    paid: (DIRECT_MARKETPLACE_ENABLED && row.price != null) || row.sourceModel !== "open-source",
+    price: DIRECT_MARKETPLACE_ENABLED ? row.price : null,
     url: `https://modulora.dev/components/${row.namespace}/${row.name}`,
   }));
 

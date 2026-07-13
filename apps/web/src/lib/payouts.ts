@@ -14,18 +14,11 @@ import { eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { getStripe } from "./stripe";
+import { requestOrigin } from "./request-origin";
 
 function getDb() {
   const url = process.env.DATABASE_URL;
   return url ? drizzle(neon(url), { schema }) : null;
-}
-
-function originOf(): string {
-  try {
-    return new URL(getRequest()!.url).origin;
-  } catch {
-    return "https://modulora.dev";
-  }
 }
 
 export interface PayoutStatus {
@@ -81,7 +74,7 @@ export const startPayoutOnboarding = createServerFn({ method: "POST" }).handler(
         .where(eq(schema.users.id, user.id));
     }
 
-    const origin = originOf();
+    const origin = requestOrigin(request);
     const link = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${origin}/dashboard/payouts?payouts=refresh`,

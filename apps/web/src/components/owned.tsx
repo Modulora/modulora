@@ -7,6 +7,7 @@ import { useState } from "react";
 import { LiveCardPreview } from "@/components/live-card-preview";
 import { BadgeCheck, Bot, Check, Copy, FileText, TerminalSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,7 @@ export function CopyChip({ label, text, icon: Icon }: { label: string; text: str
   const [copied, copy] = useCopy();
   return (
     <Button variant="outline" size="sm" className="gap-1.5" onClick={() => copy(text)}>
-      {copied ? <Check className="size-3.5 text-emerald-500" /> : <Icon className="size-3.5" />}
+      {copied ? <Check className="size-3.5 text-receipt" /> : <Icon className="size-3.5" />}
       {copied ? "Copied" : label}
     </Button>
   );
@@ -89,9 +90,9 @@ export function OwnedTray({ owned }: { owned: OwnedComponent }) {
     publicRepoPolicy: publicRepoPolicy(owned.licenseTemplate),
   });
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.04] p-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-receipt/25 bg-receipt/[0.04] p-4">
       <div className="flex items-center gap-2">
-        <BadgeCheck className="size-4 text-emerald-500" />
+        <BadgeCheck className="size-4 text-receipt" />
         <p className="text-sm font-medium">You own this component</p>
         <span className="text-xs text-muted-foreground">
           purchased {new Date(owned.purchasedAt).toLocaleDateString()}
@@ -105,7 +106,7 @@ export function OwnedTray({ owned }: { owned: OwnedComponent }) {
         <CopyChip label="Copy prompt for your agent" text={agentPrompt} icon={Bot} />
         <LicenseDialog licenseText={owned.licenseText} acceptedAt={owned.licenseAcceptedAt} />
       </div>
-      <p className="text-[11px] leading-relaxed text-muted-foreground">
+      <p className="text-xs leading-relaxed text-muted-foreground">
         Sign in first with <code className="font-mono">npx modulora login</code> — purchased source is tied to your account. The CLI verifies the content digest on every install.
         {publicRepoPolicy(owned.licenseTemplate) === "forbidden" ? (
           <> <span className="text-amber-500">This license doesn&apos;t allow committing the source to public repositories</span> — keep it in private repos; the agent prompt includes this restriction.</>
@@ -166,12 +167,10 @@ function PurchaseRow({ owned }: { owned: OwnedComponent }) {
 
 export function PurchasesEmptyState() {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 px-6 py-12 text-center">
-      <BadgeCheck className="size-6 text-muted-foreground" />
-      <p className="text-sm font-medium">No purchases yet</p>
-      <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-        Components you buy appear here with their install command, an integrate prompt for your coding agent, and the license you agreed to.
-      </p>
-    </div>
+    <EmptyState
+      icon={BadgeCheck}
+      title="No purchases yet"
+      description="Components you buy appear here with their install command, an integrate prompt for your coding agent, and the license you agreed to."
+    />
   );
 }

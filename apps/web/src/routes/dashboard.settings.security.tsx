@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getConnections, notifyPasswordChanged } from "@/lib/profile";
@@ -26,10 +27,7 @@ function SecurityPage() {
 
   return (
     <div className="flex w-full max-w-2xl flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Security</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Password and active sessions.</p>
-      </div>
+      <DashboardPageHeader title="Security" description="Password and active sessions." />
 
       {connections.hasPassword ? (
         <PasswordSection />
@@ -96,7 +94,7 @@ function PasswordSection() {
       </div>
       <div className="flex items-center justify-end gap-3">
         {error ? <span className="text-xs text-destructive">{error}</span> : null}
-        {done ? <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="size-3.5" /> Updated</span> : null}
+        {done ? <span className="flex items-center gap-1 text-xs text-receipt"><Check className="size-3.5" /> Updated</span> : null}
         <Button type="submit" variant="secondary" disabled={pending}>{pending ? <Loader2 className="size-4 animate-spin" /> : null} Update password</Button>
       </div>
     </form>

@@ -100,7 +100,7 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
             <CopyChip label="Copy" text={installCommand} icon={TerminalSquare} />
           </div>
         ) : null}
-        {collection.owned ? <p className="mt-2 text-xs text-emerald-500">You own this collection.</p> : null}
+        {collection.owned ? <p className="mt-2 text-xs text-receipt">You own this collection.</p> : null}
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">

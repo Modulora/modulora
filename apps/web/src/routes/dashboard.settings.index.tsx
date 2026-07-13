@@ -1,16 +1,8 @@
-/* ─────────────────────────────────────────────────────────
- * SETTINGS — entrance storyboard
- *
- *    0ms   page hidden
- *   70ms   heading rises
- *  160ms   profile card rises
- *  260ms   danger zone fades in
- * ───────────────────────────────────────────────────────── */
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { createFileRoute, Link, redirect, useNavigate, useRouter } from "@tanstack/react-router";
-import { motion } from "motion/react";
 import { BadgeCheck, Check, Copy, Globe, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +28,7 @@ import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
 import { addDomain, discoverDomainConnect, listDomains, removeDomain, verifyDomain, type DomainConnectInfo, type DomainRecord } from "@/lib/domains";
 import { DnsRecordCard, OneClickSetup, type DnsRecordInfo } from "@/components/domain-verify";
 import { linkSocial } from "@/lib/auth-client";
+import { isRenderableImageUrl } from "@/lib/image-url";
 
 export const Route = createFileRoute("/dashboard/settings/")({
   loader: async () => {
@@ -48,17 +41,10 @@ export const Route = createFileRoute("/dashboard/settings/")({
   component: Settings,
 });
 
-const TIMING = { heading: 70, card: 160, connections: 230, danger: 300 };
-const RISE = {
-  offsetY: 8,
-  spring: { type: "spring" as const, stiffness: 340, damping: 28 },
-};
-
 function Settings() {
   const { user, connections, domains } = Route.useLoaderData();
   const router = useRouter();
   const navigate = useNavigate();
-  const [stage, setStage] = useState(0);
   const [form, setForm] = useState<ProfileInput>({
     username: user.username ?? "",
     imageUrl: user.image ?? "",
@@ -75,16 +61,6 @@ function Settings() {
   const [handle, setHandle] = useState<HandleStatus>({ state: "current" });
   const handleSeq = useRef(0);
   const usernameLockedUntil = usernameChangeAvailableAt(user.usernameChangedAt);
-
-  useEffect(() => {
-    const timers = [
-      setTimeout(() => setStage(1), TIMING.heading),
-      setTimeout(() => setStage(2), TIMING.card),
-      setTimeout(() => setStage(3), TIMING.connections),
-      setTimeout(() => setStage(4), TIMING.danger),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, []);
 
   useEffect(() => {
     if (form.username === (user.username ?? "")) {
@@ -126,25 +102,18 @@ function Settings() {
 
   return (
     <div className="flex w-full max-w-2xl flex-col gap-8">
-      <motion.div
-        initial={{ opacity: 0, y: RISE.offsetY }}
-        animate={{ opacity: stage >= 1 ? 1 : 0, y: stage >= 1 ? 0 : RISE.offsetY }}
-        transition={RISE.spring}
-      >
-        <h1 className="text-2xl font-semibold">Profile</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Your public identity: avatar, handle, bio, links, and verified connections.
-        </p>
-      </motion.div>
+      <div>
+        <DashboardPageHeader
+          title="Profile"
+          description="Your public identity: avatar, handle, bio, links, and verified connections."
+        />
+      </div>
 
-      <motion.form
+      <form
         onSubmit={onSubmit}
-        initial={{ opacity: 0, y: RISE.offsetY }}
-        animate={{ opacity: stage >= 2 ? 1 : 0, y: stage >= 2 ? 0 : RISE.offsetY }}
-        transition={RISE.spring}
         className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card/40 p-6"
       >
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <Avatar username={form.username} name={user.name} imageUrl={form.imageUrl} />
           <div className="flex-1">
             <Label htmlFor="imageUrl">Avatar</Label>
@@ -216,7 +185,7 @@ function Settings() {
           <div className="flex items-center gap-3">
             {error ? <span className="text-xs text-destructive">{error}</span> : null}
             {saved ? (
-              <span className="flex items-center gap-1 text-xs text-emerald-400">
+              <span className="flex items-center gap-1 text-xs text-receipt">
                 <Check className="size-3.5" /> Saved
               </span>
             ) : null}
@@ -226,14 +195,9 @@ function Settings() {
             </Button>
           </div>
         </div>
-      </motion.form>
+      </form>
 
-      <motion.div
-        initial={{ opacity: 0, y: RISE.offsetY }}
-        animate={{ opacity: stage >= 3 ? 1 : 0, y: stage >= 3 ? 0 : RISE.offsetY }}
-        transition={RISE.spring}
-        className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/40 p-6"
-      >
+      <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/40 p-6">
         <div>
           <h2 className="text-sm font-semibold">Connections</h2>
           <p className="mt-1 text-xs text-muted-foreground">Link accounts to sign in and publish.</p>
@@ -244,7 +208,7 @@ function Settings() {
               <GitHubIcon className="size-4" /> GitHub
               {user.githubUsername ? <span className="text-muted-foreground">@{user.githubUsername}</span> : null}
             </span>
-            <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="size-3.5" /> {user.githubUsername ? "Verified" : "Connected"}</span>
+            <span className="flex items-center gap-1 text-xs text-receipt"><Check className="size-3.5" /> {user.githubUsername ? "Verified" : "Connected"}</span>
           </div>
         ) : (
           <Button type="button" size="lg" className="w-full gap-2" onClick={() => void linkSocial({ provider: "github", callbackURL: "/dashboard/settings" })}>
@@ -257,23 +221,18 @@ function Settings() {
               <XIcon className="size-3.5" /> X
               {user.xUsername ? <span className="text-muted-foreground">@{user.xUsername}</span> : null}
             </span>
-            <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="size-3.5" /> {user.xUsername ? "Verified" : "Connected"}</span>
+            <span className="flex items-center gap-1 text-xs text-receipt"><Check className="size-3.5" /> {user.xUsername ? "Verified" : "Connected"}</span>
           </div>
         ) : (
           <Button type="button" size="lg" variant="outline" className="w-full gap-2" onClick={() => void linkSocial({ provider: "twitter", callbackURL: "/dashboard/settings" })}>
             <XIcon className="size-3.5" /> Connect to X
           </Button>
         )}
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: RISE.offsetY }}
-        animate={{ opacity: stage >= 3 ? 1 : 0, y: stage >= 3 ? 0 : RISE.offsetY }}
-        transition={RISE.spring}
-        className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/35 p-6"
-      >
+      <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/35 p-6">
         <DomainsSection initial={domains} />
-      </motion.div>
+      </div>
 
     </div>
   );
@@ -342,9 +301,9 @@ function DomainsSection({ initial }: { initial: DomainRecord[] }) {
                 <Globe className="size-4 text-muted-foreground" />
                 {d.domain}
                 {d.verified ? (
-                  <span className="flex items-center gap-1 text-xs text-emerald-500"><BadgeCheck className="size-3.5" /> Verified</span>
+                  <span className="flex items-center gap-1 text-xs text-receipt"><BadgeCheck className="size-3.5" /> Verified</span>
                 ) : (
-                  <span className="text-xs text-amber-500">Pending</span>
+                  <span className="text-xs text-muted-foreground">Pending</span>
                 )}
               </span>
               <div className="flex items-center gap-1.5">
@@ -353,9 +312,9 @@ function DomainsSection({ initial }: { initial: DomainRecord[] }) {
                     {busy === d.domain ? <Loader2 className="size-3.5 animate-spin" /> : null} Verify
                   </Button>
                 ) : null}
-                <button type="button" aria-label="Remove domain" onClick={() => onRemove(d.domain)} className="rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive">
-                  <Trash2 className="size-3.5" />
-                </button>
+                <Button type="button" aria-label={`Remove ${d.domain}`} variant="ghost" size="icon-sm" onClick={() => onRemove(d.domain)} className="text-muted-foreground hover:text-destructive">
+                  <Trash2 />
+                </Button>
               </div>
             </div>
 
@@ -405,7 +364,7 @@ function DomainConnectPanel({ record }: { record: DomainRecord }) {
     // Honest absence: one-click depends on the DNS provider supporting our
     // Domain Connect template. Say so instead of silently showing nothing.
     return info.provider ? (
-      <p className="text-[11px] text-muted-foreground/70">
+      <p className="text-xs text-muted-foreground/70">
         One-click setup isn&apos;t available at {info.provider} yet — add the record manually below.
       </p>
     ) : null;
@@ -423,20 +382,22 @@ function TxtRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex items-center gap-2">
-      <span className="w-12 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/60">{label}</span>
-      <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1 font-mono text-[11px]">{value}</code>
-      <button
+      <span className="w-12 shrink-0 text-xs uppercase tracking-wide text-muted-foreground/60">{label}</span>
+      <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1 font-mono text-xs">{value}</code>
+      <Button
         type="button"
         aria-label={`Copy ${label}`}
+        variant="ghost"
+        size="icon-xs"
         onClick={() => {
           void navigator.clipboard.writeText(value);
           setCopied(true);
           setTimeout(() => setCopied(false), 1200);
         }}
-        className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground"
       >
         {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -449,7 +410,7 @@ function HandleStatusLine({ status, username }: { status: HandleStatus; username
     return <p className="flex items-center gap-1.5 text-xs text-destructive"><X className="size-3" /> @{username} is taken.</p>;
   }
   if (status.state === "available") {
-    return <p className="flex items-center gap-1.5 text-xs text-emerald-400"><Check className="size-3" /> @{username} is available.</p>;
+    return <p className="flex items-center gap-1.5 text-xs text-receipt"><Check className="size-3" /> @{username} is available.</p>;
   }
   return (
     <p className="text-xs text-muted-foreground">
@@ -498,10 +459,21 @@ function AvatarUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
 
 function Avatar({ username, name, imageUrl }: { username: string; name: string; imageUrl: string }) {
   const initial = (username || name || "?").charAt(0).toUpperCase();
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const previousUrl = useRef(imageUrl);
+  useEffect(() => {
+    if (previousUrl.current !== imageUrl) {
+      previousUrl.current = imageUrl;
+      setImageFailed(false);
+    }
+    const image = imageRef.current;
+    if (image?.complete && image.naturalWidth === 0) setImageFailed(true);
+  }, [imageUrl]);
   return (
     <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-secondary text-xl font-semibold text-secondary-foreground">
-      {imageUrl ? (
-        <img src={imageUrl} alt="" className="size-full object-cover" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+      {isRenderableImageUrl(imageUrl) && !imageFailed ? (
+        <img ref={imageRef} src={imageUrl} alt="" className="size-full object-cover" onError={() => setImageFailed(true)} />
       ) : (
         initial
       )}

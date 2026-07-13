@@ -184,8 +184,8 @@ export function emailPayoutsActive(to: string): Promise<void> {
     subject: "Payouts are active",
     heading: "You can get paid now",
     body: [
-      `Your Stripe account finished verification — payouts are active. Marketplace sales settle to it automatically, and profit-share distributions pay out once your accrued share reaches the threshold.`,
+      `Your Stripe account finished verification — payouts are active. Profit-share distributions pay out once your accrued share reaches the threshold.`,
     ],
-    cta: { label: "Set a price on a component", url: "https://modulora.dev/dashboard/components" },
+    cta: { label: "View earnings", url: "https://modulora.dev/dashboard/earnings" },
   });
 }

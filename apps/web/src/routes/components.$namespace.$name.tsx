@@ -1,12 +1,3 @@
-/* ─────────────────────────────────────────────────────────
- * COMPONENT DETAIL — workspace entrance storyboard
- *
- *    0ms   page hidden
- *   70ms   title + creator rise
- *  160ms   preview workspace scales/fades in
- *  250ms   facts/evidence rail slides in
- *  340ms   install tray rises
- * ───────────────────────────────────────────────────────── */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { buyComponent, confirmCheckout } from "@/lib/marketplace";
@@ -16,7 +7,6 @@ import { fetchCollectionDetail } from "@/lib/catalog-db";
 import { PriceSeal } from "@/components/money";
 import { SaveMenu } from "@/components/save-menu";
 import { Tabs } from "radix-ui";
-import { motion } from "motion/react";
 import {
   Check,
   Clipboard,
@@ -28,16 +18,9 @@ import {
   Flag,
   Folder,
   Loader2,
-  Maximize2,
-  Monitor,
-  Moon,
   PackageCheck,
-  RotateCcw,
   ShieldCheck,
   Sparkles,
-  Smartphone,
-  Sun,
-  Tablet,
   Terminal,
   TriangleAlert,
   X,
@@ -51,6 +34,7 @@ import { ShadcnIcon, XIcon } from "@/components/brand-icons";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -75,6 +59,7 @@ import { CheckmarkBadge01Icon } from "@hugeicons-pro/core-solid-sharp";
 import { reportComponent, REPORT_REASONS } from "@/lib/report";
 import { fetchCatalogDetail } from "@/lib/catalog-db";
 import { type CatalogItem, type EvidenceRecord } from "../data/catalog";
+import { ComponentDetailError, ComponentDetailLoading } from "@/components/component-detail-state";
 
 interface HighlightedFile {
   path: string;
@@ -100,22 +85,10 @@ export const Route = createFileRoute("/components/$namespace/$name")({
         : [];
     return { kind: "component" as const, collection: null, item, files, viewerTheme: viewer?.editorTheme ?? DEFAULT_EDITOR_THEME, viewerPlus: viewer?.isPlus ?? false };
   },
+  pendingComponent: ComponentDetailLoading,
+  errorComponent: ComponentDetailError,
   component: ComponentDetail,
 });
-
-const TIMING = { heading: 70, workspace: 160, rail: 250, install: 340 };
-const RISE = {
-  offsetY: 10,
-  spring: { type: "spring" as const, stiffness: 340, damping: 29 },
-};
-const WORKSPACE = {
-  initialScale: 0.985,
-  spring: { type: "spring" as const, stiffness: 280, damping: 28 },
-};
-const RAIL = {
-  offsetX: 12,
-  spring: { type: "spring" as const, stiffness: 320, damping: 30 },
-};
 
 const EVIDENCE_LABELS: Record<string, string> = {
   "publisher-identity": "Published by",
@@ -140,10 +113,15 @@ function ComponentDetail() {
 }
 
 function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: NonNullable<Awaited<ReturnType<typeof fetchCatalogDetail>>>; files: HighlightedFile[]; viewerTheme: string; viewerPlus: boolean }) {
-  const [stage, setStage] = useState(0);
   const [workspaceTab, setWorkspaceTab] = useState("preview");
   const [installTab, setInstallTab] = useState(
-    item.distributionChannels?.includes("shadcn") ? "shadcn" : "modulora-cli",
+    item.distributionChannels?.includes("shadcn")
+      ? "shadcn"
+      : item.distributionChannels?.includes("modulora-cli")
+        ? "modulora-cli"
+        : item.distributionChannels?.includes("compatible-cli") && item.otherCliCommand
+          ? "own-registry"
+          : "prompt",
   );
   // Preview defaults to the site's theme; the toolbar can override per-view.
   const pageTheme = usePageTheme();
@@ -152,6 +130,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
   const setPreviewTheme = setThemeOverride;
   const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const [previewKey, setPreviewKey] = useState(0);
+  const [purchaseReturnError, setPurchaseReturnError] = useState<string | null>(null);
   const previewStageRef = useRef<HTMLDivElement>(null);
 
   // Demo model: published components carry preview-only demo files; each demo's
@@ -170,21 +149,15 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
     if (typeof window === "undefined") return;
     const sid = new URLSearchParams(window.location.search).get("purchase");
     if (!sid) return;
-    void confirmCheckout({ data: { sessionId: sid } }).then(() => {
-      window.history.replaceState(null, "", window.location.pathname);
-      void router.invalidate();
-    });
+    void confirmCheckout({ data: { sessionId: sid } })
+      .then(() => {
+        window.history.replaceState(null, "", window.location.pathname);
+        void router.invalidate();
+      })
+      .catch(() => {
+        setPurchaseReturnError("We could not confirm this purchase yet. Refresh to try again, or contact support if the charge completed.");
+      });
   }, [router]);
-
-  useEffect(() => {
-    const timers = [
-      setTimeout(() => setStage(1), TIMING.heading),
-      setTimeout(() => setStage(2), TIMING.workspace),
-      setTimeout(() => setStage(3), TIMING.rail),
-      setTimeout(() => setStage(4), TIMING.install),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, []);
 
   const commands = useMemo(
     () => ({
@@ -207,38 +180,34 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
 
   return (
     <div className="flex flex-col gap-6">
-      <motion.header
-        initial={{ opacity: 0, y: RISE.offsetY }}
-        animate={{ opacity: stage >= 1 ? 1 : 0, y: stage >= 1 ? 0 : RISE.offsetY }}
-        transition={RISE.spring}
-        className="flex flex-col gap-2"
-      >
+      <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>
-            by <Link to="/$username" params={{ username: item.namespace }} className="text-foreground/80 hover:text-foreground">{item.namespace}</Link>
+            by <Link to="/$username" params={{ username: item.namespace }} className="rounded-sm text-foreground/80 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">{item.namespace}</Link>
             {item.memberOf?.length ? (
               <>
                 {" "}in <Link to="/$username" params={{ username: item.namespace }} className="text-foreground/80 hover:text-foreground">{item.memberOf[0]!.title}</Link>
               </>
             ) : null}
           </span>
-          <span>·</span><span>v{item.version}</span><span>·</span><span>React</span>
+          <span>·</span><span>v{item.version}</span><span>·</span><span className="capitalize">{item.framework}</span>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{item.title}</h1>
-            <p className="mt-2 max-w-3xl text-muted-foreground">{item.description}</p>
+            {item.description ? <p className="mt-2 max-w-3xl text-pretty text-muted-foreground">{item.description}</p> : null}
           </div>
           <div className="flex items-center gap-3">
-          <a
-            href={`https://x.com/intent/post?text=${encodeURIComponent(`${item.title} by @${item.namespace} on Modulora\n\nhttps://modulora.dev/components/${item.namespace}/${item.name}`)}`}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Share on X"
-            className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <XIcon className="size-3.5" />
-          </a>
+          <Button asChild variant="ghost" size="icon-sm" className="size-11 sm:size-8">
+            <a
+              href={`https://x.com/intent/post?text=${encodeURIComponent(`${item.title} by @${item.namespace} on Modulora\n\nhttps://modulora.dev/components/${item.namespace}/${item.name}`)}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Share on X"
+            >
+              <XIcon />
+            </a>
+          </Button>
           <SaveMenu namespace={item.namespace} name={item.name} plus={viewerPlus} />
           <PriceSeal
             size="md"
@@ -247,15 +216,12 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
           />
           </div>
         </div>
-      </motion.header>
+      </header>
+      {purchaseReturnError ? <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{purchaseReturnError}</p> : null}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="flex min-w-0 flex-col gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: RISE.offsetY }}
-            animate={{ opacity: stage >= 2 ? 1 : 0, y: stage >= 2 ? 0 : RISE.offsetY }}
-            transition={RISE.spring}
-          >
+          <div>
             {isPaid ? (
               <CommercialTray item={item} />
             ) : locked ? (
@@ -278,27 +244,23 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
                 commands={commands}
               />
             )}
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: WORKSPACE.initialScale }}
-            animate={{ opacity: stage >= 3 ? 1 : 0, scale: stage >= 3 ? 1 : WORKSPACE.initialScale }}
-            transition={WORKSPACE.spring}
-          >
-            <Tabs.Root value={workspaceTab} onValueChange={setWorkspaceTab} className="overflow-hidden rounded-xl border border-border/60 bg-[#0d0d0d]">
-              <div className="flex h-12 items-center justify-between border-b border-border/60 px-3">
+          <div>
+            <Tabs.Root value={workspaceTab} onValueChange={setWorkspaceTab} className="overflow-hidden rounded-xl border border-border/60 bg-code-background text-code-foreground">
+              <div className="flex flex-col gap-2 border-b border-border/60 px-3 py-2 sm:min-h-12 sm:flex-row sm:items-center sm:justify-between sm:py-0">
                 <Tabs.List className="flex items-center gap-1">
                   <WorkspaceTab value="preview" icon={PackageCheck}>Preview</WorkspaceTab>
                   <WorkspaceTab value="code" icon={Code2}>{isPaid ? "Code" : "Raw code"}</WorkspaceTab>
                 </Tabs.List>
                 {workspaceTab === "preview" ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-0.5 sm:overflow-visible sm:pb-0">
                     {demos.length > 1 ? (
                       <select
                         value={activeDemo}
                         onChange={(event) => setActiveDemo(event.target.value)}
                         aria-label="Demo variant"
-                        className="h-7 rounded-md border border-border/60 bg-transparent px-2 text-xs outline-none"
+                        className="h-11 shrink-0 rounded-md border border-border/60 bg-transparent px-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 sm:h-7"
                       >
                         {demos.map((demo) => (
                           <option key={demo.path} value={demo.path} className="bg-popover">
@@ -321,8 +283,8 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
                 )}
               </div>
               <Tabs.Content value="preview" className="outline-none">
-                <div ref={previewStageRef} className={`flex h-[38rem] items-center justify-center overflow-auto bg-[#181818] ${previewTheme === "dark" ? "[color-scheme:dark]" : "[color-scheme:light]"}`}>
-                  <div className={`w-full transition-[max-width] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] ${demos.length > 0 && activeDemo ? "h-full" : ""} ${viewport === "mobile" ? "max-w-[390px]" : viewport === "tablet" ? "max-w-[768px]" : "max-w-none"}`}>
+                <div ref={previewStageRef} className={`flex h-[32rem] items-center justify-center overflow-auto bg-code-background sm:h-[38rem] ${previewTheme === "dark" ? "[color-scheme:dark]" : "[color-scheme:light]"}`}>
+                  <div className={`w-full transition-[max-width] [transition-duration:var(--motion-control-duration)] [transition-timing-function:var(--ease-out-exact)] ${demos.length > 0 && activeDemo ? "h-full" : ""} ${viewport === "mobile" ? "max-w-[390px]" : viewport === "tablet" ? "max-w-[768px]" : "max-w-none"}`}>
                     {demos.length > 0 && activeDemo ? (
                       <ComponentSandbox
                         key={previewKey}
@@ -341,22 +303,21 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
                 {isPaid || locked ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} themeId={viewerTheme} />}
               </Tabs.Content>
             </Tabs.Root>
-          </motion.div>
+          </div>
         </div>
 
-        <motion.aside
-          initial={{ opacity: 0, x: RAIL.offsetX }}
-          animate={{ opacity: stage >= 3 ? 1 : 0, x: stage >= 3 ? 0 : RAIL.offsetX }}
-          transition={RAIL.spring}
-          className="flex flex-col gap-3"
-        >
+        <aside className="flex flex-col gap-3">
           {typeof item.installCount === "number" ? (
             <FactCard label="Verified CLI installs" value={item.installCount.toLocaleString()} icon={Terminal} />
           ) : null}
           <FactCard label="License" value={item.license.kind === "spdx" ? item.license.spdxExpression : item.license.kind} icon={FileLock2} />
           <div className="rounded-xl border border-border/60 bg-card/35 p-4">
             <div className="mb-3 flex items-center gap-2"><ShieldCheck className="size-4" /><h2 className="text-sm font-semibold">Provenance &amp; integrity</h2></div>
-            <p className="mb-3 text-xs leading-relaxed text-muted-foreground">Installs copy exactly these files and never run install scripts. Each record below is scoped to this release and independently checkable — not a guarantee the code is safe to run.</p>
+            <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+              {isPaid
+                ? "Modulora hosts no source or install artifact for this release. The records below cover only the named identity, domain, and listing facts — not the creator-fulfilled code."
+                : "Installs copy exactly these files and never run install scripts. Each record below is scoped to this release and independently checkable — not a guarantee the code is safe to run."}
+            </p>
             <TooltipProvider delayDuration={150}>
               <div className="flex flex-col divide-y divide-border/60">
                 {item.evidence.map((record, index) => <EvidenceRow key={`${record.type}-${index}`} record={record} />)}
@@ -364,12 +325,12 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
             </TooltipProvider>
           </div>
           {item.source ? (
-            <a href={item.source.repository} rel="noreferrer" className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3 text-sm text-muted-foreground hover:text-foreground">
+            <a href={item.source.repository} target="_blank" rel="noreferrer" className="flex min-h-11 items-center justify-between rounded-xl border border-border/60 px-4 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
               Source repository <ExternalLink className="size-3.5" />
             </a>
           ) : null}
           <ReportComponent namespace={item.namespace} name={item.name} />
-        </motion.aside>
+        </aside>
       </div>
     </div>
   );
@@ -377,7 +338,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
 
 function WorkspaceTab({ value, icon: Icon, children }: { value: string; icon: typeof Code2; children: ReactNode }) {
   return (
-    <Tabs.Trigger value={value} className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-accent data-[state=active]:text-foreground">
+    <Tabs.Trigger value={value} className="flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[state=active]:bg-accent data-[state=active]:text-foreground sm:min-h-8">
       <Icon className="size-3.5" />{children}
     </Tabs.Trigger>
   );
@@ -389,7 +350,7 @@ function SourceFiles({ item, files, themeId }: { item: CatalogItem; files: Highl
 
   if (files.length === 0) {
     return (
-      <div className="flex h-[38rem] items-center justify-center bg-[#080808] text-sm text-muted-foreground">
+      <div className="flex h-[32rem] items-center justify-center bg-code-background px-6 text-center text-sm text-muted-foreground sm:h-[38rem]">
         Source for {item.title} is published with each release.
       </div>
     );
@@ -398,9 +359,9 @@ function SourceFiles({ item, files, themeId }: { item: CatalogItem; files: Highl
   const current = files.find((file) => file.path === active) ?? files[0]!;
 
   return (
-    <div className="grid h-[38rem] grid-cols-[13rem_1fr] bg-[#080808]">
-      <div className="flex min-h-0 flex-col overflow-y-auto border-r border-border/60 p-2">
-        <span className="px-2 pb-1 pt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+    <div className="grid h-[32rem] grid-rows-[10rem_1fr] bg-code-background sm:h-[38rem] sm:grid-cols-[13rem_1fr] sm:grid-rows-1">
+      <div className="flex min-h-0 flex-col overflow-y-auto border-b border-border/60 p-2 sm:border-b-0 sm:border-r">
+        <span className="px-2 pb-1 pt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground/60">
           {files.length} file{files.length === 1 ? "" : "s"}
         </span>
         <FileTree
@@ -476,7 +437,7 @@ function FileTree({
             aria-pressed={node.path === activePath}
             onClick={() => onSelect(node.path)}
             style={{ paddingLeft: depth * 12 + 8 }}
-            className={`flex items-center gap-2 rounded-md py-1.5 pr-2 text-left text-xs transition-colors ${node.path === activePath ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
+            className={`flex min-h-11 items-center gap-2 rounded-md pr-2 text-left text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:min-h-10 ${node.path === activePath ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
           >
             <FileCode2 className="size-3.5 shrink-0 opacity-70" />
             <span className="truncate">{node.name}</span>
@@ -513,12 +474,16 @@ function BuyButton({ item, children }: { item: CatalogItem; children: ReactNode 
   async function onBuy() {
     setBusy(true);
     setError(null);
-    const res = await buyComponent({ data: { namespace: item.namespace, name: item.name, acceptLicense: agreed } });
-    if (res.ok && res.url) {
-      window.location.href = res.url;
-      return;
+    try {
+      const res = await buyComponent({ data: { namespace: item.namespace, name: item.name, acceptLicense: agreed } });
+      if (res.ok && res.url) {
+        window.location.href = res.url;
+        return;
+      }
+      setError(res.error ?? "Could not start checkout.");
+    } catch {
+      setError("Could not reach checkout. Please try again.");
     }
-    setError(res.error ?? "Could not start checkout.");
     setBusy(false);
   }
 
@@ -537,11 +502,11 @@ function BuyButton({ item, children }: { item: CatalogItem; children: ReactNode 
         <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-border/60 bg-secondary/20 p-3">
           <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-muted-foreground">{license?.text || "The seller has not provided license text."}</pre>
         </div>
-        <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm">
-          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-4 accent-foreground" />
+        <label className="mt-3 flex min-h-11 cursor-pointer items-start gap-2.5 rounded-md py-2 text-sm focus-within:ring-2 focus-within:ring-ring/50">
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-5 accent-foreground" />
           <span>I agree to the seller&apos;s license terms for this component.</span>
         </label>
-        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           This license is between you and the seller. Modulora records the agreement and facilitates the sale, but is not a party to — and does not enforce — its terms.
         </p>
         {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
@@ -556,7 +521,7 @@ function BuyButton({ item, children }: { item: CatalogItem; children: ReactNode 
 
 function BuyTray({ item }: { item: CatalogItem }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4">
+    <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4 sm:flex-row sm:items-center">
       <div>
         <p className="text-sm font-medium">Buy to install</p>
         <p className="mt-1 text-xs text-muted-foreground">One-time purchase unlocks the source and install for your account.</p>
@@ -569,9 +534,9 @@ function BuyTray({ item }: { item: CatalogItem }) {
 function LockedCode({ item }: { item: CatalogItem }) {
   const marketplace = item.marketplacePrice != null;
   return (
-    <div className="relative h-[38rem] overflow-hidden bg-[#080808]">
-      <pre aria-hidden className="select-none p-5 font-mono text-sm leading-7 text-zinc-500 blur-[5px]">{`export function ${item.title.replace(/\s/g, "")}() {\n  // ${marketplace ? "Source unlocks after purchase" : "Paid component — delivered on purchase"}\n  return <PremiumComponent />\n}\n`.repeat(5)}</pre>
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/45 text-center backdrop-blur-[2px]">
+    <div className="relative h-[32rem] overflow-hidden bg-code-background sm:h-[38rem]">
+      <pre aria-hidden className="select-none p-5 font-mono text-sm leading-7 text-muted-foreground blur-[5px]">{`export function ${item.title.replace(/\s/g, "")}() {\n  // ${marketplace ? "Source unlocks after purchase" : "Paid component — delivered on purchase"}\n  return <PremiumComponent />\n}\n`.repeat(5)}</pre>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/45 px-6 text-center backdrop-blur-[2px]">
         <span className="flex size-11 items-center justify-center rounded-full border border-white/15 bg-black/60"><FileLock2 className="size-5" /></span>
         {marketplace ? (
           <>
@@ -581,7 +546,7 @@ function LockedCode({ item }: { item: CatalogItem }) {
         ) : (
           <>
             <div><p className="font-semibold">Paid component</p><p className="mt-1 max-w-xs text-sm text-muted-foreground">Purchase and fulfillment are handled by the creator. Modulora hosts no source and has not assessed it.</p></div>
-            {item.purchase ? <Button asChild><a href={item.purchase.url} rel="noreferrer">View on {item.purchase.domain}<ExternalLink /></a></Button> : null}
+            {item.purchase ? <Button asChild className="w-full sm:w-auto"><a href={item.purchase.url} target="_blank" rel="noreferrer">View on {item.purchase.domain}<ExternalLink /></a></Button> : null}
           </>
         )}
       </div>
@@ -592,13 +557,14 @@ function LockedCode({ item }: { item: CatalogItem }) {
 function InstallTray({ tabs, active, onActive, commands }: { tabs: string[]; active: string; onActive: (value: string) => void; commands: Record<string, string> }) {
   return (
     <Tabs.Root value={active} onValueChange={onActive} className="overflow-hidden rounded-xl border border-border/60 bg-card/35">
-      <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
-        <Tabs.List className="flex items-center gap-1">
+      <div className="flex items-center gap-1 border-b border-border/60 px-2 py-2 sm:px-3">
+        <Tabs.List className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
           {tabs.map((tab) => (
             <Tabs.Trigger
               key={tab}
               value={tab}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-accent data-[state=active]:text-foreground [&_svg]:size-3.5"
+              onClick={() => onActive(tab)}
+              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[state=active]:bg-accent data-[state=active]:text-foreground sm:min-h-8 [&_svg]:size-3.5"
             >
               <InstallTabIcon tab={tab} />
               {tab === "modulora-cli" ? "Modulora CLI" : tab === "shadcn" ? "shadcn" : tab === "own-registry" ? "Creator's registry" : "Prompt"}
@@ -607,7 +573,7 @@ function InstallTray({ tabs, active, onActive, commands }: { tabs: string[]; act
         </Tabs.List>
         <CopyButton value={commands[active] ?? ""} />
       </div>
-      {tabs.map((tab) => <Tabs.Content key={tab} value={tab} className="outline-none"><pre className="overflow-x-auto bg-[#080808] p-4 font-mono text-sm text-zinc-300"><code>{commands[tab]}</code></pre></Tabs.Content>)}
+      {tabs.map((tab) => <Tabs.Content key={tab} value={tab} className="outline-none"><pre className="overflow-x-auto bg-code-background p-4 font-mono text-sm text-code-foreground"><code className="block min-w-max">{commands[tab]}</code></pre></Tabs.Content>)}
     </Tabs.Root>
   );
 }
@@ -621,9 +587,9 @@ function InstallTabIcon({ tab }: { tab: string }) {
 
 function CommercialTray({ item }: { item: CatalogItem }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4">
+    <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4 sm:flex-row sm:items-center">
       <div><p className="text-sm font-medium">Available from the creator</p><p className="mt-1 text-xs text-muted-foreground">No source or install artifact is distributed by Modulora.</p></div>
-      {item.purchase ? <Button asChild><a href={item.purchase.url} rel="noreferrer">{item.purchase.priceLabel ?? "View component"}<ExternalLink /></a></Button> : null}
+      {item.purchase ? <Button asChild className="w-full sm:w-auto"><a href={item.purchase.url} target="_blank" rel="noreferrer">View on {item.purchase.domain}{item.purchase.priceLabel ? ` · ${item.purchase.priceLabel}` : ""}<ExternalLink /></a></Button> : null}
     </div>
   );
 }
@@ -632,6 +598,7 @@ function ReportComponent({ namespace, name }: { namespace: string; name: string 
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<string>(REPORT_REASONS[0]!.id);
   const [details, setDetails] = useState("");
+  const [reporterEmail, setReporterEmail] = useState("");
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -639,44 +606,54 @@ function ReportComponent({ namespace, name }: { namespace: string; name: string 
   async function onSubmit() {
     setPending(true);
     setError(null);
-    const result = await reportComponent({ data: { namespace, name, reason, details } });
-    setPending(false);
-    if (!result.ok) {
-      setError(result.error ?? "Could not submit.");
-      return;
+    try {
+      const result = await reportComponent({ data: { namespace, name, reason, details, reporterEmail } });
+      if (!result.ok) {
+        setError(result.error ?? "Could not submit.");
+        return;
+      }
+      setDone(true);
+    } catch {
+      setError("Could not submit the report. Please try again.");
+    } finally {
+      setPending(false);
     }
-    setDone(true);
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) { setDone(false); setError(null); setDetails(""); } }}>
+    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) { setDone(false); setError(null); setDetails(""); setReporterEmail(""); } }}>
       <DialogTrigger asChild>
-        <button type="button" className="flex items-center justify-center gap-2 rounded-xl border border-border/60 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive">
-          <Flag className="size-3.5" /> Report
-        </button>
+        <Button type="button" variant="outline" className="w-full text-muted-foreground hover:border-destructive/40 hover:text-destructive">
+          <Flag /> Report
+        </Button>
       </DialogTrigger>
       <DialogContent>
         {done ? (
           <div className="flex flex-col items-center gap-3 py-4 text-center">
-            <span className="flex size-11 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400"><Check className="size-5" /></span>
+            <span className="flex size-11 items-center justify-center rounded-full bg-receipt/10 text-receipt"><Check className="size-5" /></span>
             <div><p className="font-semibold">Report submitted</p><p className="mt-1 text-sm text-muted-foreground">Thanks — our team will review it.</p></div>
           </div>
         ) : (
           <>
             <DialogHeader>
               <DialogTitle>Report this component</DialogTitle>
-              <DialogDescription>Flag @{namespace}/{name} for stolen source, license abuse, or another issue.</DialogDescription>
+              <DialogDescription>Flag @{namespace}/{name} for suspected copied source, license abuse, unauthorized association, or another issue.</DialogDescription>
             </DialogHeader>
             <div className="mt-5 flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="report-reason">Reason</Label>
-                <select id="report-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                <select id="report-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-11 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:h-9">
                   {REPORT_REASONS.map((r) => <option key={r.id} value={r.id} className="bg-popover">{r.label}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="report-details">Details <span className="text-muted-foreground">(optional)</span></Label>
                 <textarea id="report-details" value={details} onChange={(e) => setDetails(e.target.value)} rows={3} maxLength={1000} placeholder="Links, original source, context…" className="rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="report-email">Contact email <span className="text-muted-foreground">(required without an account)</span></Label>
+                <Input id="report-email" type="email" autoComplete="email" value={reporterEmail} onChange={(e) => setReporterEmail(e.target.value)} placeholder="you@example.com" />
+                <p className="text-xs text-muted-foreground">Used only to follow up on this report. Signed-in reporters can leave this blank.</p>
               </div>
               {error ? <p className="text-xs text-destructive">{error}</p> : null}
               <Button type="button" variant="destructive" onClick={onSubmit} disabled={pending}>
@@ -691,9 +668,20 @@ function ReportComponent({ namespace, name }: { namespace: string; name: string 
 }
 
 function CopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-  async function copy() { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1400); }
-  return <button type="button" onClick={copy} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">{copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}{copied ? "Copied" : "Copy"}</button>;
+  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+  const label = status === "copied" ? "Copied" : status === "error" ? "Copy failed" : "Copy";
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setStatus("copied");
+    } catch {
+      setStatus("error");
+    }
+    setTimeout(() => setStatus("idle"), 1400);
+  }
+
+  return <Button type="button" variant="ghost" size="sm" aria-label={label} onClick={copy} className="min-w-11 shrink-0 px-2 text-muted-foreground hover:text-foreground">{status === "copied" ? <Check /> : status === "error" ? <X /> : <Copy />}<span className="hidden sm:inline">{label}</span></Button>;
 }
 
 function FactCard({ label, value, icon: Icon }: { label: string; value: string; icon: typeof Terminal }) {
@@ -703,9 +691,9 @@ function FactCard({ label, value, icon: Icon }: { label: string; value: string; 
 function EvidenceRow({ record }: { record: EvidenceRecord }) {
   const passed = record.status === "passed";
   const leadIcon = passed ? (
-    <span className="mt-0.5 text-emerald-500"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={18} /></span>
+    <span className="mt-0.5 text-receipt"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={18} /></span>
   ) : record.status === "warning" ? (
-    <span className="mt-0.5 flex size-[18px] items-center justify-center rounded-full bg-amber-500/15 text-amber-500"><TriangleAlert className="size-3" /></span>
+    <span className="mt-0.5 flex size-[18px] items-center justify-center rounded-full bg-secondary text-muted-foreground"><TriangleAlert className="size-3" /></span>
   ) : record.status === "failed" ? (
     <span className="mt-0.5 flex size-[18px] items-center justify-center rounded-full bg-destructive/15 text-destructive"><X className="size-3" /></span>
   ) : (
@@ -714,8 +702,8 @@ function EvidenceRow({ record }: { record: EvidenceRecord }) {
 
   const body = (
     <div className="min-w-0">
-      <p className="truncate text-xs font-medium">{EVIDENCE_LABELS[record.type] ?? record.type}</p>
-      <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{record.scope ?? record.limitations ?? record.issuer}</p>
+      <p className="text-xs font-medium">{EVIDENCE_LABELS[record.type] ?? record.type}</p>
+      <p className="mt-0.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{record.scope ?? record.limitations ?? record.issuer}</p>
     </div>
   );
 
@@ -724,12 +712,12 @@ function EvidenceRow({ record }: { record: EvidenceRecord }) {
       {record.limitations ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <button type="button" aria-label="What this proves" className="shrink-0 cursor-help outline-none">{leadIcon}</button>
+            <button type="button" aria-label={`What ${EVIDENCE_LABELS[record.type] ?? record.type} proves`} className="flex size-11 shrink-0 cursor-help items-start justify-center rounded-md pt-2 outline-none focus-visible:ring-2 focus-visible:ring-ring/50">{leadIcon}</button>
           </TooltipTrigger>
           <TooltipContent side="left">{record.limitations}</TooltipContent>
         </Tooltip>
       ) : (
-        <span className="shrink-0">{leadIcon}</span>
+        <span className="flex size-11 shrink-0 items-start justify-center pt-2">{leadIcon}</span>
       )}
       {body}
     </div>

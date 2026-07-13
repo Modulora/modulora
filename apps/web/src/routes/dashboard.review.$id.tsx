@@ -1,9 +1,8 @@
 /* ─────────────────────────────────────────────────────────
  * REVIEW DETAIL — curator-only. Inspect a submission, approve or reject.
  * ───────────────────────────────────────────────────────── */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, redirect, useRouter, useSearch, Link } from "@tanstack/react-router";
-import { motion } from "motion/react";
 import { ArrowLeft, Check, ExternalLink, FileCode, Loader2, ShieldCheck, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,17 +30,11 @@ function ReviewDetail() {
   const { action } = useSearch({ from: "/dashboard/review/$id" });
   const router = useRouter();
 
-  const [ready, setReady] = useState(false);
   const [rejecting, setRejecting] = useState(action === "deny");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState("");
   const [activeFile, setActiveFile] = useState(0);
-
-  useEffect(() => {
-    const t = setTimeout(() => setReady(true), 60);
-    return () => clearTimeout(t);
-  }, []);
 
   const files = useMemo(() => item?.files ?? [], [item]);
 
@@ -69,7 +62,7 @@ function ReviewDetail() {
       setBusy(null);
       return;
     }
-    router.navigate({ to: "/review" });
+    router.navigate({ to: "/dashboard/review" });
   }
 
   const file = files[activeFile];
@@ -80,12 +73,7 @@ function ReviewDetail() {
         <ArrowLeft className="size-4" /> Review queue
       </Link>
 
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={ready ? { opacity: 1, y: 0 } : {}}
-        transition={{ type: "spring", stiffness: 340, damping: 28 }}
-        className="grid gap-6 lg:grid-cols-[1fr_20rem]"
-      >
+      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         {/* Left: submission */}
         <div className="min-w-0 space-y-5">
           <div>
@@ -116,8 +104,9 @@ function ReviewDetail() {
                   <button
                     key={f.path}
                     type="button"
+                    aria-pressed={i === activeFile}
                     onClick={() => setActiveFile(i)}
-                    className={`flex items-center gap-1.5 whitespace-nowrap rounded px-2.5 py-1 text-xs transition-colors ${
+                    className={`flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded px-2.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                       i === activeFile ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -126,7 +115,7 @@ function ReviewDetail() {
                   </button>
                 ))}
               </div>
-              <pre className="max-h-[28rem] overflow-auto bg-[#0d0d0d] p-4 text-xs leading-relaxed text-neutral-200">
+              <pre className="max-h-[28rem] overflow-auto bg-code-background p-4 text-xs leading-relaxed text-code-foreground">
                 <code>{file?.content}</code>
               </pre>
             </div>
@@ -140,7 +129,7 @@ function ReviewDetail() {
           {item.evidence && item.evidence.length > 0 && (
             <div className="rounded-lg border border-border p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-                <ShieldCheck className="size-4 text-emerald-500" /> Provenance &amp; integrity
+                <ShieldCheck className="size-4 text-receipt" /> Provenance &amp; integrity
               </div>
               <ul className="space-y-2">
                 {item.evidence.map((e) => (
@@ -170,7 +159,7 @@ function ReviewDetail() {
                   rows={4}
                   autoFocus
                   placeholder="What needs to change before this can be listed?"
-                  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+                  className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 />
                 <div className="flex gap-2">
                   <Button variant="destructive" className="flex-1" disabled={busy !== null} onClick={() => decide("reject")}>
@@ -197,7 +186,7 @@ function ReviewDetail() {
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { categoryLabel, componentTypeLabel } from "./taxonomy";
 import { getCurrentUser } from "./session";
 import { normalizeDomain } from "./domains";
 import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
+import { DIRECT_MARKETPLACE_ENABLED } from "./flags";
 import { licenseTemplate, resolveLicenseText } from "./license";
 import { publicListsFor } from "./lists";
 
@@ -185,15 +186,17 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
     }
 
     // Marketplace pricing: an active price gates the source behind purchase.
-    const [price] = await database
-      .select({
-        unitAmount: schema.componentPrices.unitAmount,
-        licenseTemplate: schema.componentPrices.licenseTemplate,
-        licenseText: schema.componentPrices.licenseText,
-      })
-      .from(schema.componentPrices)
-      .where(and(eq(schema.componentPrices.componentId, row.component.id), eq(schema.componentPrices.active, true)))
-      .limit(1);
+    const price = DIRECT_MARKETPLACE_ENABLED
+      ? (await database
+          .select({
+            unitAmount: schema.componentPrices.unitAmount,
+            licenseTemplate: schema.componentPrices.licenseTemplate,
+            licenseText: schema.componentPrices.licenseText,
+          })
+          .from(schema.componentPrices)
+          .where(and(eq(schema.componentPrices.componentId, row.component.id), eq(schema.componentPrices.active, true)))
+          .limit(1))[0]
+      : undefined;
     const marketplacePrice = price?.unitAmount ?? null;
     const marketplaceLicense = price
       ? {
@@ -388,11 +391,13 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         .where(eq(schema.collectionItems.collectionId, collection.id));
       const live = members.filter((m) => m.reviewStatus === "approved" && m.visibility === "public");
       if (live.length === 0) continue;
-      const [price] = await database
-        .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
-        .from(schema.collectionPrices)
-        .where(and(eq(schema.collectionPrices.collectionId, collection.id), eq(schema.collectionPrices.active, true)))
-        .limit(1);
+      const price = DIRECT_MARKETPLACE_ENABLED
+        ? (await database
+            .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
+            .from(schema.collectionPrices)
+            .where(and(eq(schema.collectionPrices.collectionId, collection.id), eq(schema.collectionPrices.active, true)))
+            .limit(1))[0]
+        : undefined;
       collections.push({
         name: collection.name,
         title: collection.title,
@@ -485,7 +490,7 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
       sourceModel: row.component.sourceModel,
       reviewStatus: row.component.reviewStatus,
       reviewReason: row.component.reviewReason,
-      marketplacePrice: row.price ?? null,
+      marketplacePrice: DIRECT_MARKETPLACE_ENABLED ? row.price ?? null : null,
       updatedAt: row.component.updatedAt.toISOString(),
     }));
   },
@@ -610,11 +615,13 @@ export const fetchCollectionDetail = createServerFn({ method: "GET" })
     const request = getRequest();
     const viewer = request ? await getCurrentUser(request) : null;
 
-    const [price] = await database
-      .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
-      .from(schema.collectionPrices)
-      .where(and(eq(schema.collectionPrices.collectionId, row.collection.id), eq(schema.collectionPrices.active, true)))
-      .limit(1);
+    const price = DIRECT_MARKETPLACE_ENABLED
+      ? (await database
+          .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
+          .from(schema.collectionPrices)
+          .where(and(eq(schema.collectionPrices.collectionId, row.collection.id), eq(schema.collectionPrices.active, true)))
+          .limit(1))[0]
+      : undefined;
     const owned = price
       ? await hasCollectionEntitlement(row.collection.id, viewer?.id ?? null, row.ownerUserId)
       : false;
@@ -630,11 +637,13 @@ export const fetchCollectionDetail = createServerFn({ method: "GET" })
     const members: (CatalogItem & { locked: boolean })[] = [];
     for (const member of memberRows) {
       if (member.component.visibility !== "public" || member.component.reviewStatus !== "approved" || !member.version) continue;
-      const [memberPrice] = await database
-        .select({ id: schema.componentPrices.id })
-        .from(schema.componentPrices)
-        .where(and(eq(schema.componentPrices.componentId, member.component.id), eq(schema.componentPrices.active, true)))
-        .limit(1);
+      const memberPrice = DIRECT_MARKETPLACE_ENABLED
+        ? (await database
+            .select({ id: schema.componentPrices.id })
+            .from(schema.componentPrices)
+            .where(and(eq(schema.componentPrices.componentId, member.component.id), eq(schema.componentPrices.active, true)))
+            .limit(1))[0]
+        : undefined;
       const entitled = !memberPrice
         ? true
         : owned || (await hasEntitlement(member.component.id, viewer?.id ?? null, row.ownerUserId));

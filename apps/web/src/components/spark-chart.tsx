@@ -29,7 +29,7 @@ const tooltipStyles: React.CSSProperties = {
 export function SparkChart({
   points,
   label,
-  color = "#10b981",
+  color = "var(--receipt)",
   height = 72,
 }: {
   points: SparkPoint[];

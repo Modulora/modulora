@@ -27,7 +27,10 @@ export const Route = createRootRoute({
           "Browse open and premium components from trusted creators. Install with one command—or let your coding agent handle it.",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/logo.png", type: "image/png" },
+    ],
   }),
   beforeLoad: async ({ location }) => {
     const { user, gated } = await fetchSessionContext();

@@ -6,6 +6,13 @@
  */
 import type { CurrentUser } from "./session";
 
+/**
+ * Direct component and collection checkout through Modulora is deliberately
+ * off for alpha. External creator sales and profit-share payouts are separate
+ * systems and remain available.
+ */
+export const DIRECT_MARKETPLACE_ENABLED = import.meta.env.VITE_DIRECT_MARKETPLACE_ENABLED === "true";
+
 export type FlagStage = "off" | "plus-early" | "everyone";
 
 export interface FeatureFlag {

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Label } from "@/components/ui/label";
 import { CodeThemePicker } from "@/components/code-theme-picker";
 import { fetchCurrentUser } from "@/lib/session";
@@ -52,10 +53,7 @@ function AppearancePage() {
 
   return (
     <div className="flex w-full max-w-2xl flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Appearance</h1>
-        <p className="mt-1 text-sm text-muted-foreground">How Modulora looks for you.</p>
-      </div>
+      <DashboardPageHeader title="Appearance" description="How Modulora looks for you." />
 
       <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/40 p-6">
         <div className="flex flex-col gap-2">
@@ -66,7 +64,7 @@ function AppearancePage() {
         <div className="flex items-center justify-end gap-3">
           {error ? <span className="text-xs text-destructive">{error}</span> : null}
           {saved ? (
-            <span className="flex items-center gap-1 text-xs text-emerald-400">
+            <span className="flex items-center gap-1 text-xs text-receipt">
               <Check className="size-3.5" /> Saved
             </span>
           ) : null}

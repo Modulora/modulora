@@ -38,6 +38,7 @@ import { listDomains } from "@/lib/domains";
 import { getPayoutStatus } from "@/lib/payouts";
 import { EarningsBreakdown, LicensePicker } from "@/components/money";
 import { XIcon } from "@/components/brand-icons";
+import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { demoFiles, isSystemFile, roleFor, scaffoldFiles } from "@/lib/scaffold";
 import { usePageTheme } from "@/lib/use-page-theme";
@@ -132,7 +133,9 @@ export function ComponentEditor({
   const [payoutsEnabled, setPayoutsEnabled] = useState<boolean | null>(null);
   const [verifiedDomains, setVerifiedDomains] = useState<string[] | null>(null);
   useEffect(() => {
-    void getPayoutStatus().then((status) => setPayoutsEnabled(status.payoutsEnabled));
+    if (DIRECT_MARKETPLACE_ENABLED) {
+      void getPayoutStatus().then((status) => setPayoutsEnabled(status.payoutsEnabled));
+    }
     void listDomains().then((rows) => setVerifiedDomains(rows.filter((r) => r.verified).map((r) => r.domain)));
   }, []);
   const [purchaseUrl, setPurchaseUrl] = useState(initial?.purchaseUrl ?? "");
@@ -313,7 +316,7 @@ export function ComponentEditor({
     // Marketplace listing at creation: attach the price + license now. The
     // component is already submitted; a pricing failure is surfaced but
     // doesn't undo the submission.
-    if (pricing === "marketplace") {
+    if (DIRECT_MARKETPLACE_ENABLED && pricing === "marketplace") {
       const priced = await setComponentPrice({
         data: { name: result.name!, amount: Math.round(parseFloat(price) * 100), licenseTemplate, licenseText },
       });
@@ -829,7 +832,7 @@ function DetailsStep(props: {
         <MetaField label="Pricing">
           <div className="flex rounded-md border border-border/60 p-0.5">
             <Segment active={p.pricing === "free"} onClick={() => p.setPricing("free")}>Free</Segment>
-            <Segment active={p.pricing === "marketplace"} onClick={() => p.setPricing("marketplace")}>Sell on Modulora</Segment>
+            {DIRECT_MARKETPLACE_ENABLED ? <Segment active={p.pricing === "marketplace"} onClick={() => p.setPricing("marketplace")}>Sell on Modulora</Segment> : null}
             <Segment active={p.pricing === "external"} onClick={() => p.setPricing("external")}>External</Segment>
           </div>
           <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
@@ -1026,7 +1029,7 @@ function SubmitStep({
         <div className="mt-4 flex flex-col divide-y divide-border/60">
           {checks.map((check) => (
             <div key={check.label} className="flex gap-3 py-3">
-              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-receipt" />
               <div>
                 <p className="text-sm font-medium">{check.label}</p>
                 <p className="text-xs leading-relaxed text-muted-foreground">{check.detail}</p>

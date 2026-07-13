@@ -10,9 +10,8 @@ export const SPLIT = { creator: 30, ossFund: 10, modulora: 60 } as const;
 
 /**
  * Minimum accrued profit share before a distribution pays out, in cents.
- * Marketplace sales settle per-sale through Stripe automatically — this
- * threshold applies only to profit-share distributions, so transfer fees
- * don't eat micro-payouts. Balances below it roll over to the next run.
+ * This threshold applies to profit-share distributions so transfer fees do
+ * not eat micro-payouts. Balances below it roll over to the next run.
  */
 export const PAYOUT_THRESHOLD_CENTS = 2500;
 
@@ -23,11 +22,11 @@ export interface ExplainerSection {
 
 export const PROFIT_SHARE_MODEL: ExplainerSection[] = [
   {
-    title: "Two ways to earn",
+    title: "Earning during alpha",
     body: [
-      "Direct sales: list a component, template, or page for a one-time price. You keep 90% of every sale — Modulora's 10% covers our fee and payment processing. Paid to your connected account, per sale.",
       "Profit share: your free, open components earn a share of Modulora's distributable profit based on how often they're actually installed — no listing required.",
-      "Both settle to the same connected payout account you set up once.",
+      "External sales remain available on verified creator domains. Creators handle checkout and fulfillment; Modulora records no purchase and takes no fee.",
+      "Direct checkout through Modulora is shelved for alpha.",
     ],
   },
   {
@@ -35,7 +34,7 @@ export const PROFIT_SHARE_MODEL: ExplainerSection[] = [
     body: [
       "Of Modulora's distributable profit for a period, 30% goes to creators, 10% to an open-source fund, and 60% is retained by Modulora to run and grow the platform.",
       "Distributable profit means revenue in the profit-share pool minus the costs of earning it — payment processing fees, infrastructure, and operating costs including salaries. It's what's left to distribute, not gross revenue.",
-      "The 30% creator pool is divided among creators in proportion to their verified installs for that period. This is separate from marketplace sales, where you keep 90% of each sale directly.",
+      "The 30% creator pool is divided among creators in proportion to their verified installs for that period.",
     ],
   },
   {

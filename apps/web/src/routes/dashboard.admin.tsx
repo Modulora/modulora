@@ -12,6 +12,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { ShieldEllipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { getCurrentUser } from "@/lib/session";
 import { isOwnerUser } from "@/lib/access";
 import { createPayoutRun, listPayoutRuns, type PayoutRunSummary } from "@/lib/distribution";
@@ -37,15 +38,11 @@ function AdminPage() {
   const { runs, members } = Route.useLoaderData();
   return (
     <div className="w-full max-w-3xl">
-      <div className="flex items-center gap-3">
-        <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-foreground">
-          <ShieldEllipsis className="size-4.5" />
-        </span>
-        <div>
-          <h1 className="text-xl font-semibold">Platform operations</h1>
-          <p className="text-xs text-muted-foreground">Owner-only. Nothing here is linked publicly.</p>
-        </div>
-      </div>
+      <DashboardPageHeader
+        title="Platform operations"
+        icon={ShieldEllipsis}
+        description="Owner-only controls. Nothing on this page is linked publicly."
+      />
 
       <DistributionsSection runs={runs} />
       <RolesSection members={members} />
@@ -73,11 +70,11 @@ function RolesSection({ members }: { members: Member[] }) {
       </p>
       <ul className="mt-4 flex flex-col gap-2">
         {members.map((member) => (
-          <li key={member.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-4 py-2.5">
+          <li key={member.id} className="flex flex-col items-stretch justify-between gap-3 rounded-lg border border-border/60 px-4 py-3 sm:flex-row sm:items-center">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">
                 {member.username ? `@${member.username}` : member.name || member.email}
-                {member.isOwner ? <span className="ml-2 rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">Owner</span> : null}
+                {member.isOwner ? <span className="ml-2 rounded-full border border-border/60 px-1.5 py-0.5 text-xs uppercase tracking-wide text-muted-foreground">Owner</span> : null}
               </p>
               <p className="truncate text-xs text-muted-foreground">{member.email}</p>
             </div>
@@ -157,12 +154,12 @@ function DistributionsSection({ runs }: { runs: PayoutRunSummary[] }) {
       {runs.length > 0 ? (
         <ul className="mt-4 flex flex-col gap-2">
           {runs.map((run) => (
-            <li key={run.id} className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-2.5 text-xs">
+            <li key={run.id} className="flex flex-col gap-1 rounded-lg border border-border/60 px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
               <span className="text-muted-foreground">
                 {run.periodStart.slice(0, 10)} → {run.periodEnd.slice(0, 10)} · {run.creators} creator(s) · {run.totalVerifiedInstalls} install(s)
               </span>
               <span className="tabular-nums">
-                pool {money(run.creatorPoolAmount)} · paid <span className="text-emerald-500">{money(run.paid)}</span>
+                pool {money(run.creatorPoolAmount)} · paid <span className="text-receipt">{money(run.paid)}</span>
               </span>
             </li>
           ))}

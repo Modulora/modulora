@@ -5,6 +5,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { requestOrigin } from "./request-origin";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq, isNotNull } from "drizzle-orm";
@@ -428,13 +429,7 @@ export async function publishCore(data: PublishInput, request: Request): Promise
 
     // Announce the submission to the curation channel. The component stays
     // pending and hidden from browse until a curator approves it.
-    const origin = (() => {
-      try {
-        return new URL(getRequest()!.url).origin;
-      } catch {
-        return "https://modulora.dev";
-      }
-    })();
+    const origin = requestOrigin(request);
     await fireReviewWebhook({
       componentId,
       title,

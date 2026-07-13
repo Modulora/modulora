@@ -42,7 +42,7 @@ export function FeedbackDialog({
           </DialogDescription>
         </DialogHeader>
         {done ? (
-          <div className="flex items-center gap-2 py-4 text-sm text-emerald-500">
+          <div className="flex items-center gap-2 py-4 text-sm text-receipt">
             <Check className="size-4" /> Sent — thank you.
           </div>
         ) : (

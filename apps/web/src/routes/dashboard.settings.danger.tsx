@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,10 +30,7 @@ function DangerPage() {
   const { identifier } = Route.useLoaderData();
   return (
     <div className="flex w-full max-w-2xl flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Danger zone</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Irreversible actions. Read carefully.</p>
-      </div>
+      <DashboardPageHeader title="Danger zone" description="Irreversible actions. Read carefully." />
       <div className="flex flex-col gap-5 rounded-xl border border-destructive/30 bg-destructive/5 p-6">
         <DeleteAccountSection identifier={identifier} />
       </div>
@@ -90,7 +88,7 @@ function DeleteAccountSection({ identifier }: { identifier: string }) {
           {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
           <div className="mt-5 flex flex-col gap-2">
             <HoldToConfirm label={pending ? "Deleting…" : "Hold to delete account"} disabled={!matches || pending} onConfirm={onDelete} />
-            <p className="text-center text-[11px] text-muted-foreground">Press and hold to confirm.</p>
+            <p className="text-center text-xs text-muted-foreground">Press and hold to confirm.</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -121,7 +119,16 @@ function HoldToConfirm({ label, disabled, onConfirm }: { label: string; disabled
       onPointerUp={cancel}
       onPointerLeave={cancel}
       onPointerCancel={cancel}
-      className="relative flex h-10 items-center justify-center overflow-hidden rounded-md border border-destructive/50 text-sm font-medium text-destructive transition-colors select-none disabled:pointer-events-none disabled:opacity-50"
+      onKeyDown={(event) => {
+        if (!event.repeat && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          start();
+        }
+      }}
+      onKeyUp={(event) => {
+        if (event.key === "Enter" || event.key === " ") cancel();
+      }}
+      className="relative flex h-11 items-center justify-center overflow-hidden rounded-md border border-destructive/50 text-sm font-medium text-destructive transition-colors select-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-destructive/30 disabled:pointer-events-none disabled:opacity-50"
     >
       <span
         aria-hidden
@@ -130,7 +137,7 @@ function HoldToConfirm({ label, disabled, onConfirm }: { label: string; disabled
           clipPath: holding ? "inset(0 0 0 0)" : "inset(0 100% 0 0)",
           transition: holding
             ? `clip-path ${DURATION}ms linear`
-            : "clip-path 200ms cubic-bezier(0.23,1,0.32,1)",
+            : "clip-path 200ms var(--ease-out-exact)",
         }}
       />
       <span className={`relative transition-colors ${holding ? "text-white" : ""}`}>{label}</span>

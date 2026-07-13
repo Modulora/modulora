@@ -26,7 +26,7 @@ export interface DnsRecordInfo {
 
 const statusChip: Record<DnsRecordStatus, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-amber-500/10 text-amber-500" },
-  valid: { label: "Verified", className: "bg-emerald-500/10 text-emerald-500" },
+  valid: { label: "Verified", className: "bg-receipt/10 text-receipt" },
   invalid: { label: "Mismatch", className: "bg-destructive/10 text-destructive" },
 };
 
@@ -79,7 +79,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
         {value}
       </code>
       <span className="shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground">
-        {copied ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
+        {copied ? <Check className="size-3.5 text-receipt" /> : <Copy className="size-3.5" />}
       </span>
     </button>
   );
@@ -108,7 +108,7 @@ export function OneClickSetup({
           {brand ? (
             <ProviderLogo provider={brand} className="size-4.5" />
           ) : (
-            <ShieldCheck className="size-4 text-emerald-500" />
+            <ShieldCheck className="size-4 text-receipt" />
           )}
         </span>
         <div className="min-w-0 flex-1">

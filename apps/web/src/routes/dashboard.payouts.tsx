@@ -1,11 +1,12 @@
 /**
  * Payouts — its own page under the dashboard shell. Stripe Connect status,
- * how each earning stream pays out, and the profit-share payout threshold.
+ * profit-share distribution status and payout threshold.
  */
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Banknote, Check, Loader2, PieChart, ShoppingBag } from "lucide-react";
+import { ArrowUpRight, Banknote, Check, Loader2, PieChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import {
   getPayoutDashboardLink,
   getPayoutStatus,
@@ -52,10 +53,10 @@ function PayoutsPage() {
 
   return (
     <div className="w-full max-w-3xl">
-      <h1 className="text-2xl font-semibold">Payouts</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Connect a Stripe account once — both earning streams pay into it. Stripe handles identity verification, banking, and tax.
-      </p>
+      <DashboardPageHeader
+        title="Payouts"
+        description="Connect a Stripe account once — both earning streams pay into it. Stripe handles identity verification, banking, and tax."
+      />
 
       <div className="mt-8 flex flex-col gap-6">
         {/* Status */}
@@ -69,7 +70,7 @@ function PayoutsPage() {
               <Banknote className="size-4 text-muted-foreground" /> Payouts active
             </span>
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-xs text-emerald-500">
+              <span className="flex items-center gap-1 text-xs text-receipt">
                 <Check className="size-3.5" /> Verified
               </span>
               <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onManage} className="gap-1.5">
@@ -78,9 +79,9 @@ function PayoutsPage() {
             </div>
           </div>
         ) : status.connected ? (
-          <div className="flex items-center justify-between rounded-xl border border-amber-500/40 bg-amber-500/[0.04] px-5 py-4">
+          <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-secondary/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <span className="flex items-center gap-2.5 text-sm font-medium">
-              <Banknote className="size-4 text-amber-500" /> Onboarding incomplete
+              <Banknote className="size-4 text-muted-foreground" /> Onboarding incomplete
             </span>
             <Button type="button" size="sm" disabled={busy} onClick={onSetup}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : null} Finish setup
@@ -89,7 +90,7 @@ function PayoutsPage() {
         ) : (
           <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/35 p-5">
             <p className="text-sm">
-              Set up payouts to start selling — it takes about two minutes, and you keep 90% of every sale.
+              Set up payouts to receive creator profit-share distributions once your accrued balance reaches the threshold.
             </p>
             <Button type="button" size="lg" className="w-full gap-2" disabled={busy} onClick={onSetup}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Banknote className="size-4" />} Set up payouts
@@ -97,17 +98,7 @@ function PayoutsPage() {
           </div>
         )}
 
-        {/* How each stream pays out */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-border/60 bg-card/35 p-5">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="size-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Marketplace sales</h2>
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Settle automatically, per sale. Your 90% share transfers to your Stripe account when the buyer pays — no threshold, no waiting on Modulora.
-            </p>
-          </div>
+        <div className="grid gap-4">
           <div className="rounded-xl border border-border/60 bg-card/35 p-5">
             <div className="flex items-center gap-2">
               <PieChart className="size-4 text-muted-foreground" />

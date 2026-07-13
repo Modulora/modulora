@@ -19,8 +19,8 @@ export function PriceSeal({ paid, label, size = "sm" }: { paid: boolean; label?:
   return (
     <span
       className={`ticket-pill relative inline-flex shrink-0 items-center justify-center overflow-hidden font-semibold tabular-nums ${
-        size === "md" ? "px-4 py-1.5 text-xs" : "px-3.5 py-1 text-[10px]"
-      } ${paid ? "bg-gradient-to-b from-amber-400 to-amber-500 text-black/90" : "bg-secondary text-muted-foreground"}`}
+        size === "md" ? "px-4 py-1.5 text-xs" : "px-3.5 py-1 text-xs"
+      } ${paid ? "bg-ticket text-ticket-foreground" : "bg-secondary text-muted-foreground"}`}
     >
       {text}
       <span aria-hidden className="ticket-texture pointer-events-none absolute inset-0" />
@@ -47,7 +47,7 @@ export function EarningsBreakdown({ dollars }: { dollars: string }) {
       </div>
       <div className="mt-0.5 flex items-center justify-between border-t border-border/60 pt-1.5 font-medium text-foreground">
         <span>You earn</span>
-        <span className="tabular-nums text-emerald-500">{money(net)}</span>
+        <span className="tabular-nums text-receipt">{money(net)}</span>
       </div>
     </div>
   );
@@ -79,7 +79,7 @@ export function LicensePicker({ template, setTemplate, text, setText }: { templa
           className="w-full rounded-lg border border-border/60 bg-transparent p-2.5 font-mono text-xs outline-none focus:border-foreground/40"
         />
       ) : null}
-      <p className="text-[11px] leading-relaxed text-muted-foreground">
+      <p className="text-xs leading-relaxed text-muted-foreground">
         Buyers must agree to these terms before checkout; we record the agreement on every sale. Modulora doesn&apos;t enforce licenses, but we support you with sale documentation and agreement logs if you need them.
       </p>
     </div>
@@ -90,8 +90,8 @@ export function LicensePicker({ template, setTemplate, text, setText }: { templa
 /** The 60/30/10 split, as a donut with legend (docs + explainer pages). */
 export function SplitDonut() {
   const segments = [
-    { label: "Creators", value: SPLIT.creator, color: "#10b981" },
-    { label: "Open-source fund", value: SPLIT.ossFund, color: "#f59e0b" },
+    { label: "Creators", value: SPLIT.creator, color: "var(--receipt)" },
+    { label: "Open-source fund", value: SPLIT.ossFund, color: "var(--ticket)" },
     { label: "Modulora", value: SPLIT.modulora, color: "#52525b" },
   ];
   return (
@@ -102,7 +102,7 @@ export function SplitDonut() {
         center={
           <>
             <span className="text-2xl font-bold">100%</span>
-            <span className="mt-0.5 max-w-[7rem] text-center text-[10px] leading-tight text-muted-foreground">of distributable profit</span>
+            <span className="mt-0.5 max-w-[7rem] text-center text-xs leading-tight text-muted-foreground">of distributable profit</span>
           </>
         }
       />
@@ -140,7 +140,7 @@ export function MarketplaceCalculator() {
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">You earn</p>
-            <p className="text-lg font-bold tabular-nums text-emerald-500">{cents > 0 ? money(creatorNet(cents)) : "—"}</p>
+            <p className="text-lg font-bold tabular-nums text-receipt">{cents > 0 ? money(creatorNet(cents)) : "—"}</p>
           </div>
         </div>
       </div>
@@ -158,12 +158,12 @@ export function MarketplaceCalculator() {
  */
 export function PromotedBadge({ tone = "amber" }: { tone?: "amber" | "neutral" }) {
   const tones = {
-    amber: "border-amber-500/25 bg-amber-500/10 text-amber-500",
+    amber: "border-ticket/25 bg-ticket/10 text-ticket-ink",
     neutral: "border-border/60 bg-background/80 text-muted-foreground",
   } as const;
   return (
     <span
-      className={`absolute right-5 top-5 z-10 rounded-full border px-2 py-0.5 text-[10px] font-medium backdrop-blur ${tones[tone]}`}
+      className={`absolute right-5 top-5 z-10 rounded-full border px-2 py-0.5 text-xs font-medium backdrop-blur ${tones[tone]}`}
     >
       Promoted
     </span>

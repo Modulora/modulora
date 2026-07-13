@@ -24,7 +24,7 @@ export function PreviewToolbar({
   onFullscreen: () => void;
 }) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex min-w-max items-center gap-1">
       <ToolbarGroup>
         <ToolbarButton label="Mobile preview" active={viewport === "mobile"} onClick={() => onViewport("mobile")}><Smartphone /></ToolbarButton>
         <ToolbarButton label="Tablet preview" active={viewport === "tablet"} onClick={() => onViewport("tablet")}><Tablet /></ToolbarButton>
@@ -41,7 +41,7 @@ export function PreviewToolbar({
 }
 
 export function ToolbarGroup({ children }: { children: ReactNode }) {
-  return <div className="mr-1 flex rounded-md border border-border/60 p-0.5">{children}</div>;
+  return <div className="mr-1 flex shrink-0 rounded-md border border-border/60 p-0.5">{children}</div>;
 }
 
 export function ToolbarButton({
@@ -61,7 +61,7 @@ export function ToolbarButton({
       aria-label={label}
       aria-pressed={active}
       onClick={onClick}
-      className={`flex size-7 items-center justify-center rounded transition-[background-color,color,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] active:scale-[0.96] [&_svg]:size-3.5 ${active ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+      className={`flex size-11 shrink-0 items-center justify-center rounded transition-[background-color,color,transform] [transition-duration:var(--motion-control-duration)] [transition-timing-function:var(--ease-out-exact)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:size-7 [&_svg]:size-3.5 ${active ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
     >
       {children}
     </button>

@@ -49,7 +49,7 @@ export const startPlusCheckout = createServerFn({ method: "POST" }).handler(
     const customer = await customerFor(user.id, user.email);
     if (!customer) return { ok: false, error: "Could not set up billing." };
 
-    const origin = originOf();
+    const origin = originOf(request);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer,
@@ -112,7 +112,7 @@ export const openBillingPortal = createServerFn({ method: "POST" }).handler(
     if (!row?.id) return { ok: false, error: "No billing account yet." };
     const session = await stripe.billingPortal.sessions.create({
       customer: row.id,
-      return_url: `${originOf()}/pricing`,
+      return_url: `${originOf(request)}/pricing`,
     });
     return { ok: true, url: session.url };
   },

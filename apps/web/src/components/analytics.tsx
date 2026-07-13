@@ -4,6 +4,7 @@
  * paid sales. Views never affect earnings, and the panel says so.
  */
 import { Eye, ShieldCheck, ShoppingBag } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { CreatorAnalytics } from "@/lib/analytics";
 
 export function AnalyticsTotals({ totals }: { totals: CreatorAnalytics["totals"] }) {
@@ -51,7 +52,7 @@ export function AnalyticsTable({ components }: { components: CreatorAnalytics["c
                 ) : null}
               </td>
               <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{component.views}</td>
-              <td className="px-4 py-3 text-right font-medium tabular-nums text-emerald-500">{component.verifiedInstalls}</td>
+              <td className="px-4 py-3 text-right font-medium tabular-nums text-receipt">{component.verifiedInstalls}</td>
               <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{component.sales}</td>
             </tr>
           ))}
@@ -63,12 +64,10 @@ export function AnalyticsTable({ components }: { components: CreatorAnalytics["c
 
 export function AnalyticsEmptyState() {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 px-6 py-12 text-center">
-      <Eye className="size-6 text-muted-foreground" />
-      <p className="text-sm font-medium">Nothing to count yet</p>
-      <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-        Views and verified installs appear here once a component is live. Only digest-verified CLI installs count toward earnings — views never do.
-      </p>
-    </div>
+    <EmptyState
+      icon={Eye}
+      title="Nothing to count yet"
+      description="Views and verified installs appear here once a component is live. Only digest-verified CLI installs count toward earnings — views never do."
+    />
   );
 }

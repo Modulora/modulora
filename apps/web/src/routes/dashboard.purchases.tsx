@@ -4,6 +4,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { PurchasesEmptyState, PurchasesList } from "@/components/owned";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { fetchMyPurchases } from "@/lib/purchases";
 
 export const Route = createFileRoute("/dashboard/purchases")({
@@ -15,10 +16,10 @@ function PurchasesPage() {
   const { purchases } = Route.useLoaderData();
   return (
     <div className="w-full max-w-4xl">
-      <h1 className="text-2xl font-semibold">Purchases</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Components you own — install them, hand them to your coding agent, or review the license you agreed to.
-      </p>
+      <DashboardPageHeader
+        title="Purchases"
+        description="Components you own — install them, hand them to your coding agent, or review the license you agreed to."
+      />
       <div className="mt-8">
         {purchases.length > 0 ? <PurchasesList purchases={purchases} /> : <PurchasesEmptyState />}
       </div>

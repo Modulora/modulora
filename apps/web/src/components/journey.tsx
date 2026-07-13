@@ -44,16 +44,9 @@ export const JOURNEY_STEPS: JourneyStepDef[] = [
   {
     key: "payouts",
     title: "Connect payouts",
-    description: "One Stripe account for both earning streams — takes about two minutes.",
+    description: "Connect Stripe to receive creator profit-share distributions.",
     href: "/dashboard/payouts",
     action: "Set up payouts",
-  },
-  {
-    key: "priced",
-    title: "Sell",
-    description: "Set a price on a component. You keep 90% of every sale.",
-    href: "/dashboard/components",
-    action: "Set a price",
   },
 ];
 
@@ -97,7 +90,7 @@ export function JourneyChecklist({
             <StepperItem key={step.key} step={index + 1} className="relative flex-1 items-start">
               {/* Status display, not navigation — journey state comes from data. */}
               <StepperTrigger className="pointer-events-none flex grow flex-col items-start justify-center gap-2" tabIndex={-1}>
-                <StepperIndicator className="h-1 w-full rounded-full bg-border data-[state=active]:bg-foreground data-[state=completed]:bg-emerald-500">
+                <StepperIndicator className="h-1 w-full rounded-full bg-border data-[state=active]:bg-foreground data-[state=completed]:bg-receipt">
                   <span className="sr-only">{index + 1}</span>
                 </StepperIndicator>
                 <StepperTitle className="text-start text-xs font-medium group-data-[state=inactive]/step:text-muted-foreground/60">

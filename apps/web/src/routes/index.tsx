@@ -11,7 +11,8 @@
  * 1600ms   beui credit fades in at the bottom
  * ───────────────────────────────────────────────────────── */
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { motion } from "motion/react";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,18 @@ import {
   type UsernameCheck,
 } from "../lib/waitlist";
 
-export const Route = createFileRoute("/")({ component: Home });
+const getHomeData = createServerFn({ method: "GET" }).handler(async () => {
+  return { mode: process.env.LANDING_MODE === "platform" ? ("platform" as const) : ("waitlist" as const) };
+});
+
+export const Route = createFileRoute("/")({
+  loader: async () => {
+    const data = await getHomeData();
+    if (data.mode === "platform") throw redirect({ to: "/components" });
+    return data;
+  },
+  component: Home,
+});
 
 const TIMING = {
   wordmark: 200, // wordmark fades in
@@ -91,8 +103,8 @@ function StatusLine({ status }: { status: FieldStatus }) {
         </>
       ) : status.kind === "valid" ? (
         <>
-          <Check className="size-3 text-emerald-400" />
-          <span className="text-emerald-400">{status.message}</span>
+          <Check className="size-3 text-receipt" />
+          <span className="text-receipt">{status.message}</span>
         </>
       ) : (
         <>
@@ -105,6 +117,10 @@ function StatusLine({ status }: { status: FieldStatus }) {
 }
 
 function Home() {
+  return <WaitlistHome />;
+}
+
+function WaitlistHome() {
   const [stage, setStage] = useState(0);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -270,7 +286,7 @@ function Home() {
         >
           {reserved ? (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <Check className="size-6 text-emerald-400" />
+              <Check className="size-6 text-receipt" />
               {memberNumber ? (
                 <span className="rounded-full border border-border/60 bg-background/60 px-3 py-1 font-mono text-xs tracking-wider text-muted-foreground">
                   MEMBER #{memberNumber}

@@ -19,7 +19,7 @@
  *   package.json                 → customSetup.dependencies
  */
 import { useEffect, useMemo, useState } from "react";
-import { SandpackProvider, SandpackPreview, useSandpack } from "@codesandbox/sandpack-react";
+import { SandpackProvider, SandpackPreview } from "@codesandbox/sandpack-react";
 import { scaffoldFiles } from "@/lib/scaffold";
 import { Logo } from "@/components/logo";
 
@@ -114,15 +114,19 @@ export {};
 
 /** Breathing Modulora logo shown until the sandbox finishes its first bundle. */
 function LoadingCover({ theme }: { theme: "light" | "dark" }) {
-  const { listen } = useSandpack();
   const [done, setDone] = useState(false);
-  useEffect(
-    () =>
-      listen((message) => {
-        if (message.type === "done") setDone(true);
-      }),
-    [listen],
-  );
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === "modulora-preview-ready") setDone(true);
+    };
+    // If author code fails before mounting, reveal Sandpack's own error overlay.
+    const timeout = window.setTimeout(() => setDone(true), 8_000);
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("message", onMessage);
+    };
+  }, []);
   if (done) return null;
   return (
     <div
@@ -183,9 +187,11 @@ export function ComponentSandbox({
 
     const demoImport = "." + toSandboxPath(selectedDemo).replace(/\.(tsx|jsx)$/, "");
     mapped["/App.tsx"] =
+      `import { useEffect } from "react";\n` +
       `import "./tw-tokens.js";\n` +
       `import Demo from "${demoImport}";\n\n` +
       `export default function App() {\n` +
+      `  useEffect(() => { window.parent.postMessage({ type: "modulora-preview-ready" }, "*"); }, []);\n` +
       `  return (\n    <div className="flex min-h-screen w-full items-center justify-center bg-background text-foreground p-8">\n      <Demo />\n    </div>\n  );\n}\n`;
 
     return mapped;

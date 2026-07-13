@@ -5,8 +5,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { EarningsEmptyState, EarningsSummary, ProfitSharePanel, SalesList } from "@/components/earnings";
 import { fetchEarnings } from "@/lib/earnings";
+import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 
 export const Route = createFileRoute("/dashboard/earnings")({
   loader: async () => ({ earnings: await fetchEarnings() }),
@@ -19,15 +21,10 @@ function EarningsPage() {
 
   return (
     <div className="w-full max-w-4xl">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Earnings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Two streams: marketplace sales (you keep 90%) and the creator profit share.{" "}
-            <Link to="/profit-share" className="text-foreground underline underline-offset-2">How earning works</Link>
-          </p>
-        </div>
-        {!earnings.payoutsEnabled ? (
+      <DashboardPageHeader
+        title="Earnings"
+        description={<>{DIRECT_MARKETPLACE_ENABLED ? "Marketplace sales and creator profit share." : "Your share of Modulora's distributable profit, based on verified CLI installs."}{" "}<Link to="/profit-share" className="text-foreground underline underline-offset-2">How earning works</Link></>}
+        action={!earnings.payoutsEnabled ? (
           <Button asChild size="sm">
             <Link to="/dashboard/payouts">Set up payouts</Link>
           </Button>
@@ -38,15 +35,15 @@ function EarningsPage() {
             </Link>
           </Button>
         )}
-      </div>
+      />
 
       <div className="mt-8 flex flex-col gap-6">
-        <EarningsSummary data={earnings} />
-        {earnings.sales.length > 0 ? (
+        <EarningsSummary data={earnings} showSales={DIRECT_MARKETPLACE_ENABLED} />
+        {DIRECT_MARKETPLACE_ENABLED && earnings.sales.length > 0 ? (
           <SalesList sales={earnings.sales} />
-        ) : (
+        ) : DIRECT_MARKETPLACE_ENABLED ? (
           <EarningsEmptyState payoutsEnabled={earnings.payoutsEnabled} />
-        )}
+        ) : null}
         <ProfitSharePanel
           data={earnings}
           learnMore={<Link to="/profit-share" className="text-foreground underline underline-offset-2">How the split works</Link>}

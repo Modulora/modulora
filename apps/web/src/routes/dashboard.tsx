@@ -5,6 +5,7 @@
  */
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { DashboardLoading, DashboardRouteError } from "@/components/dashboard-route-state";
 import { fetchStudioSummary } from "@/lib/studio";
 
 export const Route = createFileRoute("/dashboard")({
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/dashboard")({
     if (!summary) throw redirect({ to: "/signin" });
     return summary;
   },
+  pendingComponent: DashboardLoading,
+  errorComponent: DashboardRouteError,
   component: DashboardLayout,
 });
 
@@ -27,7 +30,7 @@ function DashboardLayout() {
   if (fullBleed) return <Outlet />;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[16rem_1fr]">
+    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[16rem_1fr] lg:gap-8">
       <DashboardSidebar summary={summary} />
       <div className="min-w-0">
         <Outlet />

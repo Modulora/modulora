@@ -1,13 +1,5 @@
-/* ─────────────────────────────────────────────────────────
- * MY COMPONENTS — manage/edit/remove
- *
- *    0ms   hidden
- *   70ms   heading rises
- *  160ms   rows rise, staggered 50ms
- * ───────────────────────────────────────────────────────── */
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
-import { motion } from "motion/react";
 import { Blocks, ExternalLink, Loader2, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +16,10 @@ import { confirmCheckout, setComponentPrice, startPromotion } from "@/lib/market
 import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
 import { LiveCardPreview } from "@/components/live-card-preview";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Tag } from "lucide-react";
+import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 
 export const Route = createFileRoute("/dashboard/components")({
   beforeLoad: ({ context }) => {
@@ -37,27 +32,11 @@ export const Route = createFileRoute("/dashboard/components")({
   component: MyComponents,
 });
 
-const TIMING = { heading: 70, rows: 160 };
-const RISE = {
-  offsetY: 8,
-  stagger: 0.05,
-  spring: { type: "spring" as const, stiffness: 340, damping: 28 },
-};
-
 function MyComponents() {
   const { components } = Route.useLoaderData();
   const { user } = Route.useRouteContext();
   const router = useRouter();
-  const [stage, setStage] = useState(0);
   const [promoted, setPromoted] = useState(false);
-
-  useEffect(() => {
-    const timers = [
-      setTimeout(() => setStage(1), TIMING.heading),
-      setTimeout(() => setStage(2), TIMING.rows),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, []);
 
   // Confirm a returning promotion Checkout, then clean the URL.
   useEffect(() => {
@@ -73,52 +52,30 @@ function MyComponents() {
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-6">
-      <motion.div
-        initial={{ opacity: 0, y: RISE.offsetY }}
-        animate={{ opacity: stage >= 1 ? 1 : 0, y: stage >= 1 ? 0 : RISE.offsetY }}
-        transition={RISE.spring}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Components</h1>
-          <p className="mt-1 text-muted-foreground">Edit or remove what you've published.</p>
-        </div>
-        <Button asChild className="gap-2">
-          <Link to="/dashboard/new"><Plus className="size-4" /> New component</Link>
-        </Button>
-      </motion.div>
+      <DashboardPageHeader
+        title="Components"
+        description={DIRECT_MARKETPLACE_ENABLED ? "Edit, price, promote, or remove what you've published." : "Edit, distribute, promote, or remove what you've published."}
+        action={<Button asChild><Link to="/dashboard/new"><Plus /> New component</Link></Button>}
+      />
 
       {promoted ? (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-2.5 text-sm text-emerald-500">
+        <div className="rounded-lg border border-receipt/30 bg-receipt/5 px-4 py-2.5 text-sm text-receipt">
           Promotion active — your component is now featured on browse.
         </div>
       ) : null}
 
       {components.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: stage >= 2 ? 1 : 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/70 text-center"
-        >
-          <Blocks className="size-5 text-muted-foreground" />
-          <div>
-            <p className="font-medium">No components yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Publish your first component to see it here.</p>
-          </div>
-          <Button asChild size="sm"><Link to="/dashboard/new">New component</Link></Button>
-        </motion.div>
+        <EmptyState
+          icon={Blocks}
+          title="No components yet"
+          description="Publish your first component to manage its review, pricing, and distribution here."
+          action={<Button asChild size="sm"><Link to="/dashboard/new">New component</Link></Button>}
+          className="min-h-64 justify-center"
+        />
       ) : (
         <div className="flex flex-col gap-2">
-          {components.map((component, index) => (
-            <motion.div
-              key={component.name}
-              initial={{ opacity: 0, y: RISE.offsetY }}
-              animate={{ opacity: stage >= 2 ? 1 : 0, y: stage >= 2 ? 0 : RISE.offsetY }}
-              transition={{ ...RISE.spring, delay: index * RISE.stagger }}
-            >
-              <ComponentRow component={component} username={user?.username ?? ""} payoutsEnabled={Boolean(user?.payoutsEnabled)} />
-            </motion.div>
+          {components.map((component) => (
+            <ComponentRow key={component.name} component={component} username={user?.username ?? ""} payoutsEnabled={Boolean(user?.payoutsEnabled)} />
           ))}
         </div>
       )}
@@ -129,12 +86,12 @@ function MyComponents() {
 function ReviewBadge({ status }: { status: MyComponent["reviewStatus"] }) {
   const map = {
     draft: { label: "Draft", cls: "bg-secondary text-muted-foreground" },
-    approved: { label: "Live", cls: "bg-emerald-500/10 text-emerald-500" },
-    pending: { label: "In review", cls: "bg-amber-500/10 text-amber-500" },
+    approved: { label: "Live", cls: "bg-receipt/10 text-receipt" },
+    pending: { label: "In review", cls: "bg-secondary text-foreground" },
     rejected: { label: "Changes requested", cls: "bg-destructive/10 text-destructive" },
   } as const;
   const { label, cls } = map[status];
-  return <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${cls}`}>{label}</span>;
+  return <span className={`rounded-full px-2 py-0.5 text-xs ${cls}`}>{label}</span>;
 }
 
 function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; payoutsEnabled: boolean }) {
@@ -175,8 +132,8 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
           </DialogDescription>
         </DialogHeader>
         {!payoutsEnabled ? (
-          <div className="mt-4 flex flex-col gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
-            <p className="text-sm text-amber-500">Connect payouts first — it takes about two minutes, and you keep 90% of every sale.</p>
+          <div className="mt-4 flex flex-col gap-3 rounded-lg border border-border/60 bg-secondary/30 p-4">
+            <p className="text-sm text-foreground">Connect payouts first — it takes about two minutes, and you keep 90% of every sale.</p>
             <Button asChild size="sm" className="self-start">
               <Link to="/dashboard/payouts">Set up payouts</Link>
             </Button>
@@ -230,15 +187,15 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
   }
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-card/40 p-4">
+    <div className="flex flex-col items-stretch gap-3 rounded-xl border border-border/60 bg-card/40 p-4 sm:flex-row sm:items-center sm:gap-4">
       <LiveCardPreview
         item={{ namespace: username, name: component.name, title: component.title, live: true }}
         className="w-28 shrink-0 max-sm:hidden"
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h2 className="truncate font-medium">{component.title}</h2>
-          <PriceSeal paid={component.sourceModel !== "open-source" || component.marketplacePrice != null} label={component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="min-w-0 truncate font-medium">{component.title}</h2>
+          <PriceSeal paid={component.sourceModel !== "open-source" || (DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null)} label={DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />
           <ReviewBadge status={component.reviewStatus} />
         </div>
         <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">@{username}/{component.name}@{component.version} · {component.category}</p>
@@ -246,7 +203,7 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
           <p className="mt-1 line-clamp-2 text-xs text-destructive">Changes requested: {component.reviewReason}</p>
         ) : null}
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1 border-t border-border/50 pt-2 sm:shrink-0 sm:border-0 sm:pt-0">
         <Button asChild variant="ghost" size="sm" className="gap-1.5">
           <Link to="/components/$namespace/$name" params={{ namespace: username, name: component.name }}><ExternalLink className="size-3.5" /> View</Link>
         </Button>
@@ -255,7 +212,7 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
         </Button>
         {component.reviewStatus === "approved" ? (
           <>
-            <PriceDialog component={component} payoutsEnabled={payoutsEnabled} />
+            {DIRECT_MARKETPLACE_ENABLED ? <PriceDialog component={component} payoutsEnabled={payoutsEnabled} /> : null}
             <Button variant="ghost" size="sm" className="gap-1.5" disabled={promoting} onClick={onPromote}>
               {promoting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />} Promote
             </Button>
@@ -263,7 +220,7 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
         ) : null}
         <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setConfirm(""); }}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></Button>
+            <Button aria-label={`Delete ${component.title}`} variant="ghost" size="icon-sm" className="ml-auto text-muted-foreground hover:text-destructive"><Trash2 /></Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

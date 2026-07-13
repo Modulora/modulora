@@ -258,7 +258,7 @@ function SocialLink({
       {verifiedVia ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <button type="button" aria-label={`Verified via ${verifiedVia}`} className="text-emerald-500 outline-none">
+            <button type="button" aria-label={`Verified via ${verifiedVia}`} className="text-receipt outline-none">
               <HugeiconsIcon icon={CheckmarkBadge01Icon} size={13} />
             </button>
           </TooltipTrigger>
@@ -343,7 +343,7 @@ function CollectionCard({ collection, namespace, components }: { collection: imp
       ) : collection.price != null && !collection.owned ? (
         <BuyCollectionDialog collection={{ namespace, name: collection.name, price: collection.price, license: collection.license }} />
       ) : null}
-      {collection.owned ? <p className="px-1 text-[11px] text-emerald-500">You own this collection.</p> : null}
+      {collection.owned ? <p className="px-1 text-[11px] text-receipt">You own this collection.</p> : null}
     </div>
   );
 }

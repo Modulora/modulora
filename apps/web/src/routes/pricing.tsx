@@ -29,7 +29,7 @@ export const Route = createFileRoute("/pricing")({
 const FREE = [
   "Publish unlimited components",
   "Verified installs (CLI digest checks)",
-  "Sell components and collections — keep 90%",
+  "Link external sales from verified domains",
   "Profit share on verified installs",
   "Public profile, evidence, analytics",
 ];
@@ -100,7 +100,7 @@ function PricingPage() {
           <ul className="mt-5 flex flex-1 flex-col gap-2.5">
             {FREE.map((benefit) => (
               <li key={benefit} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" /> {benefit}
+                <Check className="mt-0.5 size-4 shrink-0 text-receipt" /> {benefit}
               </li>
             ))}
           </ul>
@@ -117,7 +117,7 @@ function PricingPage() {
           <ul className="mt-5 flex flex-1 flex-col gap-2.5">
             {PLUS.map((benefit) => (
               <li key={benefit.label} className="flex items-start gap-2 text-sm">
-                <Check className={`mt-0.5 size-4 shrink-0 ${benefit.live ? "text-emerald-500" : "text-muted-foreground/40"}`} />
+                <Check className={`mt-0.5 size-4 shrink-0 ${benefit.live ? "text-receipt" : "text-muted-foreground/40"}`} />
                 <span className={benefit.live ? "" : "text-muted-foreground"}>
                   {benefit.label}
                   {!benefit.live ? <span className="ml-1.5 rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">coming</span> : null}

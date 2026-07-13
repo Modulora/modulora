@@ -3,6 +3,8 @@ import { useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Globe, ListPlus, Loader2, Lock, Plus, Sparkles, Trash2, Check, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { createList, deleteList, fetchMyLists, setListVisibility } from "@/lib/lists";
 import { fetchMyBookmarks } from "@/lib/bookmarks";
@@ -25,25 +27,24 @@ function ListsPage() {
   if (!mine.plus) {
     return (
       <div className="w-full max-w-3xl">
-        <h1 className="text-2xl font-semibold">Lists</h1>
-        <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 px-6 py-12 text-center">
-          <Sparkles className="size-6 text-muted-foreground" />
-          <p className="text-sm font-medium">Part of Modulora Plus</p>
-          <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-            Bookmarks and public/private component lists are Plus features. Saving never affects a component&apos;s rank or earnings.
-          </p>
-          <Link to="/pricing" className="mt-1 text-xs font-medium text-foreground underline underline-offset-2">See pricing →</Link>
-        </div>
+        <DashboardPageHeader title="Lists" />
+        <EmptyState
+          icon={Sparkles}
+          title="Part of Modulora Plus"
+          description={<>Bookmarks and public/private component lists are Plus features. Saving never affects a component&apos;s rank or earnings.</>}
+          action={<Link to="/pricing" className="text-xs font-medium text-foreground underline underline-offset-2">See pricing →</Link>}
+          className="mt-8"
+        />
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-3xl">
-      <h1 className="text-2xl font-semibold">Lists</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Group anyone&apos;s components. Public lists show on your profile as &quot;curated by you&quot;; private ones are yours alone.
-      </p>
+      <DashboardPageHeader
+        title="Lists"
+        description={<>Group anyone&apos;s components. Public lists show on your profile as &quot;curated by you&quot;; private ones are yours alone.</>}
+      />
 
       <div className="mt-6 flex flex-wrap items-end gap-2 rounded-xl border border-border/60 bg-card/35 p-4">
         <div className="flex min-w-48 flex-1 flex-col gap-1">
@@ -93,7 +94,7 @@ function ListsPage() {
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <p className="truncate text-sm font-medium">{list.title}</p>
-                <span className="flex items-center gap-1 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1 rounded-full bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">
                   {list.visibility === "public" ? <Globe className="size-2.5" /> : <Lock className="size-2.5" />}
                   {list.visibility}
                 </span>
@@ -177,7 +178,7 @@ function CopyListLink({ list, username }: { list: { name: string; visibility: "p
         setTimeout(() => setCopied(false), 1400);
       }}
     >
-      {copied ? <Check className="size-3.5 text-emerald-500" /> : <LinkIcon className="size-3.5" />}
+      {copied ? <Check className="size-3.5 text-receipt" /> : <LinkIcon className="size-3.5" />}
       {copied ? "Copied" : "Copy link"}
     </Button>
   );

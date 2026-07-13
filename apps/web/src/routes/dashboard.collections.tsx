@@ -6,6 +6,8 @@ import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Layers, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,6 +23,7 @@ import { fetchMyComponents } from "@/lib/catalog-db";
 import { setCollectionExternalUrl, setCollectionPrice } from "@/lib/marketplace";
 import { getPayoutStatus } from "@/lib/payouts";
 import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
+import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 
 export const Route = createFileRoute("/dashboard/collections")({
   loader: async () => ({
@@ -37,25 +40,19 @@ function CollectionsPage() {
 
   return (
     <div className="w-full max-w-3xl">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Collections</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Group your components into installable kits — one command installs every member, each digest-verified on its own. Only approved, public members serve.
-          </p>
-        </div>
-        <CollectionDialog eligible={eligible.map((c) => ({ name: c.name, title: c.title }))} />
-      </div>
+      <DashboardPageHeader
+        title="Collections"
+        description="Group your components into installable kits — one command installs every member, each digest-verified on its own. Only approved, public members serve."
+        action={<CollectionDialog eligible={eligible.map((c) => ({ name: c.name, title: c.title }))} />}
+      />
 
       <div className="mt-8 flex flex-col gap-3">
         {collections.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 px-6 py-12 text-center">
-            <Layers className="size-6 text-muted-foreground" />
-            <p className="text-sm font-medium">No collections yet</p>
-            <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-              Bundle related components — a dashboard kit, a marketing set — and users install the whole thing with one command.
-            </p>
-          </div>
+          <EmptyState
+            icon={Layers}
+            title="No collections yet"
+            description="Bundle related components — a dashboard kit, a marketing set — and users install the whole thing with one command."
+          />
         ) : (
           collections.map((collection) => <CollectionRow key={collection.id} collection={collection} eligible={eligible.map((c) => ({ name: c.name, title: c.title }))} payoutsEnabled={payouts.payoutsEnabled} />)
         )}
@@ -73,7 +70,7 @@ function CollectionRow({ collection, eligible, payoutsEnabled }: { collection: M
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="truncate font-medium">{collection.title}</h2>
-            <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            <span className="rounded-full bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">
               {collection.items.length} component{collection.items.length === 1 ? "" : "s"}
             </span>
           </div>
@@ -201,7 +198,9 @@ function CollectionDialog({ eligible, existing }: { eligible: { name: string; ti
 function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCollection; payoutsEnabled: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"modulora" | "external">(collection.externalUrl ? "external" : "modulora");
+  const [mode, setMode] = useState<"modulora" | "external">(
+    DIRECT_MARKETPLACE_ENABLED && !collection.externalUrl ? "modulora" : "external",
+  );
   const [dollars, setDollars] = useState(collection.price != null ? String(collection.price / 100) : "");
   const [externalUrl, setExternalUrl] = useState(collection.externalUrl ?? "");
   const [licenseTemplate, setLicenseTemplate] = useState("modulora-commercial-v1");
@@ -239,7 +238,7 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          {collection.price != null ? (
+          {DIRECT_MARKETPLACE_ENABLED && collection.price != null ? (
             <PriceSeal paid label={`$${collection.price / 100}`} />
           ) : collection.externalUrl ? (
             <PriceSeal paid label="external" />
@@ -252,24 +251,24 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
         <DialogHeader>
           <DialogTitle>Sell {collection.title}</DialogTitle>
           <DialogDescription>
-            {mode === "modulora"
+            {DIRECT_MARKETPLACE_ENABLED && mode === "modulora"
               ? "One price for the whole collection. Buyers get every current member — the purchase snapshots entitlements, so later edits don't change what they bought. You keep 90%."
               : "List the collection as sold on your own site. Modulora hosts no source, records no purchase, and takes no fee — buyers are linked out. The URL must be on a domain you've verified."}
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-3 flex rounded-md border border-border/60 p-0.5">
+        {DIRECT_MARKETPLACE_ENABLED ? <div className="mt-3 flex rounded-md border border-border/60 p-0.5">
           {(["modulora", "external"] as const).map((m) => (
             <button
               key={m}
               type="button"
               aria-pressed={mode === m}
               onClick={() => setMode(m)}
-              className={`flex-1 rounded px-3 py-1.5 text-xs transition-colors ${mode === m ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`min-h-11 flex-1 rounded px-3 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${mode === m ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               {m === "modulora" ? "Sell on Modulora" : "Sold on your site"}
             </button>
           ))}
-        </div>
+        </div> : null}
         {mode === "external" ? (
           <div className="mt-4 flex flex-col gap-3">
             <Input value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} placeholder="https://you.dev/pro" className="h-9" />
@@ -284,7 +283,7 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
             </div>
           </div>
         ) : !payoutsEnabled ? (
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-500">
+          <div className="mt-4 rounded-lg border border-border/60 bg-secondary/30 p-4 text-sm text-foreground">
             Connect payouts first — see the Payouts page.
           </div>
         ) : (

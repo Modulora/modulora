@@ -6,20 +6,23 @@ import type { ReactNode } from "react";
 import { Banknote, PieChart, ShieldCheck, ShoppingBag } from "lucide-react";
 import type { EarningsData, EarningsSale } from "@/lib/earnings";
 import { PAYOUT_THRESHOLD_CENTS } from "@/lib/profit-share";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export function money(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-export function EarningsSummary({ data }: { data: EarningsData }) {
+export function EarningsSummary({ data, showSales = true }: { data: EarningsData; showSales?: boolean }) {
   const cards = [
-    { label: "Sales earnings", value: money(data.netAmount), sub: `${money(data.grossAmount)} gross − ${money(data.feeAmount)} fees`, icon: Banknote },
-    { label: "Sales", value: String(data.totalSales), sub: "one-time purchases", icon: ShoppingBag },
+    ...(showSales ? [
+      { label: "Sales earnings", value: money(data.netAmount), sub: `${money(data.grossAmount)} gross − ${money(data.feeAmount)} fees`, icon: Banknote },
+      { label: "Sales", value: String(data.totalSales), sub: "one-time purchases", icon: ShoppingBag },
+    ] : []),
     { label: "Profit share", value: money(data.profitShareDistributed), sub: "distributed to date", icon: PieChart },
     { label: "Verified installs", value: String(data.verifiedInstalls), sub: "digest-verified via the CLI", icon: ShieldCheck },
   ];
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${showSales ? "lg:grid-cols-4" : ""}`}>
       {cards.map((card) => (
         <div key={card.label} className="rounded-xl border border-border/60 bg-card/35 p-4">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -52,7 +55,7 @@ export function ProfitSharePanel({ data, learnMore }: { data: EarningsData; lear
       </p>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
         {data.profitShareDistributed > 0
-          ? <>Distributed to you so far: <span className="font-medium text-emerald-500">{money(data.profitShareDistributed)}</span>.</>
+          ? <>Distributed to you so far: <span className="font-medium text-receipt">{money(data.profitShareDistributed)}</span>.</>
           : "No distributions have been paid to you yet."}{" "}
         {data.profitSharePending > 0 ? (
           <>Accrued and waiting: <span className="font-medium text-foreground">{money(data.profitSharePending)}</span> — pays out on a distribution run once it reaches {`$${(PAYOUT_THRESHOLD_CENTS / 100).toFixed(0)}`}.</>
@@ -85,7 +88,7 @@ export function SalesList({ sales }: { sales: EarningsSale[] }) {
               <td className="px-4 py-3 font-medium">{sale.componentTitle}</td>
               <td className="px-4 py-3 text-muted-foreground">{sale.buyerUsername ? `@${sale.buyerUsername}` : "—"}</td>
               <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{money(sale.amount)}</td>
-              <td className="px-4 py-3 text-right font-medium tabular-nums text-emerald-500">{money(sale.amount - sale.feeAmount)}</td>
+              <td className="px-4 py-3 text-right font-medium tabular-nums text-receipt">{money(sale.amount - sale.feeAmount)}</td>
               <td className="px-4 py-3 text-right text-xs text-muted-foreground">{relativeTime(sale.createdAt)}</td>
             </tr>
           ))}
@@ -97,15 +100,15 @@ export function SalesList({ sales }: { sales: EarningsSale[] }) {
 
 export function EarningsEmptyState({ payoutsEnabled }: { payoutsEnabled: boolean }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 px-6 py-12 text-center">
-      <Banknote className="size-6 text-muted-foreground" />
-      <p className="text-sm font-medium">No sales yet</p>
-      <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-        {payoutsEnabled
+    <EmptyState
+      icon={Banknote}
+      title="No sales yet"
+      description={
+        payoutsEnabled
           ? "Set a price on one of your components — buyers pay through Modulora and you keep 90% of every sale."
-          : "Connect payouts, then set a price on one of your components. You keep 90% of every sale."}
-      </p>
-    </div>
+          : "Connect payouts, then set a price on one of your components. You keep 90% of every sale."
+      }
+    />
   );
 }
 

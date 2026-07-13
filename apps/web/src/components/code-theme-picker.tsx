@@ -120,7 +120,7 @@ export function CodeThemePicker({
                       <span className="text-[9px] uppercase tracking-wide text-muted-foreground/60">
                         {palette.type}
                       </span>
-                      {active ? <Check className="size-3 text-emerald-500" /> : null}
+                      {active ? <Check className="size-3 text-foreground" /> : null}
                     </div>
                   </button>
                 );

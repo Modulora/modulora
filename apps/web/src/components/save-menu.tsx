@@ -16,6 +16,7 @@ import {
 import { isBookmarked, toggleBookmark } from "@/lib/bookmarks";
 import { createList, fetchMyLists, toggleListItem, type MyList } from "@/lib/lists";
 import { NewListDialog } from "@/components/new-list-dialog";
+import { Button } from "@/components/ui/button";
 
 export function SaveMenu({ namespace, name, plus }: { namespace: string; name: string; plus: boolean }) {
   const [saved, setSaved] = useState(false);
@@ -40,13 +41,15 @@ export function SaveMenu({ namespace, name, plus }: { namespace: string; name: s
   return (
     <DropdownMenu onOpenChange={(open) => open && void load()}>
       <DropdownMenuTrigger asChild>
-        <button
+        <Button
           type="button"
-          title="Save"
-          className="flex size-8 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+          aria-label="Save component"
+          variant="outline"
+          size="icon-sm"
+          className="size-11 text-muted-foreground hover:border-foreground/30 hover:text-foreground sm:size-8"
         >
-          <Bookmark className={`size-4 ${saved ? "fill-current text-foreground" : ""}`} />
-        </button>
+          <Bookmark className={saved ? "fill-current text-foreground" : ""} />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         {!plus ? (
@@ -88,7 +91,7 @@ export function SaveMenu({ namespace, name, plus }: { namespace: string; name: s
                   <ListPlus className="size-4" />
                   <span className="flex-1 truncate">{list.title}</span>
                   {inList(list) ? <Check className="size-3.5" /> : null}
-                  <span className="text-[10px] uppercase text-muted-foreground/60">{list.visibility === "public" ? "pub" : ""}</span>
+                  <span className="text-xs uppercase text-muted-foreground/60">{list.visibility === "public" ? "pub" : ""}</span>
                 </DropdownMenuItem>
               ))
             )}

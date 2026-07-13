@@ -1,6 +1,8 @@
 /** Bookmarks — components you saved. Personal only; never affects rank. */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bookmark } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { fetchMyBookmarks } from "@/lib/bookmarks";
 import { fetchCurrentUser } from "@/lib/session";
 
@@ -14,24 +16,21 @@ function BookmarksPage() {
   if (!plus) {
     return (
       <div className="w-full max-w-3xl">
-        <h1 className="text-2xl font-semibold">Bookmarks</h1>
+        <DashboardPageHeader title="Bookmarks" />
         <p className="mt-8 rounded-xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">Bookmarks are part of Modulora Plus.</p>
       </div>
     );
   }
   return (
     <div className="w-full max-w-3xl">
-      <h1 className="text-2xl font-semibold">Bookmarks</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Components you saved. Only you can see these.</p>
+      <DashboardPageHeader title="Bookmarks" description="Components you saved. Only you can see these." />
       <div className="mt-8 flex flex-col gap-3">
         {bookmarks.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 px-6 py-12 text-center">
-            <Bookmark className="size-6 text-muted-foreground" />
-            <p className="text-sm font-medium">Nothing saved yet</p>
-            <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-              Hit the bookmark on any component page and it lands here.
-            </p>
-          </div>
+          <EmptyState
+            icon={Bookmark}
+            title="Nothing saved yet"
+            description="Hit the bookmark on any component page and it lands here."
+          />
         ) : (
           bookmarks.map((bookmark) => (
             <Link

@@ -18,6 +18,10 @@ import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { getStripe, applicationFee } from "./stripe";
 import { LICENSE_TEMPLATES, resolveLicenseText } from "./license";
+import { DIRECT_MARKETPLACE_ENABLED } from "./flags";
+import { requestOrigin } from "./request-origin";
+
+const MARKETPLACE_DISABLED_ERROR = "Direct sales through Modulora are not available during alpha.";
 
 /** Featured placement: flat price for a fixed window. */
 export const FEATURED_PRICE_CENTS = 1200;
@@ -27,13 +31,7 @@ function getDb() {
   const url = process.env.DATABASE_URL;
   return url ? drizzle(neon(url), { schema }) : null;
 }
-export function originOf(): string {
-  try {
-    return new URL(getRequest()!.url).origin;
-  } catch {
-    return "https://modulora.dev";
-  }
-}
+export const originOf = requestOrigin;
 
 /* ── Paid promotion ─────────────────────────────────────── */
 
@@ -63,7 +61,7 @@ export const startPromotion = createServerFn({ method: "POST" })
       .values({ componentId: component.id, ownerUserId: user.id, amount: FEATURED_PRICE_CENTS, status: "pending" })
       .returning({ id: schema.promotions.id });
 
-    const origin = originOf();
+    const origin = originOf(request);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: `${origin}/dashboard/components?promo={CHECKOUT_SESSION_ID}`,
@@ -95,6 +93,7 @@ export const setComponentPrice = createServerFn({ method: "POST" })
     licenseText: String(data.licenseText ?? "").trim().slice(0, 20000),
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
+    if (!DIRECT_MARKETPLACE_ENABLED) return { ok: false, error: MARKETPLACE_DISABLED_ERROR };
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
     if (!user?.username) return { ok: false, error: "Sign in first." };
@@ -146,6 +145,7 @@ export const buyComponent = createServerFn({ method: "POST" })
     acceptLicense: Boolean(data.acceptLicense),
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; url?: string; error?: string }> => {
+    if (!DIRECT_MARKETPLACE_ENABLED) return { ok: false, error: MARKETPLACE_DISABLED_ERROR };
     const stripe = getStripe();
     if (!stripe) return { ok: false, error: "Payments are not configured." };
     const request = getRequest();
@@ -194,7 +194,7 @@ export const buyComponent = createServerFn({ method: "POST" })
       })
       .returning({ id: schema.purchases.id });
 
-    const origin = originOf();
+    const origin = originOf(request);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: `${origin}/components/${data.namespace}/${data.name}?purchase={CHECKOUT_SESSION_ID}`,
@@ -277,6 +277,7 @@ export const setCollectionPrice = createServerFn({ method: "POST" })
     licenseText: String(data.licenseText ?? "").trim().slice(0, 20000),
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
+    if (!DIRECT_MARKETPLACE_ENABLED) return { ok: false, error: MARKETPLACE_DISABLED_ERROR };
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
     if (!user?.username) return { ok: false, error: "Sign in first." };
@@ -396,6 +397,7 @@ export const buyCollection = createServerFn({ method: "POST" })
     acceptLicense: Boolean(data.acceptLicense),
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; url?: string; error?: string }> => {
+    if (!DIRECT_MARKETPLACE_ENABLED) return { ok: false, error: MARKETPLACE_DISABLED_ERROR };
     const stripe = getStripe();
     if (!stripe) return { ok: false, error: "Payments are not configured." };
     const request = getRequest();
@@ -438,7 +440,7 @@ export const buyCollection = createServerFn({ method: "POST" })
       })
       .returning({ id: schema.collectionPurchases.id });
 
-    const origin = originOf();
+    const origin = originOf(request);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: `${origin}/${data.namespace}?purchase={CHECKOUT_SESSION_ID}`,

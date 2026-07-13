@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LiveCardPreview } from "@/components/live-card-preview";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
 import { fetchCatalog, fetchFeatured } from "@/lib/catalog-db";
 import {
   type CatalogItem,
@@ -303,11 +304,13 @@ function Catalog() {
             ))}
           </div>
         ) : (
-          <div className="flex min-h-[30rem] flex-col items-center justify-center gap-3 text-center">
-            <Filter className="size-5 text-muted-foreground" />
-            <div><p className="font-medium">No components match</p><p className="mt-1 text-sm text-muted-foreground">Try another category or clear the filters.</p></div>
-            <button type="button" onClick={clear} className="text-sm underline underline-offset-4">Clear filters</button>
-          </div>
+          <EmptyState
+            icon={Filter}
+            title="No components match"
+            description="Try another category or clear the filters."
+            action={<button type="button" onClick={clear} className="text-sm underline underline-offset-4">Clear filters</button>}
+            className="min-h-[30rem] justify-center border-0"
+          />
         )}
       </section>
     </div>
@@ -356,7 +359,7 @@ function EvidenceMark({ evidence }: { evidence: { type: string; status: string }
     <Tooltip>
       <TooltipTrigger asChild>
         <span
-          className="text-emerald-500"
+          className="text-receipt"
           // A hover target inside the card link: explain, don't navigate.
           onClick={(e) => e.preventDefault()}
         >
