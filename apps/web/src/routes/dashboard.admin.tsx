@@ -5,6 +5,7 @@
  * money are different powers.
  */
 import { useState } from "react";
+import { runWeeklyDigestNow } from "@/lib/weekly-digest";
 import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -131,7 +132,8 @@ function DistributionsSection({ runs }: { runs: PayoutRunSummary[] }) {
 
   return (
     <div className="mt-10">
-      <h2 className="text-sm font-semibold">Profit-share distributions</h2>
+      <DigestSection />
+      <h2 className="mt-10 text-sm font-semibold">Profit-share distributions</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Distributes 30% of the distributable profit to creators, weighted by verified installs in the period.
         Balances under the threshold carry forward. Every run is recorded in the ledger.
@@ -166,6 +168,40 @@ function DistributionsSection({ runs }: { runs: PayoutRunSummary[] }) {
           ))}
         </ul>
       ) : null}
+    </div>
+  );
+}
+
+/** Manual trigger for the weekly digest cron — same code path as the schedule. */
+function DigestSection() {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  return (
+    <div>
+      <h2 className="text-sm font-semibold">Weekly creator digest</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Runs automatically every Monday 16:00 UTC (Worker cron). Emails each creator their last-7-day
+        views, verified installs, and sales — creators with no activity get nothing.
+      </p>
+      <div className="mt-3 flex items-center gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={running}
+          onClick={() => {
+            setRunning(true);
+            setResult(null);
+            void runWeeklyDigestNow().then((res) => {
+              setRunning(false);
+              setResult(res.ok ? `Sent ${res.result?.sent ?? 0} of ${res.result?.creators ?? 0} creators.` : res.error ?? "Failed.");
+            });
+          }}
+        >
+          {running ? "Running…" : "Run digest now"}
+        </Button>
+        {result ? <span className="text-xs text-muted-foreground">{result}</span> : null}
+      </div>
     </div>
   );
 }

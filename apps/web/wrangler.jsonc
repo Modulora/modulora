@@ -3,7 +3,7 @@
   "name": "modulora-web",
   "compatibility_date": "2026-07-01",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  "main": "src/worker.ts",
   "routes": [
     { "pattern": "modulora.dev", "custom_domain": true },
     { "pattern": "www.modulora.dev", "custom_domain": true }
@@ -11,5 +11,6 @@
   "r2_buckets": [
     { "binding": "MEDIA", "bucket_name": "modulora-media" }
   ],
+  "triggers": { "crons": ["0 16 * * 1"] },
   "observability": { "enabled": true }
 }
