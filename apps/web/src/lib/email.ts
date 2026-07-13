@@ -16,34 +16,12 @@ export interface EmailInput {
   cta?: { label: string; url: string };
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function render({ heading, body, cta }: EmailInput): { html: string; text: string } {
-  const paragraphs = body
-    .map((line) => `<p style="margin:0 0 14px;font-size:14px;line-height:1.65;color:#3f3f46;">${escapeHtml(line)}</p>`)
-    .join("");
-  const button = cta
-    ? `<a href="${cta.url}" style="display:inline-block;margin-top:6px;padding:10px 18px;border-radius:8px;background:#18181b;color:#fafafa;font-size:13px;font-weight:600;text-decoration:none;">${escapeHtml(cta.label)}</a>`
-    : "";
-  const html = `<!doctype html>
-<html><body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:520px;margin:0 auto;padding:32px 20px;">
-    <p style="margin:0 0 24px;font-size:13px;font-weight:700;letter-spacing:0.08em;color:#18181b;">MODULORA</p>
-    <div style="background:#ffffff;border:1px solid #e4e4e7;border-radius:12px;padding:28px;">
-      <h1 style="margin:0 0 16px;font-size:18px;line-height:1.4;color:#18181b;">${escapeHtml(heading)}</h1>
-      ${paragraphs}
-      ${button}
-    </div>
-    <p style="margin:20px 0 0;font-size:11px;line-height:1.6;color:#a1a1aa;">
-      Sent by Modulora · <a href="${ORIGIN}" style="color:#a1a1aa;">modulora.dev</a>
-    </p>
-  </div>
-</body></html>`;
-  const text = [heading, "", ...body, ...(cta ? ["", `${cta.label}: ${cta.url}`] : [])].join("\n");
-  return { html, text };
-}
+/**
+ * Sends via the Resend template "transactional-generic" — duplicated from
+ * the brand template (black shell, logo, sign-off) with generic variables:
+ * preheader, heading, body1, body2, ctalabel, ctaurl.
+ */
+const TEMPLATE_ALIAS = process.env.RESEND_TRANSACTIONAL_TEMPLATE ?? "transactional-generic";
 
 export async function sendEmail(input: EmailInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -54,12 +32,26 @@ export async function sendEmail(input: EmailInput): Promise<void> {
   }
   // Transactional sender — distinct from the waitlist's RESEND_FROM.
   const from = process.env.RESEND_TRANSACTIONAL_FROM ?? "Modulora <noreply@mail.modulora.dev>";
-  const { html, text } = render(input);
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: input.to, subject: input.subject, html, text }),
+      body: JSON.stringify({
+        from,
+        to: input.to,
+        subject: input.subject,
+        template: {
+          id: TEMPLATE_ALIAS,
+          variables: {
+            preheader: input.subject,
+            heading: input.heading,
+            body1: input.body[0] ?? "",
+            body2: input.body.slice(1).join(" "),
+            ctalabel: input.cta?.label ?? "Open Modulora",
+            ctaurl: input.cta?.url ?? ORIGIN,
+          },
+        },
+      }),
     });
     if (!res.ok) console.error("email failed", input.subject, res.status, await res.text());
   } catch (error) {
