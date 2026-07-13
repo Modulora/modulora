@@ -11,7 +11,7 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { normalizeDomain } from "./domains";
-import { isCategoryId } from "./taxonomy";
+import { isCategoryId, isComponentTypeId } from "./taxonomy";
 import { verifyShadcnParity } from "./parity";
 import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
 import { fireReviewWebhook } from "./review";
@@ -37,6 +37,7 @@ export interface PublishInput {
   title: string;
   description: string;
   category: string;
+  componentType?: string;
   version: string;
   pricing: "free" | "paid";
   purchaseUrl: string;
@@ -128,6 +129,7 @@ export async function publishCore(data: PublishInput, request: Request): Promise
     if (!title || title.length > 80) return { ok: false, error: "Title is required (≤80 chars)." };
     const description = String(data.description ?? "").trim().slice(0, 280);
     if (!isCategoryId(data.category)) return { ok: false, error: "Choose a valid category." };
+    const componentType = data.componentType && isComponentTypeId(data.componentType) ? data.componentType : null;
     // Version is managed by Modulora, not entered by creators: 0.1.0 for a new
     // component, then an automatic patch bump on each republish.
 
@@ -267,6 +269,7 @@ export async function publishCore(data: PublishInput, request: Request): Promise
           title,
           description,
           category: data.category,
+          componentType,
           sourceModel,
           itemType: "registry:component",
           distributionChannels: channels,
@@ -294,6 +297,7 @@ export async function publishCore(data: PublishInput, request: Request): Promise
           title,
           description,
           category: data.category,
+          componentType,
           framework: "react",
           itemType: "registry:component",
           sourceModel,

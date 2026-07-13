@@ -31,12 +31,13 @@ import { PreviewToolbar, type PreviewViewport } from "@/components/preview-toolb
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CATEGORIES } from "@/lib/taxonomy";
+import { CATEGORIES, COMPONENT_TYPES } from "@/lib/taxonomy";
 import { publishComponent, type PublishFile } from "@/lib/publish";
 import { setComponentPrice } from "@/lib/marketplace";
 import { listDomains } from "@/lib/domains";
 import { getPayoutStatus } from "@/lib/payouts";
 import { EarningsBreakdown, LicensePicker } from "@/components/money";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { demoFiles, isSystemFile, roleFor, scaffoldFiles } from "@/lib/scaffold";
 import { usePageTheme } from "@/lib/use-page-theme";
 
@@ -74,6 +75,7 @@ export interface EditorInitial {
   title: string;
   description: string;
   category: string;
+  componentType?: string;
   version: string;
   pricing: "free" | "paid";
   purchaseUrl: string;
@@ -121,6 +123,7 @@ export function ComponentEditor({
   const [nameEdited, setNameEdited] = useState(Boolean(initial?.name));
   const [description, setDescription] = useState(initial?.description ?? "");
   const [category, setCategory] = useState<string>(initial?.category ?? CATEGORIES[0]!.id);
+  const [componentType, setComponentType] = useState<string>(initial?.componentType ?? "");
   const [pricing, setPricing] = useState<PricingModel>(initial?.pricing === "paid" ? "external" : "free");
   const [price, setPrice] = useState("");
   const [licenseTemplate, setLicenseTemplate] = useState("modulora-commercial-v1");
@@ -255,6 +258,7 @@ export function ComponentEditor({
         title: title.trim() || effectiveName || "Untitled",
         description: description.trim(),
         category,
+        componentType,
         version: "",
         pricing: pricing === "external" ? "paid" : "free",
         purchaseUrl: purchaseUrl.trim(),
@@ -286,6 +290,7 @@ export function ComponentEditor({
         title: title.trim(),
         description: description.trim(),
         category,
+        componentType,
         version: "",
         pricing: pricing === "external" ? "paid" : "free",
         purchaseUrl: purchaseUrl.trim(),
@@ -426,6 +431,8 @@ export function ComponentEditor({
           setDescription={setDescription}
           category={category}
           setCategory={setCategory}
+          componentType={componentType}
+          setComponentType={setComponentType}
           pricing={pricing}
           setPricing={setPricing}
           purchaseUrl={purchaseUrl}
@@ -745,6 +752,8 @@ function DetailsStep(props: {
   setDescription: (v: string) => void;
   category: string;
   setCategory: (v: string) => void;
+  componentType: string;
+  setComponentType: (v: string) => void;
   pricing: PricingModel;
   setPricing: (v: PricingModel) => void;
   purchaseUrl: string;
@@ -795,17 +804,25 @@ function DetailsStep(props: {
           />
         </MetaField>
         <MetaField label="Category">
-          <select
-            value={p.category}
-            onChange={(e) => p.setCategory(e.target.value)}
-            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.id} value={c.id} className="bg-popover">
-                {c.label}
-              </option>
-            ))}
-          </select>
+          <Select value={p.category} onValueChange={p.setCategory}>
+            <SelectTrigger><SelectValue placeholder="Choose a category" /></SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </MetaField>
+
+        <MetaField label="Type" hint="optional">
+          <Select value={p.componentType || undefined} onValueChange={p.setComponentType}>
+            <SelectTrigger><SelectValue placeholder="What kind of component is it?" /></SelectTrigger>
+            <SelectContent>
+              {COMPONENT_TYPES.map((t) => (
+                <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </MetaField>
 
         <MetaField label="Pricing">

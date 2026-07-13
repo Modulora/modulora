@@ -33,7 +33,7 @@ import {
   Table2,
   Users,
   X,
-} from "lucide-react";
+ Component } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,7 @@ const LAYOUTS = ["grid", "list"] as const;
 const catalogSearchParams = {
   q: parseAsString.withDefault(""),
   category: parseAsString,
+  type: parseAsString,
   price: parseAsStringLiteral(PRICES),
   source: parseAsStringLiteral(SOURCE_MODELS),
   license: parseAsStringLiteral(LICENSES),
@@ -109,6 +110,11 @@ const EVIDENCE_OPTIONS: { value: (typeof EVIDENCE_FILTERS)[number]; label: strin
 
 function Catalog() {
   const { catalog, featured } = Route.useLoaderData();
+  const componentTypes = useMemo(
+    () => [...new Set(catalog.map((item) => item.componentType).filter((t): t is string => Boolean(t)))].sort(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [catalog],
+  );
   const categories = useMemo(
     () => [...new Set(catalog.map((item) => item.category))].sort(),
     [catalog],
@@ -136,7 +142,7 @@ function Catalog() {
   const advancedCount = [search.source, search.license, search.evidence].filter(Boolean).length;
 
   function toggle(
-    key: "category" | "price" | "source" | "license" | "evidence",
+    key: "category" | "type" | "price" | "source" | "license" | "evidence",
     value: string,
   ) {
     void setSearch({ [key]: search[key] === value ? null : value });
@@ -146,6 +152,7 @@ function Catalog() {
     void setSearch({
       q: null,
       category: null,
+      type: null,
       price: null,
       source: null,
       license: null,
@@ -197,6 +204,23 @@ function Catalog() {
               </RailButton>
             ))}
           </div>
+
+          {componentTypes.length > 0 ? (
+            <div className="flex flex-col gap-1">
+              <RailHeading>Type</RailHeading>
+              {componentTypes.map((type) => (
+                <RailButton
+                  key={type}
+                  icon={Component}
+                  active={search.type === type}
+                  count={catalog.filter((item) => item.componentType === type).length}
+                  onClick={() => toggle("type", type)}
+                >
+                  {type}
+                </RailButton>
+              ))}
+            </div>
+          ) : null}
 
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-accent/60 hover:text-foreground">
@@ -362,6 +386,7 @@ function matches(item: CatalogItem, search: CatalogSearch) {
     if (!haystack.includes(search.q.toLowerCase())) return false;
   }
   if (search.category && item.category !== search.category) return false;
+  if (search.type && item.componentType !== search.type) return false;
   if (search.price) {
     const isFree = item.sourceModel === "open-source";
     if (search.price === "free" && !isFree) return false;

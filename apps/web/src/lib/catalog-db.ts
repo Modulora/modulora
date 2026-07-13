@@ -11,7 +11,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { catalog as demoCatalog, findItem, type CatalogItem } from "../data/catalog";
-import { categoryLabel } from "./taxonomy";
+import { categoryLabel, componentTypeLabel } from "./taxonomy";
 import { getCurrentUser } from "./session";
 import { normalizeDomain } from "./domains";
 import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
@@ -67,6 +67,7 @@ function toCatalogItem(
     title: component.title,
     description: component.description,
     category: categoryLabel(component.category),
+    componentType: componentTypeLabel(component.componentType) ?? undefined,
     distributionChannels: component.distributionChannels ?? undefined,
     creatorShadcnCommand: component.shadcnCommand ?? undefined,
     otherCliCommand: component.otherCliCommand ?? undefined,
@@ -490,6 +491,7 @@ export interface EditableComponent {
   title: string;
   description: string;
   category: string;
+  componentType?: string;
   version: string;
   pricing: "free" | "paid";
   purchaseUrl: string;
@@ -533,6 +535,7 @@ export const fetchComponentForEdit = createServerFn({ method: "GET" })
       title: row.component.title,
       description: row.component.description,
       category: row.component.category,
+      componentType: row.component.componentType ?? undefined,
       version: row.version?.version ?? "0.1.0",
       pricing: isPaid ? "paid" : "free",
       purchaseUrl: row.component.purchaseUrl ?? "",

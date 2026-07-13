@@ -68,6 +68,8 @@ export interface CatalogItem {
   description: string;
   category: string;
   distributionChannels?: DistributionChannel[];
+  /** shadcn-style type label (Button, Dialog, …). */
+  componentType?: string;
   /** Creator-provided install command for their own registry/CLI. */
   otherCliCommand?: string;
   installCount?: number;

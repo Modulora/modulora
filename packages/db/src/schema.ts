@@ -174,6 +174,8 @@ export const components = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     category: text("category").notNull(),
+    // Optional shadcn-style type (button, dialog, data-table, …).
+    componentType: text("component_type"),
     framework: text("framework", { enum: ["react"] }).notNull(),
     // registry-item type per shadcn: registry:block | registry:component | ...
     itemType: text("item_type").notNull().default("registry:component"),
