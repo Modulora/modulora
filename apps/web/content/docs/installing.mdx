@@ -23,6 +23,19 @@ Verification outcomes:
 Useful flags: `--dry-run` (plan only), `--yes` (skip overwrite prompts),
 `--json` (machine-readable, for agents and CI), `--cwd <dir>`.
 
+## Collections
+
+Creators can group components into installable kits. One command installs
+every member — and **each component is digest-verified individually**, never
+as a combined blob:
+
+```bash
+npx modulora add @creator/dashboard-kit
+```
+
+Every member lands in `modulora.lock` with its own version and digest, so
+`verify`, `diff`, and `update` work per component afterward.
+
 ## Purchased components
 
 Paid components are tied to your account. Sign in once:

@@ -61,7 +61,101 @@ interface RegistryItem {
   dependencies?: string[];
   files: { path: string; content: string; type: string }[];
   // Non-standard: the published content digest, so the CLI can verify installs.
-  meta?: { contentSha256: string | null; version: string };
+  // Collections add kind + per-member refs/digests (installed individually).
+  meta?: {
+    contentSha256: string | null;
+    version: string;
+    kind?: "collection";
+    items?: { ref: string; version: string; contentSha256: string | null }[];
+  };
+}
+
+/**
+ * A collection resolves to a combined registry item (shadcn-compatible: all
+ * member files + merged deps) plus meta.kind="collection" and per-member
+ * refs/digests — the Modulora CLI installs members individually so every
+ * component is digest-verified on its own. Only approved + public +
+ * open-source members serve; anything else is silently absent by design.
+ */
+async function resolveCollection(
+  db: ReturnType<typeof drizzle<typeof schema>>,
+  parsed: ParsedRegistryPath,
+  notFound: { status: "not-found" },
+): Promise<RegistryResolution> {
+  const [collection] = await db
+    .select({ collection: schema.collections })
+    .from(schema.collections)
+    .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.collections.namespaceId))
+    .where(and(eq(schema.namespaces.name, parsed.namespace), eq(schema.collections.name, parsed.name)))
+    .limit(1);
+  if (!collection) return notFound;
+
+  const members = await db
+    .select({ component: schema.components, version: schema.componentVersions })
+    .from(schema.collectionItems)
+    .innerJoin(schema.components, eq(schema.components.id, schema.collectionItems.componentId))
+    .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
+    .where(eq(schema.collectionItems.collectionId, collection.collection.id))
+    .orderBy(schema.collectionItems.orderIndex);
+
+  const servable = members.filter(
+    (m) =>
+      m.component.visibility === "public" &&
+      m.component.reviewStatus === "approved" &&
+      m.component.sourceModel === "open-source" &&
+      m.version,
+  );
+  if (servable.length === 0) return notFound;
+
+  const files: { path: string; content: string; type: string }[] = [];
+  const seenPaths = new Set<string>();
+  const deps = new Set<string>();
+  const items: { ref: string; version: string; contentSha256: string | null }[] = [];
+
+  for (const member of servable) {
+    const memberFiles = await db
+      .select({ path: schema.componentFiles.path, content: schema.componentFiles.content, role: schema.componentFiles.role })
+      .from(schema.componentFiles)
+      .where(eq(schema.componentFiles.componentVersionId, member.version!.id))
+      .orderBy(schema.componentFiles.orderIndex);
+    for (const file of memberFiles) {
+      if (file.role !== "component") continue;
+      const path = stripSrc(file.path);
+      if (seenPaths.has(path)) continue;
+      seenPaths.add(path);
+      files.push({ path, content: file.content ?? "", type: fileType(path) });
+    }
+    const pkg = memberFiles.find((f) => f.path === "package.json");
+    if (pkg?.content) {
+      try {
+        const parsedPkg = JSON.parse(pkg.content) as { dependencies?: Record<string, string> };
+        for (const dep of Object.keys(parsedPkg.dependencies ?? {})) {
+          if (dep !== "react" && dep !== "react-dom") deps.add(dep);
+        }
+      } catch { /* ignore */ }
+    }
+    items.push({
+      ref: `@${parsed.namespace}/${member.component.name}`,
+      version: member.version!.version,
+      contentSha256: member.version!.contentSha256 ?? null,
+    });
+  }
+  if (files.length === 0) return notFound;
+
+  return {
+    status: "ok",
+    gated: false,
+    item: {
+      $schema: "https://ui.shadcn.com/schema/registry-item.json",
+      name: collection.collection.name,
+      type: "registry:block",
+      title: collection.collection.title,
+      description: collection.collection.description,
+      ...(deps.size ? { dependencies: [...deps] } : {}),
+      files,
+      meta: { contentSha256: null, version: "", kind: "collection", items },
+    },
+  };
 }
 
 export type RegistryResolution =
@@ -86,7 +180,10 @@ export async function resolveRegistryItem(
     .where(and(eq(schema.namespaces.name, parsed.namespace), eq(schema.components.name, parsed.name)))
     .limit(1);
 
-  if (!row) return notFound;
+  if (!row) {
+    // No component by that name — it may be a collection.
+    return resolveCollection(db, parsed, notFound);
+  }
   const c = row.component;
   // Only serve components that are public, approved, and open-source.
   // (external-commercial source is never hosted here.)

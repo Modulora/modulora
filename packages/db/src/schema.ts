@@ -427,6 +427,43 @@ export const installReceipts = pgTable(
 );
 
 /**
+ * Collections — a creator's installable group of their own components
+ * (e.g. a dashboard kit). Collections carry no source of their own: they
+ * reference components, and only approved + public members ever serve.
+ * Install trust is per member — the CLI verifies each component's digest.
+ */
+export const collections = pgTable(
+  "collections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    namespaceId: uuid("namespace_id")
+      .notNull()
+      .references(() => namespaces.id, { onDelete: "cascade" }),
+    name: text("name").notNull(), // url-safe, unique per namespace
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("collections_namespace_name").on(t.namespaceId, t.name)],
+);
+
+export const collectionItems = pgTable(
+  "collection_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    collectionId: uuid("collection_id")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    orderIndex: integer("order_index").notNull().default(0),
+  },
+  (t) => [uniqueIndex("collection_items_unique").on(t.collectionId, t.componentId)],
+);
+
+/**
  * Component page views — one row per detail-page view of an approved public
  * component. Owner self-views are excluded at write time. Views are
  * analytics-only and never affect earnings (only verified installs do).

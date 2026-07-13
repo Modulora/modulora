@@ -33,6 +33,7 @@ import { Route as DashboardPayoutsRouteImport } from './routes/dashboard.payouts
 import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
 import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardComponentsRouteImport } from './routes/dashboard.components'
+import { Route as DashboardCollectionsRouteImport } from './routes/dashboard.collections'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
@@ -170,6 +171,11 @@ const DashboardComponentsRoute = DashboardComponentsRouteImport.update({
   path: '/components',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardCollectionsRoute = DashboardCollectionsRouteImport.update({
+  id: '/collections',
+  path: '/collections',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -272,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByTo {
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
   '/dashboard/components': typeof DashboardComponentsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/new': typeof DashboardNewRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/api/upload-avatar'
     | '/dashboard/admin'
     | '/dashboard/analytics'
+    | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
     | '/api/upload-avatar'
     | '/dashboard/admin'
     | '/dashboard/analytics'
+    | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -481,6 +492,7 @@ export interface FileRouteTypes {
     | '/api/upload-avatar'
     | '/dashboard/admin'
     | '/dashboard/analytics'
+    | '/dashboard/collections'
     | '/dashboard/components'
     | '/dashboard/earnings'
     | '/dashboard/new'
@@ -702,6 +714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardComponentsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/collections': {
+      id: '/dashboard/collections'
+      path: '/collections'
+      fullPath: '/dashboard/collections'
+      preLoaderRoute: typeof DashboardCollectionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/analytics': {
       id: '/dashboard/analytics'
       path: '/analytics'
@@ -837,6 +856,7 @@ const DashboardSettingsRouteWithChildren =
 interface DashboardRouteChildren {
   DashboardAdminRoute: typeof DashboardAdminRoute
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
+  DashboardCollectionsRoute: typeof DashboardCollectionsRoute
   DashboardComponentsRoute: typeof DashboardComponentsRoute
   DashboardEarningsRoute: typeof DashboardEarningsRoute
   DashboardNewRoute: typeof DashboardNewRoute
@@ -852,6 +872,7 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAdminRoute: DashboardAdminRoute,
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
+  DashboardCollectionsRoute: DashboardCollectionsRoute,
   DashboardComponentsRoute: DashboardComponentsRoute,
   DashboardEarningsRoute: DashboardEarningsRoute,
   DashboardNewRoute: DashboardNewRoute,

@@ -47,7 +47,10 @@ export function DashboardSidebar({ summary }: { summary: StudioSummary }) {
           <ShoppingBag className="size-4 shrink-0 opacity-70" />
           <span className="flex-1 truncate">Purchases</span>
         </Link>
-        <SidebarRow icon={Library} label="Libraries" count={summary.counts.libraries} muted />
+        <Link to="/dashboard/collections" className={itemClass}>
+          <Library className="size-4 shrink-0 opacity-70" />
+          <span className="flex-1 truncate">Collections</span>
+        </Link>
       </nav>
 
       <nav className="flex flex-col gap-1">
