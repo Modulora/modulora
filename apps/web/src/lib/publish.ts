@@ -207,9 +207,15 @@ export async function publishCore(data: PublishInput, request: Request): Promise
     // namespace references (no URL) are legitimate but unverifiable. Only a
     // confirmed mismatch blocks the publish.
     let parity: Awaited<ReturnType<typeof verifyShadcnParity>> = { status: "unverifiable" };
-    if (!isPaid && channels.includes("shadcn") && installFiles.length > 0) {
+    if (!isPaid && !isDraft && channels.includes("shadcn") && installFiles.length > 0) {
       parity = await verifyShadcnParity(shadcnCommand, installFiles);
       if (parity.status === "mismatch") return { ok: false, error: parity.error };
+    }
+    // Own-registry commands get the same treatment when they're shadcn-style
+    // (a fetchable registry URL): output must match the uploaded files.
+    if (!isPaid && !isDraft && channels.includes("compatible-cli") && otherCliCommand && installFiles.length > 0) {
+      const ownParity = await verifyShadcnParity(otherCliCommand, installFiles);
+      if (ownParity.status === "mismatch") return { ok: false, error: ownParity.error };
     }
 
     // Provenance links (optional). Validate any provided URLs.

@@ -55,8 +55,8 @@ const CHANNELS = [
   },
   {
     id: "compatible-cli",
-    label: "Your own registry / CLI",
-    note: "You host it; your install command shows on the component page.",
+    label: "Your own registry",
+    note: "Your own shadcn registry or custom CLI — paste the install command. Registry URLs are fetched and compared file-for-file against your upload; custom CLI commands can’t be verified.",
   },
 ];
 
@@ -876,7 +876,7 @@ function DetailsStep(props: {
                   </button>
                   {on ? <p className="pl-6 text-[10px] leading-relaxed text-muted-foreground/70">{channel.note}</p> : null}
                   {on && channel.id === "compatible-cli" ? (
-                    <Input value={p.otherCliCommand} onChange={(e) => p.setOtherCliCommand(e.target.value)} placeholder="npx your-cli add …" className="h-8 font-mono text-[11px]" />
+                    <Input value={p.otherCliCommand} onChange={(e) => p.setOtherCliCommand(e.target.value)} placeholder="npx shadcn@latest add https://your.dev/r/thing.json" className="h-8 font-mono text-[11px]" />
                   ) : null}
                 </div>
               );
