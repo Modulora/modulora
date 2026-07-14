@@ -12,27 +12,57 @@ submission is real, functional, and honestly described. Approval is a
 listing decision — it is **not** a code audit, and the evidence panel on
 every component says exactly what was and wasn't checked.
 
-## What curators review
+## The review standard (`alpha-1`)
 
-Each submission in **Dashboard → Curation → Review queue** shows the source,
-the live demo, and the automated evidence. Curators check:
+Every decision applies a **named, versioned standard**. The current version
+is `alpha-1`; the exact checklist below is rendered beside every submission
+on the review page, and each check gets an explicit result — *pass*,
+*flag*, or *not applicable*:
 
-- **It's real** — the component renders, the demo demonstrates it, the
-  title/description match what the code does.
-- **It's theirs to publish** — no lifted source misrepresented as original.
-  The optional *Original URL* and *Inspired by* links exist for honest
-  attribution; missing attribution for obviously derived work is a reject.
-- **It's safe to list** — no malicious patterns, no misleading install
-  behavior. The secret scan and digest checks run automatically; curators
-  read the code for what scanners can't see.
-- **Paid listings are honest** — external components must link to a valid
-  purchase URL. During alpha, domain verification is optional, so an
-  unverified destination must be disclosed and the listing must not imply
-  Modulora reviewed source it never saw.
+1. **Publisher & association** — the authenticated publisher's identity is
+   scoped correctly; no unauthorized creator, brand, repository, preview, or
+   affiliation claim.
+2. **Authorization & attribution** — original URL, inspiration,
+   fork/derivative, and license/attribution claims are internally
+   consistent. Similarity is a review signal, never proof of plagiarism or
+   originality.
+3. **Listing accuracy** — title, description, taxonomy, framework, demo,
+   files, dependencies, and stated behavior agree.
+4. **Artifact integrity** — exact files, digest, registry shape, path
+   sanitization, and distribution-channel output are present and internally
+   consistent.
+5. **Install behavior** — install paths copy files only; parity evidence
+   and its limitations are shown; unverifiable creator commands stay
+   labeled unverifiable.
+6. **Risk indicators** — automated secret-scan and other scoped evidence,
+   plus obvious executable, network, or data-exfiltration behavior. Not a
+   security guarantee.
+7. **License & sales scope** — hosted source states its license; external
+   sales use a creator-operated destination, and unverified destination
+   domains are explicitly disclosed during alpha.
+8. **Demo quality & accessibility** — the preview renders the submitted
+   component without obvious keyboard, focus, contrast, overflow, or
+   misleading-state failures. A listing-quality check, not accessibility
+   certification.
 
-Rejections always carry a reason — the creator sees it verbatim on their
-dashboard and by email, fixes, and resubmits. Every new release of an
-approved component re-enters the queue.
+**Scope limitation, stated on every record:** approval is a listing
+decision against these checks. It is not a security audit, ownership or
+originality certification, accessibility certification, or legal review.
+
+## Decisions and records
+
+Curators choose **approve**, **request changes**, **reject**, or
+**escalate** (which leaves the submission pending for an owner or second
+curator). Every outcome — including approval — requires a written
+rationale and a complete checklist. Each decision writes an **append-only
+review record**: component and version, reviewer, standard version,
+per-check results, rationale, and the scope limitation — verbatim, with a
+timestamp. Historical records are never rewritten; a resubmitted release
+gets a new record.
+
+Creators see the decision and rationale verbatim on their dashboard and by
+email, fix, and resubmit. Every new release of an approved component
+re-enters the queue.
 
 ## What curators can never do
 

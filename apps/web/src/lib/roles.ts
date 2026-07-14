@@ -71,11 +71,25 @@ export const setCuratorRole = createServerFn({ method: "POST" })
     if (!db) return { ok: false, error: "Database is not configured." };
     // The owner's own curator flag stays managed like anyone else's, but
     // revoking your own curator role is allowed — ownership is separate.
+    const [target] = await db
+      .select({ id: schema.users.id, isCurator: schema.users.isCurator })
+      .from(schema.users)
+      .where(eq(schema.users.id, data.userId))
+      .limit(1);
+    if (!target) return { ok: false, error: "User not found." };
     const updated = await db
       .update(schema.users)
       .set({ isCurator: data.curator, updatedAt: new Date() })
       .where(eq(schema.users.id, data.userId))
       .returning({ id: schema.users.id });
     if (updated.length === 0) return { ok: false, error: "User not found." };
+    // Append-only audit: who changed which role, from what, to what, when.
+    await db.insert(schema.roleChangeEvents).values({
+      actorUserId: user.id,
+      targetUserId: data.userId,
+      role: "curator",
+      priorValue: target.isCurator ?? false,
+      nextValue: data.curator,
+    });
     return { ok: true };
   });

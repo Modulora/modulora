@@ -241,6 +241,57 @@ export const components = pgTable(
   ],
 );
 
+/**
+ * Append-only curation records (#69). One row per decision; historical rows
+ * are never updated or deleted when a release is re-reviewed. The component's
+ * mutable review_status is a pointer; these rows are the durable audit trail.
+ */
+export const reviewRecords = pgTable(
+  "review_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    /** Latest version at decision time, when one exists. */
+    componentVersionId: uuid("component_version_id"),
+    reviewerUserId: text("reviewer_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    /** Which published standard the decision applied (e.g. "alpha-1"). */
+    standardVersion: text("standard_version").notNull(),
+    decision: text("decision", {
+      enum: ["approve", "request-changes", "reject", "escalate"],
+    }).notNull(),
+    /** Explicit per-check results keyed by check id: pass | flag | not-applicable. */
+    checklist: jsonb("checklist").$type<Record<string, string>>().notNull(),
+    rationale: text("rationale").notNull(),
+    /** The scope limitation statement shown with the decision, verbatim. */
+    limitations: text("limitations").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("review_records_component").on(t.componentId)],
+);
+
+/** Append-only role-change audit: who granted/revoked curator, and when. */
+export const roleChangeEvents = pgTable(
+  "role_change_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorUserId: text("actor_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    targetUserId: text("target_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["curator"] }).notNull(),
+    priorValue: boolean("prior_value").notNull(),
+    nextValue: boolean("next_value").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("role_change_events_target").on(t.targetUserId)],
+);
+
 export const componentVersions = pgTable(
   "component_versions",
   {

@@ -11,6 +11,13 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { and, desc, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
+import {
+  REVIEW_STANDARD_LIMITATIONS,
+  REVIEW_STANDARD_VERSION,
+  validateChecklist,
+  type Checklist,
+  type ReviewDecision,
+} from "./review-standard";
 
 function getDb() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -115,16 +122,25 @@ export const fetchReviewQueue = createServerFn({ method: "GET" }).handler(
 
 export interface ReviewDecisionInput {
   componentId: string;
-  decision: "approve" | "reject";
-  reason?: string;
+  decision: ReviewDecision;
+  rationale: string;
+  checklist: Checklist;
 }
 
-/** Curator-only: approve or reject a submitted component. */
+const DECISIONS: readonly ReviewDecision[] = ["approve", "request-changes", "reject", "escalate"];
+
+/**
+ * Curator-only. Every outcome — including approval — requires an explicit
+ * per-check checklist and a rationale, and writes an append-only review
+ * record naming the standard version. Escalation leaves the submission
+ * pending for an owner or second curator.
+ */
 export const decideReview = createServerFn({ method: "POST" })
   .validator((data: ReviewDecisionInput) => ({
     componentId: String(data.componentId ?? "").trim(),
-    decision: data.decision === "reject" ? ("reject" as const) : ("approve" as const),
-    reason: String(data.reason ?? "").trim().slice(0, 500),
+    decision: DECISIONS.includes(data.decision) ? data.decision : ("escalate" as const),
+    rationale: String(data.rationale ?? "").trim().slice(0, 2000),
+    checklist: data.checklist as unknown,
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
     const request = getRequest();
@@ -132,24 +148,50 @@ export const decideReview = createServerFn({ method: "POST" })
     const user = await getCurrentUser(request);
     if (!user?.isCurator) return { ok: false, error: "Curators only." };
     if (!data.componentId) return { ok: false, error: "Missing component." };
-    if (data.decision === "reject" && !data.reason) {
-      return { ok: false, error: "A reason is required to reject." };
+    if (!data.rationale) {
+      return { ok: false, error: "A rationale is required for every decision, including approval." };
     }
+    const checked = validateChecklist(data.checklist);
+    if (!checked.ok) return { ok: false, error: checked.error };
     const db = getDb();
     if (!db) return { ok: false, error: "Database is not configured." };
+
+    // Escalation records a decision but leaves the submission pending.
+    const nextStatus =
+      data.decision === "approve" ? "approved" : data.decision === "escalate" ? "pending" : "rejected";
 
     const updated = await db
       .update(schema.components)
       .set({
-        reviewStatus: data.decision === "approve" ? "approved" : "rejected",
-        reviewReason: data.decision === "reject" ? data.reason : null,
+        reviewStatus: nextStatus,
+        reviewReason: nextStatus === "rejected" ? data.rationale : null,
         reviewedBy: user.id,
         reviewedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(and(eq(schema.components.id, data.componentId), eq(schema.components.reviewStatus, "pending")))
-      .returning({ id: schema.components.id, name: schema.components.name, title: schema.components.title, namespaceId: schema.components.namespaceId });
+      .returning({
+        id: schema.components.id,
+        name: schema.components.name,
+        title: schema.components.title,
+        namespaceId: schema.components.namespaceId,
+        latestVersionId: schema.components.latestVersionId,
+      });
     if (updated.length === 0) return { ok: false, error: "Already reviewed or no longer pending." };
+
+    // Append-only audit record; historical records are never rewritten.
+    await db.insert(schema.reviewRecords).values({
+      componentId: data.componentId,
+      componentVersionId: updated[0]!.latestVersionId,
+      reviewerUserId: user.id,
+      standardVersion: REVIEW_STANDARD_VERSION,
+      decision: data.decision,
+      checklist: checked.checklist,
+      rationale: data.rationale,
+      limitations: REVIEW_STANDARD_LIMITATIONS,
+    });
+
+    if (data.decision === "escalate") return { ok: true };
 
     // Notify the creator (fire-and-forget — the decision never blocks on email).
     const component = updated[0]!;
@@ -164,7 +206,7 @@ export const decideReview = createServerFn({ method: "POST" })
       // Awaited: dangling promises are cancelled in the Workers runtime.
       const email = await import("./email");
       if (data.decision === "approve") await email.emailReviewApproved(owner.email, component.title, ref);
-      else await email.emailReviewRejected(owner.email, component.title, data.reason);
+      else await email.emailReviewRejected(owner.email, component.title, data.rationale);
     }
 
     return { ok: true };

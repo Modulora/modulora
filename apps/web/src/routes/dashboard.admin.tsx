@@ -186,11 +186,23 @@ function InvitationsSection({ invitations }: { invitations: AlphaWaitlistPage })
 function RolesSection({ members }: { members: Member[] }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
   async function toggle(member: Member) {
     setBusyId(member.id);
-    await setCuratorRole({ data: { userId: member.id, curator: !member.isCurator } });
-    await router.invalidate();
+    setFeedback(null);
+    const result = await setCuratorRole({ data: { userId: member.id, curator: !member.isCurator } });
+    if (!result.ok) {
+      setFeedback({ kind: "error", text: result.error ?? "Role change failed." });
+    } else {
+      setFeedback({
+        kind: "ok",
+        text: `${member.username ? `@${member.username}` : member.email} is ${member.isCurator ? "no longer" : "now"} a curator.`,
+      });
+      await router.invalidate();
+    }
+    setConfirmId(null);
     setBusyId(null);
   }
 
@@ -198,8 +210,13 @@ function RolesSection({ members }: { members: Member[] }) {
     <div className="mt-12">
       <h2 className="text-sm font-semibold">Roles</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Curators review submissions. Ownership is configured in the environment (OWNER_USER_IDS) and can never be granted here.
+        Curators review submissions. Ownership is configured in the environment (OWNER_USER_IDS) and can never be granted here. Every role change writes an audit record.
       </p>
+      {feedback ? (
+        <p role="status" className={`mt-2 text-xs ${feedback.kind === "error" ? "text-destructive" : "text-receipt"}`}>
+          {feedback.text}
+        </p>
+      ) : null}
       <ul className="mt-4 flex flex-col gap-2">
         {members.map((member) => (
           <li key={member.id} className="flex flex-col items-stretch justify-between gap-3 rounded-lg border border-border/60 px-4 py-3 sm:flex-row sm:items-center">
@@ -210,14 +227,30 @@ function RolesSection({ members }: { members: Member[] }) {
               </p>
               <p className="truncate text-xs text-muted-foreground">{member.email}</p>
             </div>
-            <Button
-              size="sm"
-              variant={member.isCurator ? "outline" : "default"}
-              disabled={busyId === member.id}
-              onClick={() => toggle(member)}
-            >
-              {member.isCurator ? "Revoke curator" : "Make curator"}
-            </Button>
+            {confirmId === member.id ? (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={member.isCurator ? "destructive" : "default"}
+                  disabled={busyId === member.id}
+                  onClick={() => toggle(member)}
+                >
+                  {member.isCurator ? "Confirm revoke" : "Confirm grant"}
+                </Button>
+                <Button size="sm" variant="ghost" disabled={busyId === member.id} onClick={() => setConfirmId(null)}>
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                variant={member.isCurator ? "outline" : "default"}
+                disabled={busyId !== null}
+                onClick={() => setConfirmId(member.id)}
+              >
+                {member.isCurator ? "Revoke curator" : "Make curator"}
+              </Button>
+            )}
           </li>
         ))}
       </ul>
