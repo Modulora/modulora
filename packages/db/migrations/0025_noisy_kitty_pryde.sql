@@ -1,0 +1,2 @@
+ALTER TABLE "user" ADD COLUMN "color_vision_mode" text DEFAULT 'standard' NOT NULL;--> statement-breakpoint
+CREATE INDEX "collection_items_component_idx" ON "collection_items" USING btree ("component_id");

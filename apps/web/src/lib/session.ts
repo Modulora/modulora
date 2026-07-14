@@ -30,7 +30,7 @@ export interface CurrentUser {
   payoutsEnabled: boolean;
   isCurator: boolean;
   isPlus: boolean;
-  editorTheme: string;
+  colorVisionMode: import("./pierre-theme").ColorVisionMode;
 }
 
 export async function getCurrentUser(request: Request): Promise<CurrentUser | null> {
@@ -77,7 +77,7 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     payoutsEnabled: row.payoutsEnabled,
     isCurator: row.isCurator,
     isPlus: row.isPlus,
-    editorTheme: row.editorTheme,
+    colorVisionMode: (row.colorVisionMode ?? "standard") as import("./pierre-theme").ColorVisionMode,
   };
 }
 

@@ -1,6 +1,8 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { ComponentEditor } from "@/components/component-editor";
 import { fetchComponentForEdit } from "@/lib/catalog-db";
+import { usePageTheme } from "@/lib/use-page-theme";
+import { resolvePierreCodeTheme } from "@/lib/pierre-theme";
 
 export const Route = createFileRoute("/dashboard/edit/$name")({
   beforeLoad: ({ context }) => {
@@ -17,7 +19,8 @@ export const Route = createFileRoute("/dashboard/edit/$name")({
 function EditComponent() {
   const initial = Route.useLoaderData();
   const { user } = Route.useRouteContext();
+  const pageTheme = usePageTheme();
   return (
-    <ComponentEditor username={user?.username ?? null} mode="edit" initial={initial} editorTheme={user?.editorTheme} />
+    <ComponentEditor username={user?.username ?? null} mode="edit" initial={initial} editorTheme={resolvePierreCodeTheme(pageTheme, user?.colorVisionMode ?? "standard")} />
   );
 }

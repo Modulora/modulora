@@ -4,30 +4,19 @@
  * Uses the fine-grained core with the JavaScript RegExp engine so it runs on
  * the Cloudflare Worker without WASM. Highlighting happens in route loaders
  * (server side); the rendered HTML is streamed to the client. Every Shiki
- * bundled theme is selectable in settings; themes load lazily on first use.
+ * Pierre Light/Dark and their color-vision variants are the only supported
+ * code themes. The palette follows app appearance + accessibility settings.
  */
 import { createHighlighterCore, type HighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
-import { bundledThemes, bundledThemesInfo } from "shiki/themes";
-import { THEME_PALETTES } from "./theme-palettes.generated";
+import pierreDark from "@pierre/theme/pierre-dark";
+import { PIERRE_THEME_LOADERS, isPierreTheme } from "./pierre-theme";
 
-export const DEFAULT_EDITOR_THEME = "github-dark-default";
-
-/** All Shiki bundled themes, selectable in settings. */
-export const EDITOR_THEMES = bundledThemesInfo.map((info) => ({
-  id: info.id,
-  label: info.displayName ?? info.id,
-  type: info.type,
-}));
-
-const THEME_IDS = new Set(EDITOR_THEMES.map((theme) => theme.id));
+export const DEFAULT_EDITOR_THEME = "pierre-dark";
 
 export function isEditorTheme(value: string): boolean {
-  return THEME_IDS.has(value);
+  return isPierreTheme(value);
 }
-
-/** Exact preview colors per theme (bg/fg + token colors), for the picker. */
-export { THEME_PALETTES };
 
 let highlighterPromise: Promise<HighlighterCore> | null = null;
 const loadedThemes = new Set<string>([DEFAULT_EDITOR_THEME]);
@@ -35,7 +24,7 @@ const loadedThemes = new Set<string>([DEFAULT_EDITOR_THEME]);
 function getHighlighter() {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighterCore({
-      themes: [import("shiki/themes/github-dark-default.mjs")],
+      themes: [pierreDark as never],
       langs: [
         import("shiki/langs/tsx.mjs"),
         import("shiki/langs/typescript.mjs"),
@@ -64,9 +53,10 @@ export function langForPath(path: string): string {
 
 async function ensureTheme(highlighter: HighlighterCore, theme: string) {
   if (loadedThemes.has(theme) || !isEditorTheme(theme)) return;
-  const loader = bundledThemes[theme as keyof typeof bundledThemes];
+  const loader = PIERRE_THEME_LOADERS[theme as keyof typeof PIERRE_THEME_LOADERS];
   if (!loader) return;
-  await highlighter.loadTheme(await loader());
+  const loaded = await loader();
+  await highlighter.loadTheme((loaded as { default?: never }).default ?? (loaded as never));
   loadedThemes.add(theme);
 }
 

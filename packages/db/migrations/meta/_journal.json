@@ -176,6 +176,13 @@
       "when": 1784033324674,
       "tag": "0024_narrow_captain_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1784051268926,
+      "tag": "0025_noisy_kitty_pryde",
+      "breakpoints": true
     }
   ]
 }

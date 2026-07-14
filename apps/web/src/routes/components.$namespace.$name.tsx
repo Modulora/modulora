@@ -28,9 +28,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
 import { CodeEditor } from "@/components/code-editor";
 import { usePageTheme } from "@/lib/use-page-theme";
+import { resolvePierreCodeTheme, type ColorVisionMode } from "@/lib/pierre-theme";
 import { fetchCurrentUser } from "@/lib/session";
 import {
   Tooltip,
@@ -41,7 +41,7 @@ import {
 import { HiCheckBadge } from "react-icons/hi2";
 import { reportComponent, REPORT_REASONS } from "@/lib/report";
 import { fetchCatalogDetail } from "@/lib/catalog-db";
-import { type CatalogItem, type EvidenceRecord } from "../data/catalog";
+import { isPaidCatalogItem, needsInteractionHint, type CatalogItem, type EvidenceRecord } from "../data/catalog";
 import { ComponentDetailError, ComponentDetailLoading } from "@/components/component-detail-state";
 import { externalDomainDisclosure } from "@/lib/external-sales";
 
@@ -58,7 +58,7 @@ export const Route = createFileRoute("/components/$namespace/$name")({
       // as /r/). Rendered in the same page shell with a member rail.
       const collection = await fetchCollectionDetail({ data: { namespace: params.namespace, name: params.name } });
       if (!collection) throw notFound();
-      return { kind: "collection" as const, collection, item: null, files: [], viewerTheme: DEFAULT_EDITOR_THEME, viewerPlus: false };
+      return { kind: "collection" as const, collection, item: null, files: [], colorVisionMode: "standard" as ColorVisionMode, viewerPlus: false };
     }
     // Only open (free) components expose source. Rendered client-side in a
     // read-only editor using the viewer's chosen code theme (settings).
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/components/$namespace/$name")({
       item.sourceModel === "open-source" && item.files
         ? item.files.map((file) => ({ path: file.path, raw: file.content }))
         : [];
-    return { kind: "component" as const, collection: null, item, files, viewerTheme: viewer?.editorTheme ?? DEFAULT_EDITOR_THEME, viewerPlus: viewer?.isPlus ?? false };
+    return { kind: "component" as const, collection: null, item, files, colorVisionMode: viewer?.colorVisionMode ?? "standard", viewerPlus: viewer?.isPlus ?? false };
   },
   pendingComponent: ComponentDetailLoading,
   errorComponent: ComponentDetailError,
@@ -94,10 +94,10 @@ const EVIDENCE_LABELS: Record<string, string> = {
 function ComponentDetail() {
   const data = Route.useLoaderData();
   if (data.kind === "collection") return <CollectionView collection={data.collection} />;
-  return <ComponentDetailInner item={data.item} files={data.files} viewerTheme={data.viewerTheme} viewerPlus={data.viewerPlus} />;
+  return <ComponentDetailInner item={data.item} files={data.files} colorVisionMode={data.colorVisionMode} viewerPlus={data.viewerPlus} />;
 }
 
-function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: NonNullable<Awaited<ReturnType<typeof fetchCatalogDetail>>>; files: HighlightedFile[]; viewerTheme: string; viewerPlus: boolean }) {
+function ComponentDetailInner({ item, files, colorVisionMode, viewerPlus }: { item: NonNullable<Awaited<ReturnType<typeof fetchCatalogDetail>>>; files: HighlightedFile[]; colorVisionMode: ColorVisionMode; viewerPlus: boolean }) {
   const [workspaceTab, setWorkspaceTab] = useState("preview");
   const [installTab, setInstallTab] = useState(
     item.distributionChannels?.includes("shadcn")
@@ -117,13 +117,20 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
   const [previewKey, setPreviewKey] = useState(0);
   const [purchaseReturnError, setPurchaseReturnError] = useState<string | null>(null);
   const previewStageRef = useRef<HTMLDivElement>(null);
+  const viewerTheme = resolvePierreCodeTheme(pageTheme, colorVisionMode);
 
   // Demo model: published components carry preview-only demo files; each demo's
   // default export is a variant, rendered live in the sandbox.
   const demos = useMemo(() => pickDemoFiles(item.files ?? []), [item.files]);
+  const interactionHint = useMemo(
+    () => (needsInteractionHint(item.files) ? "Move your pointer inside · click to trigger the effect" : undefined),
+    [item.files],
+  );
   const [activeDemo, setActiveDemo] = useState<string>(demos[0]?.path ?? "");
-  // Paid components are fulfilled by the creator; Modulora hosts no source.
-  const isPaid = item.sourceModel !== "open-source";
+  // Commerce display includes paid collection membership. Source access stays
+  // tied to the component's actual fulfillment model and entitlement.
+  const isPaid = isPaidCatalogItem(item);
+  const isCommercialSource = item.sourceModel !== "open-source";
   // Marketplace-priced: an open component sold on Modulora, source gated behind
   // purchase until the viewer owns it.
   const locked = item.marketplacePrice != null && item.entitled === false;
@@ -154,7 +161,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
     [item],
   );
 
-  const enabledInstallTabs = isPaid
+  const enabledInstallTabs = isCommercialSource
     ? []
     : [
         ...(item.distributionChannels?.includes("shadcn") ? ["shadcn"] : []),
@@ -203,8 +210,8 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
           <SaveMenu namespace={item.namespace} name={item.name} plus={viewerPlus} />
           <PriceSeal
             size="md"
-            paid={isPaid || item.marketplacePrice != null}
-            label={isPaid ? item.purchase?.priceLabel ?? "Paid" : item.marketplacePrice != null ? formatPrice(item.marketplacePrice) : "Free"}
+            paid={isPaid}
+            label={isPaid ? item.purchase?.priceLabel ?? "Paid" : "Free"}
           />
           </div>
         </div>
@@ -214,7 +221,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="flex min-w-0 flex-col gap-3">
           <div>
-            {isPaid ? (
+            {isCommercialSource ? (
               <CommercialTray item={item} />
             ) : locked ? (
               <BuyTray item={item} />
@@ -243,7 +250,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
               <div className="flex flex-col gap-2 border-b border-border/60 px-3 py-2 sm:min-h-12 sm:flex-row sm:items-center sm:justify-between sm:py-0">
                 <Tabs.List className="flex items-center gap-1">
                   <WorkspaceTab value="preview" icon={PackageCheck}>Preview</WorkspaceTab>
-                  <WorkspaceTab value="code" icon={Code2}>{isPaid ? "Code" : "Raw code"}</WorkspaceTab>
+                  <WorkspaceTab value="code" icon={Code2}>{isCommercialSource ? "Code" : "Raw code"}</WorkspaceTab>
                 </Tabs.List>
                 {workspaceTab === "preview" ? (
                   <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-0.5 sm:overflow-visible sm:pb-0">
@@ -284,6 +291,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
                         selectedDemo={activeDemo}
                         theme={previewTheme}
                         className="h-full w-full"
+                        interactionHint={interactionHint}
                       />
                     ) : (
                       <ComponentPreview key={previewKey} item={item} theme={previewTheme} interactive className="min-h-[30rem] w-full" />
@@ -292,7 +300,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
                 </div>
               </Tabs.Content>
               <Tabs.Content value="code" className="relative outline-none">
-                {isPaid || locked ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} themeId={viewerTheme} />}
+                {isCommercialSource || locked ? <LockedCode item={item} /> : <SourceFiles item={item} files={files} themeId={viewerTheme} />}
               </Tabs.Content>
             </Tabs.Root>
           </div>
@@ -306,7 +314,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
           <div className="rounded-xl border border-border/60 bg-card/35 p-4">
             <div className="mb-3 flex items-center gap-2"><ShieldCheck className="size-4" /><h2 className="text-sm font-semibold">Provenance &amp; integrity</h2></div>
             <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
-              {isPaid
+              {isCommercialSource
                 ? "Modulora hosts no source or install artifact for this release. The records below cover only the facts they name — not the creator-fulfilled code."
                 : "Installs copy exactly these files and never run install scripts. Each record below is scoped to this release and independently checkable — not a guarantee the code is safe to run."}
             </p>

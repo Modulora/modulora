@@ -8,7 +8,7 @@ import { EditorView } from "@codemirror/view";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
 import type { Extension } from "@codemirror/state";
-import { bundledThemes } from "shiki/themes";
+import { PIERRE_THEME_LOADERS, isPierreTheme } from "./pierre-theme";
 
 interface TokenColor {
   scope?: string | string[];
@@ -107,7 +107,7 @@ const cache = new Map<string, Extension>();
 /** Load and cache the exact CodeMirror theme for a Shiki theme id. */
 export async function loadCodeMirrorTheme(id: string): Promise<Extension | null> {
   if (cache.has(id)) return cache.get(id)!;
-  const loader = bundledThemes[id as keyof typeof bundledThemes];
+  const loader = isPierreTheme(id) ? PIERRE_THEME_LOADERS[id] : undefined;
   if (!loader) return null;
   const mod = await loader();
   const theme = ((mod as { default?: ShikiTheme }).default ?? mod) as ShikiTheme;

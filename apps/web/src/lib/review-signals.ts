@@ -43,6 +43,11 @@ export function signalsFromEvidence(evidence: EvidenceLike[]): Record<string, Ch
     signals["install-behavior"] = { result: "pass", reason: "Install parity verified; installs copy files only." };
   } else if (parity === "warning") {
     signals["install-behavior"] = { result: "flag", reason: "Creator-run install command is unverifiable." };
+  } else if (byType.get("content-integrity") === "passed") {
+    signals["install-behavior"] = {
+      result: "pass",
+      reason: "Hosted install files and digest recorded; Modulora installs copy files without running scripts.",
+    };
   }
 
   const secret = byType.get("secret-scan");

@@ -20,7 +20,7 @@ const mockUser: CurrentUser = {
   payoutsEnabled: false,
   isCurator: true,
   isPlus: true,
-  editorTheme: "github-dark-default",
+  colorVisionMode: "standard",
 };
 
 const meta = {

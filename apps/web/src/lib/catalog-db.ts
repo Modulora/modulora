@@ -8,7 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { and, asc, desc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { catalog as demoCatalog, findItem, type CatalogItem } from "../data/catalog";
 import { categoryLabel, componentTypeLabel } from "./taxonomy";
@@ -118,18 +118,35 @@ export const fetchCatalog = createServerFn({ method: "GET" }).handler(
 
     // Collection membership per component (first collection shown on cards).
     const memberships = await database
-      .select({ componentId: schema.collectionItems.componentId, title: schema.collections.title })
+      .select({
+        componentId: schema.collectionItems.componentId,
+        title: schema.collections.title,
+        collectionPrice: schema.collectionPrices.unitAmount,
+        externalUrl: schema.collections.externalUrl,
+      })
       .from(schema.collectionItems)
-      .innerJoin(schema.collections, eq(schema.collections.id, schema.collectionItems.collectionId));
-    const collectionByComponent = new Map<string, string>();
+      .innerJoin(schema.collections, eq(schema.collections.id, schema.collectionItems.collectionId))
+      .leftJoin(
+        schema.collectionPrices,
+        and(eq(schema.collectionPrices.collectionId, schema.collections.id), eq(schema.collectionPrices.active, true)),
+      );
+    const collectionByComponent = new Map<string, { title: string; paid: boolean }>();
     for (const m of memberships) {
-      if (!collectionByComponent.has(m.componentId)) collectionByComponent.set(m.componentId, m.title);
+      const current = collectionByComponent.get(m.componentId);
+      collectionByComponent.set(m.componentId, {
+        title: current?.title ?? m.title,
+        paid: current?.paid === true || m.collectionPrice !== null || m.externalUrl !== null,
+      });
     }
 
-    const dbItems = rows.map((row) => ({
-      ...toCatalogItem(row.namespace, row.component, row.version),
-      inCollection: collectionByComponent.get(row.component.id) ?? null,
-    }));
+    const dbItems = rows.map((row) => {
+      const membership = collectionByComponent.get(row.component.id);
+      return {
+        ...toCatalogItem(row.namespace, row.component, row.version),
+        inCollection: membership?.title ?? null,
+        inPaidCollection: membership?.paid ?? false,
+      };
+    });
     return [...dbItems, ...demoCatalog];
   },
 );
@@ -157,7 +174,24 @@ export const fetchFeatured = createServerFn({ method: "GET" }).handler(
       )
       .orderBy(desc(schema.promotions.startsAt))
       .limit(6);
-    return rows.map((row) => toCatalogItem(row.namespace, row.component, row.version));
+    return Promise.all(
+      rows.map(async (row) => {
+        const paidCollections = await database
+          .select({ id: schema.collections.id, price: schema.collectionPrices.unitAmount, externalUrl: schema.collections.externalUrl })
+          .from(schema.collectionItems)
+          .innerJoin(schema.collections, eq(schema.collections.id, schema.collectionItems.collectionId))
+          .leftJoin(
+            schema.collectionPrices,
+            and(eq(schema.collectionPrices.collectionId, schema.collections.id), eq(schema.collectionPrices.active, true)),
+          )
+          .where(eq(schema.collectionItems.componentId, row.component.id))
+          .limit(20);
+        return {
+          ...toCatalogItem(row.namespace, row.component, row.version),
+          inPaidCollection: paidCollections.some((collection) => collection.price !== null || collection.externalUrl !== null),
+        };
+      }),
+    );
   },
 );
 
@@ -278,12 +312,29 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
 
     // Collection membership: "by maker · in <collection>".
     const memberOf = await database
-      .select({ name: schema.collections.name, title: schema.collections.title })
+      .select({
+        name: schema.collections.name,
+        title: schema.collections.title,
+        collectionPrice: schema.collectionPrices.unitAmount,
+        externalUrl: schema.collections.externalUrl,
+      })
       .from(schema.collectionItems)
       .innerJoin(schema.collections, eq(schema.collections.id, schema.collectionItems.collectionId))
+      .leftJoin(
+        schema.collectionPrices,
+        and(eq(schema.collectionPrices.collectionId, schema.collections.id), eq(schema.collectionPrices.active, true)),
+      )
       .where(eq(schema.collectionItems.componentId, row.component.id));
 
-    return { ...item, marketplacePrice, marketplaceLicense, entitled, ownedPurchase, memberOf };
+    return {
+      ...item,
+      marketplacePrice,
+      marketplaceLicense,
+      entitled,
+      ownedPurchase,
+      memberOf: memberOf.map(({ name, title }) => ({ name, title })),
+      inPaidCollection: memberOf.some((membership) => membership.collectionPrice !== null || membership.externalUrl !== null),
+    };
   });
 
 /** Curator-only: load a component's full detail by id, regardless of status. */
@@ -313,6 +364,16 @@ export const fetchComponentForReview = createServerFn({ method: "GET" })
           .orderBy(schema.componentFiles.orderIndex)
       : [];
     const evidence = row.version ? await loadEvidence(database, row.version.id, { audience: "curator" }) : [];
+    const paidCollections = await database
+      .select({ id: schema.collections.id, price: schema.collectionPrices.unitAmount, externalUrl: schema.collections.externalUrl })
+      .from(schema.collectionItems)
+      .innerJoin(schema.collections, eq(schema.collections.id, schema.collectionItems.collectionId))
+      .leftJoin(
+        schema.collectionPrices,
+        and(eq(schema.collectionPrices.collectionId, schema.collections.id), eq(schema.collectionPrices.active, true)),
+      )
+      .where(eq(schema.collectionItems.componentId, row.component.id))
+      .limit(20);
 
     // Latest similarity screen for the curator comparison surface (#67).
     let similarityScreen: CatalogItem["similarityScreen"] = null;
@@ -324,14 +385,48 @@ export const fetchComponentForReview = createServerFn({ method: "GET" })
         .orderBy(desc(schema.similarityScreens.createdAt))
         .limit(1);
       if (screen && screen.status !== "error") {
-        const candidates = ((screen.results as { candidates?: { ref: string; confidence: string | null; matches?: { path: string; candidatePath: string; score: number; scaffolding: boolean }[] }[] })?.candidates ?? []).map(
-          (candidate) => ({
-            ref: candidate.ref,
-            confidence: candidate.confidence,
-            files: (candidate.matches ?? [])
-              .filter((match) => !match.scaffolding)
-              .slice(0, 6)
-              .map((match) => ({ path: match.path, candidatePath: match.candidatePath, score: match.score })),
+        const submittedContent = new Map(files.map((file) => [file.path, file.content ?? ""]));
+        const storedCandidates = (screen.results as {
+          candidates?: {
+            componentVersionId: string;
+            ref: string;
+            confidence: string | null;
+            matches?: { path: string; candidatePath: string; score: number; scaffolding: boolean }[];
+          }[];
+        })?.candidates ?? [];
+        // Source is returned only by this curator-authorized server function.
+        // Diffs render locally in the browser; no unpublished code is sent to
+        // the rendering library or another service.
+        const candidates = await Promise.all(
+          storedCandidates.map(async (candidate) => {
+            const matches = (candidate.matches ?? []).filter((match) => !match.scaffolding).slice(0, 6);
+            const candidatePaths = [...new Set(matches.map((match) => match.candidatePath))];
+            // Nothing rendered means nothing fetched — never pull a whole
+            // release's files for a scaffolding-only candidate.
+            const candidateFiles =
+              candidatePaths.length > 0
+                ? await database
+                    .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
+                    .from(schema.componentFiles)
+                    .where(
+                      and(
+                        eq(schema.componentFiles.componentVersionId, candidate.componentVersionId),
+                        inArray(schema.componentFiles.path, candidatePaths),
+                      ),
+                    )
+                : [];
+            const candidateContent = new Map(candidateFiles.map((file) => [file.path, file.content ?? ""]));
+            return {
+              ref: candidate.ref,
+              confidence: candidate.confidence,
+              files: matches.map((match) => ({
+                  path: match.path,
+                  candidatePath: match.candidatePath,
+                  score: match.score,
+                  submittedContent: submittedContent.get(match.path),
+                  candidateContent: candidateContent.get(match.candidatePath),
+                })),
+            };
           }),
         );
         similarityScreen = {
@@ -354,6 +449,7 @@ export const fetchComponentForReview = createServerFn({ method: "GET" })
         evidence,
       ),
       similarityScreen,
+      inPaidCollection: paidCollections.some((collection) => collection.price !== null || collection.externalUrl !== null),
     };
   });
 
@@ -429,6 +525,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       .where(eq(schema.collections.namespaceId, ns.id))
       .orderBy(desc(schema.collections.updatedAt));
     const collections: PublicCollection[] = [];
+    const paidCollectionMemberNames = new Set<string>();
     for (const collection of collectionRows) {
       const members = await database
         .select({ name: schema.components.name, title: schema.components.title, reviewStatus: schema.components.reviewStatus, visibility: schema.components.visibility, distributionChannels: schema.components.distributionChannels })
@@ -437,13 +534,13 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         .where(eq(schema.collectionItems.collectionId, collection.id));
       const live = members.filter((m) => m.reviewStatus === "approved" && m.visibility === "public");
       if (live.length === 0) continue;
-      const price = DIRECT_MARKETPLACE_ENABLED
-        ? (await database
-            .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
-            .from(schema.collectionPrices)
-            .where(and(eq(schema.collectionPrices.collectionId, collection.id), eq(schema.collectionPrices.active, true)))
-            .limit(1))[0]
-        : undefined;
+      const [storedPrice] = await database
+        .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
+        .from(schema.collectionPrices)
+        .where(and(eq(schema.collectionPrices.collectionId, collection.id), eq(schema.collectionPrices.active, true)))
+        .limit(1);
+      if (storedPrice || collection.externalUrl) live.forEach((member) => paidCollectionMemberNames.add(member.name));
+      const price = DIRECT_MARKETPLACE_ENABLED ? storedPrice : undefined;
       const externalDomain = collection.externalUrl ? domainOf(collection.externalUrl) : null;
       const [verifiedExternalDomain] = externalDomain && ns.ownerUserId
         ? await database
@@ -492,7 +589,10 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         badges: badges.map((row) => row.badge),
         joinedAt: user.createdAt.toISOString(),
       },
-      components: rows.map((row) => toCatalogItem(row.namespace, row.component, row.version)),
+      components: rows.map((row) => ({
+        ...toCatalogItem(row.namespace, row.component, row.version),
+        inPaidCollection: paidCollectionMemberNames.has(row.component.name),
+      })),
       collections,
       publicLists: await publicListsFor(ns.ownerUserId),
     };

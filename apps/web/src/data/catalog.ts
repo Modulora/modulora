@@ -81,6 +81,8 @@ export interface CatalogItem {
   ownedPurchase?: import("../lib/purchases").OwnedComponent | null;
   memberOf?: { name: string; title: string }[];
   inCollection?: string | null;
+  /** True when any active paid collection contains this component. */
+  inPaidCollection?: boolean;
   /** DB-backed component with real source (live iframe previews). */
   live?: boolean;
   /** Creator-provided install command (their own registry), when set. */
@@ -92,9 +94,36 @@ export interface CatalogItem {
   /** Latest similarity screen for this release (curator review surface). */
   similarityScreen?: {
     state: "clear" | "potential" | "blocked" | "authorized-derivative";
-    candidates: { ref: string; confidence: string | null; files: { path: string; candidatePath: string; score: number }[] }[];
+    candidates: {
+      ref: string;
+      confidence: string | null;
+      files: {
+        path: string;
+        candidatePath: string;
+        score: number;
+        /** Curator-only payload used to render the local code comparison. */
+        submittedContent?: string;
+        candidateContent?: string;
+      }[];
+    }[];
     corpusLimitation: string;
   } | null;
+}
+
+/**
+ * Interaction-only previews (canvas + pointer-driven effects) render blank
+ * until the pointer moves. Surfaces showing the live sandbox use this to add
+ * a dismissable "move your pointer" cue instead of a misleading empty frame.
+ */
+export function needsInteractionHint(files: ComponentFile[] | undefined): boolean {
+  return (files ?? []).some(
+    (file) => /canvas/i.test(file.content) && /pointermove|mousemove|onPointerMove/i.test(file.content),
+  );
+}
+
+/** Commerce display only; licensing and source-model copy remain separate. */
+export function isPaidCatalogItem(item: CatalogItem): boolean {
+  return item.sourceModel !== "open-source" || item.marketplacePrice != null || item.inPaidCollection === true;
 }
 
 export const catalog: CatalogItem[] = [
