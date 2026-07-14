@@ -24,6 +24,7 @@ export function usernameChangeAvailableAt(changedAt: string | null): string | nu
 }
 
 export interface ProfileInput {
+  name: string;
   username: string;
   imageUrl: string;
   bio: string;
@@ -110,6 +111,7 @@ function normalizeUrl(value: string): string | null {
 
 export const updateProfile = createServerFn({ method: "POST" })
   .validator((data: ProfileInput) => ({
+    name: String(data.name ?? "").trim().slice(0, 64),
     username: String(data.username ?? "").trim().toLowerCase(),
     imageUrl: String(data.imageUrl ?? "").trim(),
     bio: String(data.bio ?? "").trim().slice(0, 280),
@@ -129,6 +131,9 @@ export const updateProfile = createServerFn({ method: "POST" })
 
     const check = validateUsername(data.username);
     if (!check.ok) return { ok: false, error: check.reason, field: "username" };
+    if (!data.name) {
+      return { ok: false, error: "Display name can't be empty.", field: "name" };
+    }
 
     const db = drizzle(neon(databaseUrl), { schema });
 
@@ -160,6 +165,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     await db
       .update(schema.users)
       .set({
+        name: data.name,
         username: data.username,
         usernameChangedAt:
           data.username !== user.username ? new Date() : undefined,

@@ -33,6 +33,7 @@ function AppearancePage() {
     setError(null);
     // updateProfile takes the full profile; submit current values with only the theme changed.
     const input: ProfileInput = {
+      name: user.name ?? "",
       username: user.username ?? "",
       imageUrl: user.image ?? "",
       bio: user.bio ?? "",
