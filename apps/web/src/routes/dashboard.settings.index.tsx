@@ -47,6 +47,7 @@ function Settings() {
   const router = useRouter();
   const navigate = useNavigate();
   const [form, setForm] = useState<ProfileInput>({
+    name: user.name ?? "",
     username: user.username ?? "",
     imageUrl: user.image ?? "",
     bio: user.bio ?? "",
@@ -115,7 +116,7 @@ function Settings() {
         className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card/40 p-6"
       >
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-          <Avatar username={form.username} name={user.name} imageUrl={form.imageUrl} />
+          <Avatar username={form.username} name={form.name} imageUrl={form.imageUrl} />
           <div className="flex-1">
             <Label htmlFor="imageUrl">Avatar</Label>
             <div className="mt-2 flex items-center gap-2">
@@ -133,6 +134,22 @@ function Settings() {
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Upload an image (PNG/JPEG/WebP, under 2 MB) or paste a URL.</p>
           </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="name">Display name</Label>
+          <Input
+            id="name"
+            value={form.name}
+            onChange={(event) => set("name", event.target.value)}
+            aria-invalid={errorField === "name"}
+            maxLength={64}
+            autoComplete="name"
+            placeholder="Justin Levine"
+          />
+          <p className="text-xs text-muted-foreground">
+            Shown on your public profile and next to your components. Your handle stays @{form.username || "username"}.
+          </p>
         </div>
 
         <div className="flex flex-col gap-2">
