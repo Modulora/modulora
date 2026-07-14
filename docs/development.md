@@ -35,10 +35,20 @@ pnpm storybook        # component workbench (localhost:6006)
 pnpm build-storybook  # static Storybook bundle
 ```
 
-Live preview needs the self-hosted Sandpack bundler on a separate origin: run a
-local build of `codesandbox/sandpack-bundler` on `:4587` and set
-`VITE_SANDPACK_BUNDLER_URL=http://localhost:4587`. See
-`modulora-infra/workers/sandpack` for the pinned build + prod config.
+Live preview needs the self-hosted Sandpack bundler on a separate origin. Build
+and serve the pinned runtime from the infrastructure repository:
+
+```bash
+cd ../modulora-infra/workers/sandpack
+./build.sh
+python3 -m http.server 4587 --directory dist
+```
+
+Set `VITE_SANDPACK_BUNDLER_URL=http://localhost:4587` in `apps/web/.env`, then
+start the app on `:5173`. A Sandpack `TIME_OUT` in local development usually
+means the static server on `:4587` is not running. Run `./verify.sh
+http://localhost:4587` before debugging the client. The production runtime uses
+the same pinned build on the isolated `sandpack.modulora.dev` origin.
 
 ## Storybook — the component workbench
 
