@@ -12,6 +12,11 @@ import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { validateUsername } from "./username";
 import { isColorVisionMode } from "./pierre-theme";
+import {
+  normalizeProfileSectionVisibility,
+  sanitizeProfileSectionPatch,
+  type ProfileSectionVisibility,
+} from "./profile-sections";
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 15;
 const COOLDOWN_MS = USERNAME_CHANGE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
@@ -32,6 +37,7 @@ export interface ProfileInput {
   githubUrl: string;
   xUrl: string;
   sponsorUrl: string;
+  sections?: Partial<ProfileSectionVisibility>;
   colorVisionMode?: string;
 }
 
@@ -145,6 +151,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     githubUrl: String(data.githubUrl ?? "").trim(),
     xUrl: String(data.xUrl ?? "").trim(),
     sponsorUrl: String(data.sponsorUrl ?? "").trim().slice(0, 300),
+    sections: data.sections ? sanitizeProfileSectionPatch(data.sections) : undefined,
     colorVisionMode: String(data.colorVisionMode ?? "").trim(),
   }))
   .handler(async ({ data }): Promise<ProfileResult> => {
@@ -207,6 +214,8 @@ export const updateProfile = createServerFn({ method: "POST" })
       }
     }
 
+    const sections = normalizeProfileSectionVisibility(data.sections ?? {}, user.sections);
+
     await db
       .update(schema.users)
       .set({
@@ -220,6 +229,12 @@ export const updateProfile = createServerFn({ method: "POST" })
         githubUrl,
         xUrl,
         sponsorUrl,
+        showProfileBio: sections.bio,
+        showProfileLinks: sections.links,
+        showProfileSponsor: sections.sponsor,
+        showProfileComponents: sections.components,
+        showProfileCollections: sections.collections,
+        showProfilePublicLists: sections.publicLists,
         colorVisionMode: isColorVisionMode(data.colorVisionMode) ? data.colorVisionMode : undefined,
         updatedAt: new Date(),
       })

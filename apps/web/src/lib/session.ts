@@ -13,6 +13,8 @@ import { alphaGateActive, isAllowedEmail } from "./access";
 import { getAuth } from "./auth";
 import { hasAcceptedInvitation } from "./invitation-core";
 
+import type { ProfileSectionVisibility } from "./profile-sections";
+
 export interface CurrentUser {
   id: string;
   email: string;
@@ -25,6 +27,7 @@ export interface CurrentUser {
   githubUrl: string | null;
   xUrl: string | null;
   sponsorUrl: string | null;
+  sections: ProfileSectionVisibility;
   githubUsername: string | null;
   xUsername: string | null;
   stripeAccountId: string | null;
@@ -73,6 +76,14 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     githubUrl: row.githubUrl,
     xUrl: row.xUrl,
     sponsorUrl: row.sponsorUrl,
+    sections: {
+      bio: row.showProfileBio,
+      links: row.showProfileLinks,
+      sponsor: row.showProfileSponsor,
+      components: row.showProfileComponents,
+      collections: row.showProfileCollections,
+      publicLists: row.showProfilePublicLists,
+    },
     githubUsername: row.githubUsername,
     xUsername: row.xUsername,
     stripeAccountId: row.stripeAccountId,

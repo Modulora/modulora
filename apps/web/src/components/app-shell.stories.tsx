@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/tanstack-react";
 import { AppShell } from "./app-shell";
 import { withRouter } from "../../.storybook/with-router";
 import type { CurrentUser } from "@/lib/session";
+import { DEFAULT_PROFILE_SECTION_VISIBILITY } from "@/lib/profile-sections";
 
 const mockUser: CurrentUser = {
   id: "u_1",
@@ -21,6 +22,7 @@ const mockUser: CurrentUser = {
   isCurator: true,
   isPlus: true,
   sponsorUrl: null,
+  sections: DEFAULT_PROFILE_SECTION_VISIBILITY,
   colorVisionMode: "standard",
 };
 

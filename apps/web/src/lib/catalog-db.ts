@@ -18,6 +18,11 @@ import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
 import { DIRECT_MARKETPLACE_ENABLED } from "./flags";
 import { licenseTemplate, resolveLicenseText } from "./license";
 import { publicListsFor } from "./lists";
+import {
+  visibleProfileContent,
+  visibleProfileItems,
+  type ProfileSectionVisibility,
+} from "./profile-sections";
 
 function db() {
   const url = process.env.DATABASE_URL;
@@ -463,6 +468,7 @@ export interface PublicProfile {
   xUrl: string | null;
   /** Self-asserted sponsorship link — display-only, never a trust claim. */
   sponsorUrl: string | null;
+  sections: ProfileSectionVisibility;
   githubUsername: string | null;
   xUsername: string | null;
   websiteVerified: boolean;
@@ -491,6 +497,14 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       .where(eq(schema.users.id, ns.ownerUserId))
       .limit(1);
     if (!user) return null;
+    const sections: ProfileSectionVisibility = {
+      bio: user.showProfileBio,
+      links: user.showProfileLinks,
+      sponsor: user.showProfileSponsor,
+      components: user.showProfileComponents,
+      collections: user.showProfileCollections,
+      publicLists: user.showProfilePublicLists,
+    };
 
     const badges = await database
       .select({ badge: schema.userBadges.badge })
@@ -499,7 +513,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
 
     // Website is "verified" only if its domain is a confirmed verified domain.
     let websiteVerified = false;
-    const websiteDomain = user.websiteUrl ? normalizeDomain(user.websiteUrl) : null;
+    const websiteDomain = sections.links && user.websiteUrl ? normalizeDomain(user.websiteUrl) : null;
     if (websiteDomain) {
       const [vd] = await database
         .select({ id: schema.verifiedDomains.id })
@@ -509,23 +523,27 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       websiteVerified = Boolean(vd);
     }
 
-    const rows = await database
-      .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name })
-      .from(schema.components)
-      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
-      .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
-      .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved"), isNull(schema.components.moderationState)))
-      .orderBy(desc(schema.components.createdAt));
+    const rows = sections.components || sections.collections
+      ? await database
+          .select({ component: schema.components, version: schema.componentVersions, namespace: schema.namespaces.name })
+          .from(schema.components)
+          .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+          .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
+          .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved"), isNull(schema.components.moderationState)))
+          .orderBy(desc(schema.components.createdAt))
+      : [];
 
     // Collections: listed with their approved-member count, bundle price,
     // license, and whether the signed-in viewer already owns the bundle.
     const request = getRequest();
     const profileViewer = request ? await getCurrentUser(request) : null;
-    const collectionRows = await database
-      .select()
-      .from(schema.collections)
-      .where(eq(schema.collections.namespaceId, ns.id))
-      .orderBy(desc(schema.collections.updatedAt));
+    const collectionRows = sections.collections
+      ? await database
+          .select()
+          .from(schema.collections)
+          .where(eq(schema.collections.namespaceId, ns.id))
+          .orderBy(desc(schema.collections.updatedAt))
+      : [];
     const collections: PublicCollection[] = [];
     const paidCollectionMemberNames = new Set<string>();
     for (const collection of collectionRows) {
@@ -556,6 +574,13 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
             )
             .limit(1)
         : [];
+      const coverRow = rows.find((row) => live.some((member) => member.name === row.component.name));
+      const cover = coverRow
+        ? {
+            ...toCatalogItem(coverRow.namespace, coverRow.component, coverRow.version),
+            inPaidCollection: Boolean(storedPrice || collection.externalUrl),
+          }
+        : null;
       collections.push({
         name: collection.name,
         title: collection.title,
@@ -568,6 +593,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
             }
           : null,
         members: live.map((m) => ({ name: m.name, title: m.title })),
+        cover,
         cliInstallable: live.some((m) => (m.distributionChannels ?? []).includes("modulora-cli")),
         price: price?.unitAmount ?? null,
         license: price ? { name: licenseTemplate(price.licenseTemplate).name, text: resolveLicenseText(price.licenseTemplate, price.licenseText) } : null,
@@ -575,11 +601,8 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       });
     }
 
-    return {
-      profile: {
-        username: user.username ?? data.username,
-        name: user.name,
-        image: user.image,
+    const visibleContent = visibleProfileContent(
+      {
         bio: user.bio,
         websiteUrl: user.websiteUrl,
         githubUrl: user.githubUrl,
@@ -587,17 +610,29 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         sponsorUrl: user.sponsorUrl,
         githubUsername: user.githubUsername,
         xUsername: user.xUsername,
+      },
+      sections,
+    );
+    const componentItems = rows.map((row) => ({
+      ...toCatalogItem(row.namespace, row.component, row.version),
+      inPaidCollection: paidCollectionMemberNames.has(row.component.name),
+    }));
+
+    return {
+      profile: {
+        username: user.username ?? data.username,
+        name: user.name,
+        image: user.image,
+        ...visibleContent,
+        sections,
         websiteVerified,
         isPlus: user.isPlus,
         badges: badges.map((row) => row.badge),
         joinedAt: user.createdAt.toISOString(),
       },
-      components: rows.map((row) => ({
-        ...toCatalogItem(row.namespace, row.component, row.version),
-        inPaidCollection: paidCollectionMemberNames.has(row.component.name),
-      })),
+      components: visibleProfileItems(sections.components, componentItems),
       collections,
-      publicLists: await publicListsFor(ns.ownerUserId),
+      publicLists: sections.publicLists ? await publicListsFor(ns.ownerUserId) : [],
     };
   });
 
@@ -606,6 +641,7 @@ export interface PublicCollection {
   title: string;
   description: string;
   members: { name: string; title: string }[];
+  cover: CatalogItem | null;
   cliInstallable: boolean;
   price: number | null;
   /** Sold on the creator's own site — mutually exclusive with price. */
