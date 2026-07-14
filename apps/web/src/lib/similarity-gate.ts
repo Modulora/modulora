@@ -24,7 +24,13 @@ async function sha256Hex(content: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Latest published, non-revoked release files from every OTHER owner. */
+/**
+ * Latest APPROVED, PUBLIC, unmoderated, non-revoked release files from every
+ * OTHER owner. Drafts, pending, and rejected submissions are deliberately
+ * excluded: they are unpublished work whose existence, names, and file paths
+ * must never leak to another submitter — and screening copy promises the
+ * corpus is "published Modulora releases", which must stay literally true.
+ */
 async function loadCorpus(db: Db, excludeOwnerUserId: string, excludeComponentId: string): Promise<CandidateInput[]> {
   const rows = await db
     .select({
@@ -43,11 +49,17 @@ async function loadCorpus(db: Db, excludeOwnerUserId: string, excludeComponentId
     .where(
       and(
         eq(schema.components.latestVersionId, schema.componentVersions.id),
+        eq(schema.components.reviewStatus, "approved"),
+        eq(schema.components.visibility, "public"),
+        isNull(schema.components.moderationState),
         isNull(schema.componentVersions.revokedAt),
         eq(schema.componentFiles.role, "component"),
         ne(schema.components.id, excludeComponentId),
       ),
     )
+    // Deterministic under the cap: the oldest releases are the ones a copy
+    // would plagiarize, so they stay in the corpus as the catalog grows.
+    .orderBy(schema.components.createdAt, schema.componentFiles.orderIndex)
     .limit(5000);
 
   const byVersion = new Map<string, CandidateInput>();
@@ -87,12 +99,41 @@ export async function runSimilarityGate(
   },
 ): Promise<GateOutcome> {
   let result: ScreenResult;
+  let screenId: string | null = null;
   try {
     const corpus = await loadCorpus(db, input.ownerUserId, input.componentId);
     const files = await Promise.all(
       input.files.map(async (file) => ({ ...file, sha256: await sha256Hex(file.content) })),
     );
     result = screenSubmission({ ownerUserId: input.ownerUserId, files }, corpus);
+
+    // Persistence stays INSIDE the try: a screen that isn't durably recorded
+    // must fail closed rather than pass the submission into review.
+    const [row] = await db
+      .insert(schema.similarityScreens)
+      .values({
+        componentId: input.componentId,
+        componentVersionId: input.componentVersionId,
+        methodVersion: result.methodVersion,
+        status: result.status,
+        results: { candidates: result.candidates } as unknown as Record<string, unknown>,
+        corpusLimitation: result.corpusLimitation,
+      })
+      .returning({ id: schema.similarityScreens.id });
+    screenId = row?.id ?? null;
+
+    await db.insert(schema.evidenceRecords).values({
+      componentVersionId: input.componentVersionId,
+      type: "similarity-screen",
+      status: result.status === "clear" ? "passed" : "warning",
+      issuer: "modulora-platform",
+      toolVersion: result.methodVersion,
+      scope:
+        result.status === "clear"
+          ? "No material similarity to other creators' published Modulora releases was detected."
+          : `Similarity candidates were detected against ${result.candidates.length} published release(s) and require human review.`,
+      limitations: result.corpusLimitation,
+    });
   } catch (error) {
     console.error("similarity screening failed", error);
     // Fail closed: record the failure; the caller must keep the draft out of review.
@@ -114,34 +155,9 @@ export async function runSimilarityGate(
     }
   }
 
-  const [row] = await db
-    .insert(schema.similarityScreens)
-    .values({
-      componentId: input.componentId,
-      componentVersionId: input.componentVersionId,
-      methodVersion: result.methodVersion,
-      status: result.status,
-      results: { candidates: result.candidates } as unknown as Record<string, unknown>,
-      corpusLimitation: result.corpusLimitation,
-    })
-    .returning({ id: schema.similarityScreens.id });
-
-  await db.insert(schema.evidenceRecords).values({
-    componentVersionId: input.componentVersionId,
-    type: "similarity-screen",
-    status: result.status === "clear" ? "passed" : "warning",
-    issuer: "modulora-platform",
-    toolVersion: result.methodVersion,
-    scope:
-      result.status === "clear"
-        ? "No material similarity to other creators' published Modulora releases was detected."
-        : `Similarity candidates were detected against ${result.candidates.length} published release(s) and require human review.`,
-    limitations: result.corpusLimitation,
-  });
-
   return {
     status: result.status,
-    screenId: row?.id ?? null,
+    screenId,
     candidates: result.candidates.map((candidate) => ({
       ref: candidate.ref,
       confidence: candidate.confidence,

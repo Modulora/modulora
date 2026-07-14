@@ -79,13 +79,16 @@ const ACTION_STATUS: Partial<Record<ModerationAction, string>> = {
 export const actOnModerationCase = createServerFn({ method: "POST" })
   .validator((data: { caseId: string; action: ModerationAction; note: string }) => ({
     caseId: String(data.caseId ?? "").trim(),
-    action: ACTIONS.includes(data.action) ? data.action : ("noted" as const),
+    action: String(data.action ?? ""),
     note: String(data.note ?? "").trim().slice(0, 1000),
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
     if (!user || !isOwnerUser(user.id)) return { ok: false, error: "Not authorized." };
+    // Never coerce an unknown action into a different one.
+    if (!ACTIONS.includes(data.action as ModerationAction)) return { ok: false, error: "Unknown action." };
+    const action = data.action as ModerationAction;
     if (!data.note) return { ok: false, error: "A note is required — it becomes the case record." };
     const db = getDb();
     if (!db || !data.caseId) return { ok: false, error: "Invalid request." };
@@ -97,7 +100,7 @@ export const actOnModerationCase = createServerFn({ method: "POST" })
       .limit(1);
     if (!moderationCase) return { ok: false, error: "Case not found." };
 
-    const nextStatus = ACTION_STATUS[data.action];
+    const nextStatus = ACTION_STATUS[action];
     if (nextStatus) {
       await db
         .update(schema.moderationCases)
@@ -106,29 +109,29 @@ export const actOnModerationCase = createServerFn({ method: "POST" })
     }
     await db.insert(schema.moderationCaseEvents).values({
       caseId: data.caseId,
-      action: data.action,
+      action: action,
       actorUserId: user.id,
       note: data.note,
     });
 
     // Scoped listing effects.
     if (moderationCase.componentId) {
-      if (data.action === "restricted") {
+      if (action === "restricted") {
         await db
           .update(schema.components)
           .set({ moderationState: "restricted", updatedAt: new Date() })
           .where(eq(schema.components.id, moderationCase.componentId));
-      } else if (data.action === "takedown") {
+      } else if (action === "takedown") {
         await db
           .update(schema.components)
           .set({ moderationState: "removed", updatedAt: new Date() })
           .where(eq(schema.components.id, moderationCase.componentId));
-      } else if (data.action === "corrected") {
+      } else if (action === "corrected") {
         await db
           .update(schema.components)
           .set({ moderationState: null, updatedAt: new Date() })
           .where(eq(schema.components.id, moderationCase.componentId));
-      } else if (data.action === "revoked") {
+      } else if (action === "revoked") {
         const [component] = await db
           .select({ latestVersionId: schema.components.latestVersionId })
           .from(schema.components)

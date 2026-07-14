@@ -49,18 +49,32 @@ export const classifySimilarityMatches = createServerFn({ method: "POST" })
 
     // Ownership: the screen's component must belong to the caller's namespace.
     const [screen] = await db
-      .select({ id: schema.similarityScreens.id, ownerUserId: schema.namespaces.ownerUserId })
+      .select({
+        id: schema.similarityScreens.id,
+        ownerUserId: schema.namespaces.ownerUserId,
+        resolution: schema.similarityScreens.resolution,
+      })
       .from(schema.similarityScreens)
       .innerJoin(schema.components, eq(schema.components.id, schema.similarityScreens.componentId))
       .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
       .where(eq(schema.similarityScreens.id, data.screenId))
       .limit(1);
     if (!screen || screen.ownerUserId !== user.id) return { ok: false, error: "Not your submission." };
+    // The classification is part of what the curator resolved against — it
+    // can't be rewritten after resolution (escalated holds stay open).
+    if (screen.resolution !== null && screen.resolution !== "escalated") {
+      return { ok: false, error: "This hold was already resolved; resubmit to start a new screen." };
+    }
 
     await db
       .update(schema.similarityScreens)
       .set({ submitterClassification: { entries: data.entries, classifiedAt: new Date().toISOString() } })
-      .where(eq(schema.similarityScreens.id, data.screenId));
+      .where(
+        and(
+          eq(schema.similarityScreens.id, data.screenId),
+          or(isNull(schema.similarityScreens.resolution), eq(schema.similarityScreens.resolution, "escalated")),
+        ),
+      );
     return { ok: true };
   });
 
@@ -143,21 +157,46 @@ export type HoldResolution = (typeof RESOLUTIONS)[number];
 export const resolveSimilarityHold = createServerFn({ method: "POST" })
   .validator((data: { screenId: string; resolution: HoldResolution; rationale: string }) => ({
     screenId: String(data.screenId ?? "").trim(),
-    resolution: RESOLUTIONS.includes(data.resolution) ? data.resolution : ("escalated" as const),
+    resolution: String(data.resolution ?? ""),
     rationale: String(data.rationale ?? "").trim().slice(0, 2000),
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
     if (!user?.isCurator) return { ok: false, error: "Curators only." };
+    // Never coerce an unknown resolution into a different action.
+    if (!RESOLUTIONS.includes(data.resolution as HoldResolution)) {
+      return { ok: false, error: "Unknown resolution." };
+    }
+    const resolution = data.resolution as HoldResolution;
     if (!data.rationale) return { ok: false, error: "A rationale is required for every resolution." };
     const db = getDb();
     if (!db || !data.screenId) return { ok: false, error: "Invalid request." };
 
+    // The resolution must apply to the exact release that was screened. If
+    // the creator swapped in new draft content since, refuse: the curator
+    // would be resolving a hold against files they never compared.
+    const [held] = await db
+      .select({
+        screenedVersionId: schema.similarityScreens.componentVersionId,
+        latestVersionId: schema.components.latestVersionId,
+      })
+      .from(schema.similarityScreens)
+      .innerJoin(schema.components, eq(schema.components.id, schema.similarityScreens.componentId))
+      .where(eq(schema.similarityScreens.id, data.screenId))
+      .limit(1);
+    if (!held) return { ok: false, error: "Hold not found." };
+    if (held.latestVersionId !== held.screenedVersionId) {
+      return {
+        ok: false,
+        error: "The submission changed since this screen ran. Ask the creator to resubmit so a fresh screen covers the current files.",
+      };
+    }
+
     const updated = await db
       .update(schema.similarityScreens)
       .set({
-        resolution: data.resolution,
+        resolution,
         resolutionRationale: data.rationale,
         resolvedBy: user.id,
         resolvedAt: new Date(),
@@ -173,12 +212,14 @@ export const resolveSimilarityHold = createServerFn({ method: "POST" })
     if (updated.length === 0) return { ok: false, error: "Already resolved or not held." };
     const componentId = updated[0]!.componentId;
 
-    if (data.resolution === "cleared" || data.resolution === "authorized-derivative") {
+    if (resolution === "cleared" || resolution === "authorized-derivative") {
       await db
         .update(schema.components)
         .set({ reviewStatus: "pending", submittedAt: new Date(), updatedAt: new Date() })
         .where(and(eq(schema.components.id, componentId), eq(schema.components.reviewStatus, "draft")));
-    } else if (data.resolution === "rejected" || data.resolution === "attribution-required") {
+    } else if (resolution === "rejected" || resolution === "attribution-required") {
+      // Guarded to the held draft: a stale hold can never delist a release
+      // that was since re-screened and approved.
       await db
         .update(schema.components)
         .set({
@@ -188,7 +229,7 @@ export const resolveSimilarityHold = createServerFn({ method: "POST" })
           reviewedAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(eq(schema.components.id, componentId));
+        .where(and(eq(schema.components.id, componentId), eq(schema.components.reviewStatus, "draft")));
     }
     return { ok: true };
   });

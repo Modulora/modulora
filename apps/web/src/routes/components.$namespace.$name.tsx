@@ -81,6 +81,7 @@ const EVIDENCE_LABELS: Record<string, string> = {
   "domain-verified": "Domain verified",
   "secret-scan": "Secret scan",
   "source-not-assessed": "Source not assessed",
+  "similarity-screen": "Similarity screening",
   "dependency-scan": "Dependency scan",
   "license-scan": "License scan",
   "static-analysis": "Static analysis",

@@ -292,9 +292,10 @@ export async function publishCore(data: PublishInput, request: Request): Promise
           originalUrl: originalUrl || null,
           inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
-          // Any new submission re-enters curation before it is public again;
-          // drafts stay out of the queue until the creator submits.
-          reviewStatus: isDraft ? "draft" : "pending",
+          // Any new submission re-enters curation before it is public again.
+          // Everything starts as a draft; the submission is promoted to
+          // pending only AFTER similarity screening succeeds (fail closed).
+          reviewStatus: "draft",
           reviewReason: null,
           reviewedBy: null,
           reviewedAt: null,
@@ -321,7 +322,7 @@ export async function publishCore(data: PublishInput, request: Request): Promise
           originalUrl: originalUrl || null,
           inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
-          reviewStatus: isDraft ? "draft" : "pending",
+          reviewStatus: "draft",
         })
         .returning({ id: schema.components.id });
       componentId = created!.id;
@@ -443,41 +444,48 @@ export async function publishCore(data: PublishInput, request: Request): Promise
       .set({ latestVersionId: createdVersion!.id, updatedAt: new Date() })
       .where(eq(schema.components.id, componentId));
 
-    // Pre-publication similarity screening (#67): submissions with exact or
-    // high-confidence cross-owner matches hold as drafts until a curator
-    // resolves them, and scanner failures fail closed — never into review.
-    let similarityHold: { screenId: string | null; candidates: { ref: string; confidence: string | null; files: { path: string; candidatePath: string; score: number }[] }[] } | null = null;
-    if (!isDraft && !isPaid && installFiles.length > 0) {
-      const gate = await runSimilarityGate(db, {
-        componentId,
-        componentVersionId: createdVersion!.id,
-        ownerUserId: user.id,
-        files: installFiles.map((file) => ({ path: file.path, content: file.content })),
-      });
-      if (gate.status === "error") {
-        await db
-          .update(schema.components)
-          .set({ reviewStatus: "draft", updatedAt: new Date() })
-          .where(eq(schema.components.id, componentId));
-        return {
-          ok: false,
-          error: "Similarity screening could not complete, so the submission was saved as a draft instead of entering review. Try submitting again.",
-        };
-      }
-      if (gate.status === "blocked") {
-        await db
-          .update(schema.components)
-          .set({ reviewStatus: "draft", updatedAt: new Date() })
-          .where(eq(schema.components.id, componentId));
-        similarityHold = { screenId: gate.screenId, candidates: gate.candidates };
-      }
-    }
-
     if (!isPaid && installFiles.length > 0) {
       await db
         .update(schema.componentVersions)
         .set({ contentSha256: await contentDigest(digestFiles) })
         .where(eq(schema.componentVersions.id, createdVersion!.id));
+    }
+
+    // Pre-publication similarity screening (#67). The component is still a
+    // draft here — it is promoted to pending only after a clean or potential
+    // screen, so any failure (including thrown persistence errors) fails
+    // closed and never lets a submission skip screening into review.
+    let similarityHold: { screenId: string | null; candidates: { ref: string; confidence: string | null; files: { path: string; candidatePath: string; score: number }[] }[] } | null = null;
+    if (!isDraft) {
+      if (!isPaid && installFiles.length > 0) {
+        let gate: Awaited<ReturnType<typeof runSimilarityGate>>;
+        try {
+          gate = await runSimilarityGate(db, {
+            componentId,
+            componentVersionId: createdVersion!.id,
+            ownerUserId: user.id,
+            files: installFiles.map((file) => ({ path: file.path, content: file.content })),
+          });
+        } catch (error) {
+          console.error("similarity gate threw", error);
+          gate = { status: "error", screenId: null, candidates: [] };
+        }
+        if (gate.status === "error") {
+          return {
+            ok: false,
+            error: "Similarity screening could not complete, so the submission was saved as a draft instead of entering review. Try submitting again.",
+          };
+        }
+        if (gate.status === "blocked") {
+          similarityHold = { screenId: gate.screenId, candidates: gate.candidates };
+        }
+      }
+      if (!similarityHold) {
+        await db
+          .update(schema.components)
+          .set({ reviewStatus: "pending", submittedAt: new Date(), updatedAt: new Date() })
+          .where(eq(schema.components.id, componentId));
+      }
     }
 
     // Announce the submission to the curation channel. The component stays

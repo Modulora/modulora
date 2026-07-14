@@ -77,13 +77,22 @@ function toCatalogItem(
 async function loadEvidence(
   database: NonNullable<ReturnType<typeof db>>,
   versionId: string,
+  options: { audience: "public" | "curator" } = { audience: "public" },
 ): Promise<CatalogItem["evidence"]> {
   const rows = await database
     .select()
     .from(schema.evidenceRecords)
     .where(eq(schema.evidenceRecords.componentVersionId, versionId))
     .orderBy(schema.evidenceRecords.recordedAt);
-  return rows.map((row) => ({
+  // Similarity warnings are review-time signals, not public claims: on an
+  // approved listing a stale "requires human review" warning would cast doubt
+  // on a creator's work after the human review already resolved it. Curators
+  // see every record; the public sees the clean-screen record only.
+  const visible =
+    options.audience === "curator"
+      ? rows
+      : rows.filter((row) => row.type !== "similarity-screen" || row.status === "passed");
+  return visible.map((row) => ({
     type: row.type as CatalogItem["evidence"][number]["type"],
     status: row.status as CatalogItem["evidence"][number]["status"],
     issuer: row.issuer,
@@ -303,7 +312,7 @@ export const fetchComponentForReview = createServerFn({ method: "GET" })
           .where(eq(schema.componentFiles.componentVersionId, row.version.id))
           .orderBy(schema.componentFiles.orderIndex)
       : [];
-    const evidence = row.version ? await loadEvidence(database, row.version.id) : [];
+    const evidence = row.version ? await loadEvidence(database, row.version.id, { audience: "curator" }) : [];
 
     // Latest similarity screen for the curator comparison surface (#67).
     let similarityScreen: CatalogItem["similarityScreen"] = null;

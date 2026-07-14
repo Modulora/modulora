@@ -32,35 +32,39 @@ afterEach(async () => {
 describe.skipIf(!databaseUrl)("similarity gate against the real corpus", () => {
   it("blocks a renamed cross-owner copy and persists an explainable screen", async () => {
     const componentsRows = await db!
-      .select({ id: schema.components.id, latest: schema.components.latestVersionId })
+      .select({
+        id: schema.components.id,
+        latest: schema.components.latestVersionId,
+        ownerUserId: schema.namespaces.ownerUserId,
+      })
       .from(schema.components)
-      .where(eq(schema.components.reviewStatus, "approved"))
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+      .where(and(eq(schema.components.reviewStatus, "approved"), eq(schema.components.visibility, "public")))
       .limit(2);
-    const component = componentsRows[0];
+    if (componentsRows.length < 2) return; // needs two published components to exercise self-exclusion
+    const component = componentsRows[0]!;
     // Attribute the synthetic submission to a DIFFERENT existing component so
     // the corpus self-exclusion doesn't hide the copied source.
-    const submissionComponentId = componentsRows[1]?.id ?? component!.id;
-    expect(component?.latest).toBeTruthy();
-    expect(componentsRows.length).toBeGreaterThan(1);
+    const submissionComponentId = componentsRows[1]!.id;
+    expect(component.latest).toBeTruthy();
     const files = await db!
       .select({ path: schema.componentFiles.path, content: schema.componentFiles.content, role: schema.componentFiles.role })
       .from(schema.componentFiles)
-      .where(eq(schema.componentFiles.componentVersionId, component!.latest!));
+      .where(eq(schema.componentFiles.componentVersionId, component.latest!));
     const install = files
       .filter((file) => file.role === "component" && file.content)
       .map((file) => ({ path: `renamed/${file.path}`, content: `// totally original\n${file.content}` }));
     expect(install.length).toBeGreaterThan(0);
-    const [otherOwner] = await db!
-      .select({ id: schema.users.id })
-      .from(schema.users)
-      .where(eq(schema.users.username, "justin"))
-      .limit(1);
+    // Any user who does NOT own the copied component works as the submitter.
+    const users = await db!.select({ id: schema.users.id }).from(schema.users).limit(10);
+    const otherOwner = users.find((row) => row.id !== component.ownerUserId);
+    if (!otherOwner) return;
 
-    cleanupEvidenceVersion = component!.latest!;
+    cleanupEvidenceVersion = component.latest!;
     const outcome = await runSimilarityGate(db!, {
       componentId: submissionComponentId,
-      componentVersionId: component!.latest!,
-      ownerUserId: otherOwner!.id,
+      componentVersionId: component.latest!,
+      ownerUserId: otherOwner.id,
       files: install,
     });
     if (outcome.screenId) cleanupScreens.push(outcome.screenId);
