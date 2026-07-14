@@ -635,7 +635,7 @@ function ReportComponent({ namespace, name }: { namespace: string; name: string 
         {done ? (
           <div className="flex flex-col items-center gap-3 py-4 text-center">
             <span className="flex size-11 items-center justify-center rounded-full bg-receipt/10 text-receipt"><Check className="size-5" /></span>
-            <div><p className="font-semibold">Report submitted</p><p className="mt-1 text-sm text-muted-foreground">Thanks — our team will review it.</p></div>
+            <div><p className="font-semibold">Report recorded</p><p className="mt-1 max-w-sm text-sm text-muted-foreground">Check your email to confirm this address for follow-up. The report stays on file even if you do not confirm it.</p></div>
           </div>
         ) : (
           <>
@@ -657,7 +657,7 @@ function ReportComponent({ namespace, name }: { namespace: string; name: string 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="report-email">Contact email <span className="text-muted-foreground">(required without an account)</span></Label>
                 <Input id="report-email" type="email" autoComplete="email" value={reporterEmail} onChange={(e) => setReporterEmail(e.target.value)} placeholder="you@example.com" />
-                <p className="text-xs text-muted-foreground">Used only to follow up on this report. Signed-in reporters can leave this blank.</p>
+                <p className="text-xs text-muted-foreground">Used only to follow up on this report. We send a case-specific confirmation link; signed-in reporters can leave this blank.</p>
               </div>
               {error ? <p className="text-xs text-destructive">{error}</p> : null}
               <Button type="button" variant="destructive" onClick={onSubmit} disabled={pending}>

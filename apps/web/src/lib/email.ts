@@ -30,7 +30,9 @@ export async function sendEmail(input: EmailInput): Promise<void> {
   // real recipients links that point at localhost.
   if (!apiKey || !ORIGIN.startsWith("https://")) {
     // Log instead of silently dropping, so flows stay testable in dev.
-    console.log(`[email] would send: "${input.subject}" → ${input.to}${input.cta ? ` (${input.cta.url})` : ""}`);
+    // Never log recipient PII or CTA URLs: password reset, invitation, and
+    // contact-confirmation links contain bearer credentials.
+    console.log("[email] suppressed in local or unconfigured environment");
     return;
   }
   // Transactional sender — distinct from the waitlist's RESEND_FROM.
@@ -56,9 +58,9 @@ export async function sendEmail(input: EmailInput): Promise<void> {
         },
       }),
     });
-    if (!res.ok) console.error("email failed", input.subject, res.status, await res.text());
+    if (!res.ok) console.error("email delivery failed", res.status);
   } catch (error) {
-    console.error("email failed", input.subject, error);
+    console.error("email delivery failed", error instanceof Error ? error.name : "unknown error");
   }
 }
 
@@ -139,6 +141,22 @@ export function emailPlusWelcome(to: string): Promise<void> {
       `Part of your subscription joins the profit-share pool — you're directly supporting creators of free components.`,
     ],
     cta: { label: "Open Labs", url: `${ORIGIN}/dashboard/labs` },
+  });
+}
+
+export function emailReportContactVerification(to: string, componentRef: string, token: string): Promise<void> {
+  return sendEmail({
+    to,
+    subject: `Confirm your contact for report ${componentRef}`,
+    heading: "Confirm your report contact",
+    body: [
+      `Your report was recorded and can be reviewed without an account. Confirm this address so the moderation team can treat it as a verified way to contact you.`,
+      `This case-specific link expires in 24 hours. The report remains on file if you do not confirm it.`,
+    ],
+    cta: {
+      label: "Confirm contact address",
+      url: `${ORIGIN}/api/report-contact/verify?token=${encodeURIComponent(token)}`,
+    },
   });
 }
 

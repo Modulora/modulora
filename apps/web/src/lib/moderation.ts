@@ -26,6 +26,7 @@ export interface ModerationCaseSummary {
   details: string;
   status: string;
   reporter: string;
+  reporterContactVerifiedAt: string | null;
   createdAt: string;
   events: { action: string; note: string | null; createdAt: string }[];
 }
@@ -55,6 +56,7 @@ export const listModerationCases = createServerFn({ method: "GET" }).handler(
       status: row.status,
       // Owner-only view; reporter contact still never renders publicly.
       reporter: row.reporterEmail,
+      reporterContactVerifiedAt: row.reporterContactVerifiedAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
       events: events
         .filter((event) => event.caseId === row.id)

@@ -331,6 +331,10 @@ export const moderationCases = pgTable(
     /** Private — never exposed publicly. */
     reporterEmail: text("reporter_email").notNull(),
     reporterUserId: text("reporter_user_id").references(() => users.id, { onDelete: "set null" }),
+    /** A case-specific double opt-in. Never infer this from account state. */
+    reporterContactTokenHash: text("reporter_contact_token_hash").unique(),
+    reporterContactTokenExpiresAt: timestamp("reporter_contact_token_expires_at", { withTimezone: true }),
+    reporterContactVerifiedAt: timestamp("reporter_contact_verified_at", { withTimezone: true }),
     status: text("status", {
       enum: ["open", "restricted", "takedown", "corrected", "revoked", "appealed", "closed"],
     })
@@ -351,7 +355,7 @@ export const moderationCaseEvents = pgTable(
       .notNull()
       .references(() => moderationCases.id, { onDelete: "cascade" }),
     action: text("action", {
-      enum: ["opened", "noted", "restricted", "takedown", "corrected", "revoked", "appealed", "reopened", "closed"],
+      enum: ["opened", "reporter_contact_verified", "noted", "restricted", "takedown", "corrected", "revoked", "appealed", "reopened", "closed"],
     }).notNull(),
     actorUserId: text("actor_user_id").references(() => users.id, { onDelete: "set null" }),
     note: text("note"),

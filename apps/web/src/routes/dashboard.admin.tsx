@@ -317,7 +317,7 @@ function ModerationSection({ cases }: { cases: ModerationCaseSummary[] }) {
                     <span className="ml-2 rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{moderationCase.status}</span>
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {moderationCase.reason} · {moderationCase.reporter} · {new Date(moderationCase.createdAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
+                    {moderationCase.reason} · {moderationCase.reporter} · {moderationCase.reporterContactVerifiedAt ? "case contact confirmed" : "case contact unconfirmed"} · {new Date(moderationCase.createdAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
                   </p>
                   {moderationCase.details ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{moderationCase.details}</p> : null}
                 </div>

@@ -56,6 +56,7 @@ import { Route as DashboardReviewIdRouteImport } from './routes/dashboard.review
 import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as ApiReportContactVerifyRouteImport } from './routes/api/report-contact/verify'
 import { Route as ApiInvitationsPrepareRouteImport } from './routes/api/invitations/prepare'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -296,6 +297,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiReportContactVerifyRoute = ApiReportContactVerifyRouteImport.update({
+  id: '/api/report-contact/verify',
+  path: '/api/report-contact/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInvitationsPrepareRoute = ApiInvitationsPrepareRouteImport.update({
   id: '/api/invitations/prepare',
   path: '/api/invitations/prepare',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/invitations/prepare': typeof ApiInvitationsPrepareRoute
+  '/api/report-contact/verify': typeof ApiReportContactVerifyRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -396,6 +403,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/invitations/prepare': typeof ApiInvitationsPrepareRoute
+  '/api/report-contact/verify': typeof ApiReportContactVerifyRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -448,6 +456,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/invitations/prepare': typeof ApiInvitationsPrepareRoute
+  '/api/report-contact/verify': typeof ApiReportContactVerifyRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/auth/$'
     | '/api/invitations/prepare'
+    | '/api/report-contact/verify'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/auth/$'
     | '/api/invitations/prepare'
+    | '/api/report-contact/verify'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -601,6 +612,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/auth/$'
     | '/api/invitations/prepare'
+    | '/api/report-contact/verify'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -640,6 +652,7 @@ export interface RootRouteChildren {
   ComponentsIndexRoute: typeof ComponentsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiInvitationsPrepareRoute: typeof ApiInvitationsPrepareRoute
+  ApiReportContactVerifyRoute: typeof ApiReportContactVerifyRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
   PreviewNamespaceNameRoute: typeof PreviewNamespaceNameRoute
@@ -976,6 +989,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/report-contact/verify': {
+      id: '/api/report-contact/verify'
+      path: '/api/report-contact/verify'
+      fullPath: '/api/report-contact/verify'
+      preLoaderRoute: typeof ApiReportContactVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/invitations/prepare': {
       id: '/api/invitations/prepare'
       path: '/api/invitations/prepare'
@@ -1079,6 +1099,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComponentsIndexRoute: ComponentsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiInvitationsPrepareRoute: ApiInvitationsPrepareRoute,
+  ApiReportContactVerifyRoute: ApiReportContactVerifyRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,
   PreviewNamespaceNameRoute: PreviewNamespaceNameRoute,
