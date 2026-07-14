@@ -87,14 +87,18 @@ export async function invitationForToken(db: Db, token: string) {
   return row ?? null;
 }
 
-export async function activeInvitationFor(db: Db, email: string, token: string) {
+/**
+ * Possession of the emailed single-use token is the redemption proof; the
+ * account may finish with a provider whose email differs from the invited
+ * address, so lookups match by token hash alone.
+ */
+export async function activeInvitationFor(db: Db, token: string) {
   const tokenHash = await hashInvitationToken(token);
   const [row] = await db
     .select()
     .from(schema.alphaInvitations)
     .where(
       and(
-        eq(schema.alphaInvitations.email, normalizeInvitationEmail(email)),
         eq(schema.alphaInvitations.tokenHash, tokenHash),
         isNull(schema.alphaInvitations.acceptedAt),
         isNull(schema.alphaInvitations.revokedAt),
@@ -121,7 +125,7 @@ export async function invitationAcceptedBy(db: Db, userId: string, token: string
   return Boolean(row);
 }
 
-export async function consumeInvitation(db: Db, email: string, userId: string, token: string): Promise<boolean> {
+export async function consumeInvitation(db: Db, userId: string, token: string): Promise<boolean> {
   const tokenHash = await hashInvitationToken(token);
   const acceptedAt = new Date();
   try {
@@ -137,8 +141,7 @@ export async function consumeInvitation(db: Db, email: string, userId: string, t
           we.username
         from alpha_invitations ai
         join waitlist_entries we on we.id = ai.waitlist_entry_id
-        where ai.email = ${normalizeInvitationEmail(email)}
-          and ai.token_hash = ${tokenHash}
+        where ai.token_hash = ${tokenHash}
           and ai.accepted_at is null
           and ai.revoked_at is null
           and ai.expires_at > ${acceptedAt}

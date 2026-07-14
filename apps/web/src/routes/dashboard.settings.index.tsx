@@ -192,8 +192,8 @@ function Settings() {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Field id="websiteUrl" label="Website" value={form.websiteUrl} onChange={(v) => set("websiteUrl", v)} placeholder="you.dev" />
-          <Field id="githubUrl" label="GitHub" value={form.githubUrl} onChange={(v) => set("githubUrl", v)} placeholder="github.com/you" />
-          <Field id="xUrl" label="X" value={form.xUrl} onChange={(v) => set("xUrl", v)} placeholder="x.com/you" />
+          <Field id="githubUrl" label="GitHub" value={form.githubUrl} onChange={(v) => set("githubUrl", v)} placeholder="@you or github.com/you" />
+          <Field id="xUrl" label="X" value={form.xUrl} onChange={(v) => set("xUrl", v)} placeholder="@you or x.com/you" />
         </div>
 
         <div className="flex items-center justify-between gap-3">

@@ -41,8 +41,8 @@ describe.skipIf(!databaseUrl)("alpha invitation redemption database contract", (
     cleanup.add({ userId, waitlistId: waitlist.id, invitationId: invitation.id });
 
     const results = await Promise.all([
-      consumeInvitation(db!, email, userId, token),
-      consumeInvitation(db!, email, userId, token),
+      consumeInvitation(db!, userId, token),
+      consumeInvitation(db!, userId, token),
     ]);
     expect(results.sort()).toEqual([false, true]);
 
@@ -81,7 +81,7 @@ describe.skipIf(!databaseUrl)("alpha invitation redemption database contract", (
     }).returning({ id: schema.alphaInvitations.id });
     cleanup.add({ userId, waitlistId: waitlist.id, invitationId: invitation.id });
 
-    expect(await consumeInvitation(db!, email, userId, token)).toBe(false);
+    expect(await consumeInvitation(db!, userId, token)).toBe(false);
     const [storedInvitation] = await db!.select({ acceptedAt: schema.alphaInvitations.acceptedAt }).from(schema.alphaInvitations).where(eq(schema.alphaInvitations.id, invitation.id));
     const [reservation] = await db!.select({ claimedByUserId: schema.waitlistEntries.claimedByUserId }).from(schema.waitlistEntries).where(eq(schema.waitlistEntries.id, waitlist.id));
     expect(storedInvitation.acceptedAt).toBeNull();
