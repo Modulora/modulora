@@ -113,7 +113,7 @@ function SidebarContent({ summary, mobile = false }: { summary: StudioSummary; m
       </SidebarSection>
 
       {summary.roles.curator ? <SidebarSection label="Curation"><Link to="/dashboard/review" className={itemClass}><ClipboardCheck className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Review queue</span></Link></SidebarSection> : null}
-      {summary.roles.owner ? <SidebarSection label="Platform"><Link to="/dashboard/admin" className={itemClass}><ShieldEllipsis className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Admin</span></Link></SidebarSection> : null}
+      {summary.roles.owner ? <SidebarSection label="Platform"><Link to="/dashboard/admin" search={{ invitationPage: 0 }} className={itemClass}><ShieldEllipsis className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Admin</span></Link></SidebarSection> : null}
       <SidebarSection label="Account"><Link to="/dashboard/settings" className={itemClass}><Settings className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Settings</span></Link></SidebarSection>
     </div>
   );

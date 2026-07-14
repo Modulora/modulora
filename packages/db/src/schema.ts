@@ -68,6 +68,21 @@ export const users = pgTable("user", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+/** Public, non-purchasable profile acknowledgements. */
+export const userBadges = pgTable(
+  "user_badges",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    badge: text("badge").notNull(),
+    source: text("source").notNull(),
+    assignedAt: timestamp("assigned_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("user_badges_user_badge").on(t.userId, t.badge)],
+);
+
 export const sessions = pgTable("session", {
   id: text("id").primaryKey(),
   userId: text("user_id")
@@ -667,7 +682,56 @@ export const waitlistEntries = pgTable("waitlist_entries", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   // Set once the reserved username is claimed by a signed-in user.
-  claimedByUserId: text("claimed_by_user_id").references(() => users.id),
+  claimedByUserId: text("claimed_by_user_id").references(() => users.id, { onDelete: "set null" }),
   claimedAt: timestamp("claimed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Owner-issued alpha access invitations. Only a SHA-256 token digest is
+ * stored; the bearer token exists solely in the emailed setup URL.
+ */
+export const alphaInvitations = pgTable(
+  "alpha_invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    waitlistEntryId: uuid("waitlist_entry_id")
+      .notNull()
+      .references(() => waitlistEntries.id, { onDelete: "restrict" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    invitedByUserId: text("invited_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    acceptedByUserId: text("accepted_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    revokedByUserId: text("revoked_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+    sendCount: integer("send_count").notNull().default(1),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("alpha_invitations_email").on(t.email),
+    index("alpha_invitations_waitlist").on(t.waitlistEntryId),
+    index("alpha_invitations_accepted_user").on(t.acceptedByUserId),
+    uniqueIndex("alpha_invitations_active_email")
+      .on(t.email)
+      .where(sql`${t.acceptedAt} is null and ${t.revokedAt} is null`),
+  ],
+);
+
+/** Append-only lifecycle history for invitation administration. */
+export const alphaInvitationEvents = pgTable(
+  "alpha_invitation_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    invitationId: uuid("invitation_id")
+      .notNull()
+      .references(() => alphaInvitations.id, { onDelete: "cascade" }),
+    action: text("action", { enum: ["issued", "resent", "revoked", "accepted"] }).notNull(),
+    actorUserId: text("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("alpha_invitation_events_invitation").on(t.invitationId, t.createdAt)],
+);

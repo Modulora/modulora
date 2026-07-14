@@ -13,7 +13,7 @@ import { fetchSessionContext } from "@/lib/session";
 import appCss from "../styles.css?url";
 
 /* Routes that render as full-screen canvases without the app shell chrome. */
-const CHROME_FREE = new Set(["/", "/signin"]);
+const CHROME_FREE = new Set(["/", "/signin", "/reset-password"]);
 
 export const Route = createRootRoute({
   head: () => ({
@@ -36,7 +36,7 @@ export const Route = createRootRoute({
     const { user, gated } = await fetchSessionContext();
     // Alpha: the whole product requires a signed-in (allowlisted) account.
     // Only the landing page, sign-in, and legal pages stay public.
-    const PUBLIC = ["/", "/signin", "/privacy", "/terms", "/publishing-policy", "/pricing"];
+    const PUBLIC = ["/", "/signin", "/invite", "/reset-password", "/privacy", "/terms", "/publishing-policy", "/pricing"];
     const isPublic = PUBLIC.some((path) =>
       path === "/" ? location.pathname === "/" : location.pathname === path || location.pathname.startsWith(`${path}/`),
     );
@@ -52,7 +52,7 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = Route.useRouteContext();
 
-  if (CHROME_FREE.has(pathname) || pathname.startsWith("/preview/")) {
+  if (CHROME_FREE.has(pathname) || pathname.startsWith("/invite/") || pathname.startsWith("/preview/")) {
     return (
       <RootDocument>
         <NuqsAdapter>

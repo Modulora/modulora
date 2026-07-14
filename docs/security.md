@@ -288,6 +288,12 @@ Security-relevant events are immutable or tamper-evident:
 
 Logs never include credentials, full tokens, component private source, or sensitive request bodies.
 
+Alpha invitation bearer tokens are high-entropy, stored only as SHA-256
+digests, rotated on resend, single-use, and time-limited. Acceptance atomically
+binds the invited email to its waitlist reservation, exact namespace, user,
+access record, lifecycle event, and Early Adopter badge. Revocation removes
+alpha access without deleting the historical invitation record.
+
 ## Security release gates
 
 ### Gate 1: architecture

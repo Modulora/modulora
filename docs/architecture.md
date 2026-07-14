@@ -159,6 +159,13 @@ Better Auth owns login/session primitives. Modulora owns application authorizati
 
 Every authorization decision is server-side and scoped to a concrete resource.
 
+During alpha, owners invite existing waitlist reservations rather than typing
+arbitrary identities. Modulora stores only an invitation-token digest. A valid
+single-use setup link can create credentials or complete GitHub OAuth; the
+redemption statement claims the exact reserved namespace and records access
+and the Early Adopter badge together. Existing same-email accounts are linked,
+not duplicated.
+
 ### Catalog service
 
 - Components, versions, categories, tags, compatibility, docs, screenshots.

@@ -71,7 +71,7 @@ If a component has required props but the story only uses `render`, add default
 ```bash
 cd packages/db
 pnpm drizzle-kit generate   # create a migration from schema.ts
-pnpm drizzle-kit push       # apply to the configured database
+pnpm drizzle-kit push --force # apply to the configured database (required for this project)
 ```
 
 ## Before you commit

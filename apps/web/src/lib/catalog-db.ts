@@ -324,6 +324,7 @@ export interface PublicProfile {
   xUsername: string | null;
   websiteVerified: boolean;
   isPlus: boolean;
+  badges: string[];
   joinedAt: string;
 }
 
@@ -347,6 +348,11 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       .where(eq(schema.users.id, ns.ownerUserId))
       .limit(1);
     if (!user) return null;
+
+    const badges = await database
+      .select({ badge: schema.userBadges.badge })
+      .from(schema.userBadges)
+      .where(eq(schema.userBadges.userId, user.id));
 
     // Website is "verified" only if its domain is a confirmed verified domain.
     let websiteVerified = false;
@@ -438,6 +444,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         xUsername: user.xUsername,
         websiteVerified,
         isPlus: user.isPlus,
+        badges: badges.map((row) => row.badge),
         joinedAt: user.createdAt.toISOString(),
       },
       components: rows.map((row) => toCatalogItem(row.namespace, row.component, row.version)),

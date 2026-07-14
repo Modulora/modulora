@@ -5,7 +5,7 @@
  * it. No tracking pixels; links go to modulora.dev.
  */
 
-const ORIGIN = "https://modulora.dev";
+const ORIGIN = (process.env.BETTER_AUTH_URL ?? "https://modulora.dev").replace(/\/$/, "");
 
 export interface EmailInput {
   to: string;
@@ -149,6 +149,37 @@ export function emailPasswordChanged(to: string): Promise<void> {
       `If this wasn't you, reset your password immediately and check your connected accounts.`,
     ],
     cta: { label: "Review security settings", url: "https://modulora.dev/dashboard/settings/security" },
+  });
+}
+
+export function emailAlphaInvitation(
+  to: string,
+  username: string,
+  token: string,
+  expiresAt: Date,
+): Promise<void> {
+  return sendEmail({
+    to,
+    subject: "Your Modulora alpha invitation",
+    heading: `Finish setting up @${username}`,
+    body: [
+      `You have been invited to the Modulora alpha. This single-use setup link expires on ${expiresAt.toLocaleDateString("en-US", { dateStyle: "medium", timeZone: "UTC" })}.`,
+      "Finish with GitHub or establish credentials. If you did not expect this invitation, you can ignore it.",
+    ],
+    cta: { label: "Finish account setup", url: `${ORIGIN}/invite/${encodeURIComponent(token)}` },
+  });
+}
+
+export function emailPasswordReset(to: string, url: string): Promise<void> {
+  return sendEmail({
+    to,
+    subject: "Reset your Modulora password",
+    heading: "Reset your password",
+    body: [
+      "Use this single-use link to choose a new password. Other sessions will be signed out after the reset.",
+      "If you did not request this change, you can ignore this email.",
+    ],
+    cta: { label: "Choose a new password", url },
   });
 }
 
