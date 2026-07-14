@@ -64,6 +64,9 @@ export const users = pgTable("user", {
   plusSubscriptionId: text("plus_subscription_id"),
   // Shiki theme used for code views (detail page, review) chosen in settings.
   editorTheme: text("editor_theme").notNull().default("github-dark-default"),
+  // Syntax palette accessibility. Code themes otherwise follow app light/dark
+  // mode and are locked to Pierre's maintained theme family.
+  colorVisionMode: text("color_vision_mode").notNull().default("standard"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -622,7 +625,10 @@ export const collectionItems = pgTable(
       .references(() => components.id, { onDelete: "cascade" }),
     orderIndex: integer("order_index").notNull().default(0),
   },
-  (t) => [uniqueIndex("collection_items_unique").on(t.collectionId, t.componentId)],
+  (t) => [
+    uniqueIndex("collection_items_unique").on(t.collectionId, t.componentId),
+    index("collection_items_component_idx").on(t.componentId),
+  ],
 );
 
 /**

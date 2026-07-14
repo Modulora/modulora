@@ -63,7 +63,7 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
               collection.price != null
                 ? `$${collection.price / 100}`
                 : collection.external
-                  ? `on ${collection.external.domain}`
+                  ? "Paid"
                   : undefined
             }
           />

@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fetchCatalog, fetchFeatured } from "@/lib/catalog-db";
 import {
+  isPaidCatalogItem,
   type CatalogItem,
   type EvidenceType,
   type SourceModel,
@@ -319,7 +320,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">by {item.namespace}{item.inCollection ? ` in ${item.inCollection}` : ""} · {item.category}</p>
         </div>
-        <PriceSeal paid={item.sourceModel !== "open-source"} label={item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"} />
+        <PriceSeal paid={isPaidCatalogItem(item)} label={isPaidCatalogItem(item) ? item.purchase?.priceLabel ?? "Paid" : "Free"} />
       </div>
     </Link>
   );
@@ -409,7 +410,7 @@ function matches(item: CatalogItem, search: CatalogSearch) {
   if (search.category && item.category !== search.category) return false;
   if (search.type && item.componentType !== search.type) return false;
   if (search.price) {
-    const isFree = item.sourceModel === "open-source";
+    const isFree = !isPaidCatalogItem(item);
     if (search.price === "free" && !isFree) return false;
     if (search.price === "paid" && isFree) return false;
   }

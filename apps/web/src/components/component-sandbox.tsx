@@ -146,14 +146,17 @@ export function ComponentSandbox({
   selectedDemo,
   theme,
   className,
+  interactionHint,
 }: {
   files: SandboxFile[];
   selectedDemo: string; // editor path e.g. "src/demos/default.tsx"
   theme: "light" | "dark";
   className?: string;
+  interactionHint?: string;
 }) {
   // Defer mount so heavy in-browser bundling never freezes host animations.
   const [mounted, setMounted] = useState(false);
+  const [interacted, setInteracted] = useState(false);
   useEffect(() => {
     const t = window.setTimeout(() => setMounted(true), 350);
     return () => window.clearTimeout(t);
@@ -231,8 +234,15 @@ export function ComponentSandbox({
           ...(BUNDLER_URL ? { bundlerURL: BUNDLER_URL } : {}),
         }}
       >
-        <div className="relative h-full">
+        <div className="relative h-full" onPointerEnter={() => setInteracted(true)} onPointerDown={() => setInteracted(true)}>
           <LoadingCover theme={theme} />
+          {interactionHint && !interacted ? (
+            <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex justify-center px-4" role="status">
+              <span className="rounded-md border border-white/15 bg-black/80 px-3 py-2 text-xs font-medium text-white shadow-sm backdrop-blur-sm">
+                {interactionHint}
+              </span>
+            </div>
+          ) : null}
           <SandpackPreview
             showOpenInCodeSandbox={false}
             showRefreshButton={false}

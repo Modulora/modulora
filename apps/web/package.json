@@ -26,6 +26,8 @@
     "@modulora/db": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
     "@paper-design/shaders-react": "^0.0.77",
+    "@pierre/diffs": "^1.2.12",
+    "@pierre/theme": "^1.1.0",
     "@tanstack/react-router": "^1.132.0",
     "@tanstack/react-start": "^1.132.0",
     "@types/mdx": "^2.0.14",

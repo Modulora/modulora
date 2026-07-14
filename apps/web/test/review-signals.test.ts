@@ -40,6 +40,14 @@ describe("review signals", () => {
     expect(signalsFromEvidence([])).toEqual({});
   });
 
+  it("prefills hosted copy-only install behavior from integrity evidence", () => {
+    const signals = signalsFromEvidence([{ type: "content-integrity", status: "passed" }]);
+    expect(signals["install-behavior"]).toEqual({
+      result: "pass",
+      reason: "Hosted install files and digest recorded; Modulora installs copy files without running scripts.",
+    });
+  });
+
   it("prefills signal-backed results without touching other checks", () => {
     const signals = signalsFromEvidence([{ type: "content-integrity", status: "passed" }]);
     const next = applySignals({ "listing-accuracy": "flag" }, signals);

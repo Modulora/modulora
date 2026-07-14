@@ -33,7 +33,7 @@ import { GitHubIcon, XIcon } from "@/components/brand-icons";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { fetchPublicProfile } from "@/lib/catalog-db";
-import type { CatalogItem } from "@/data/catalog";
+import { isPaidCatalogItem, type CatalogItem } from "@/data/catalog";
 
 export const Route = createFileRoute("/$username")({
   loader: async ({ params }) => {
@@ -301,8 +301,8 @@ function ProfileCard({ item }: { item: CatalogItem }) {
           <h2 className="truncate text-sm font-medium">{item.title}</h2>
           <p className="mt-1 truncate text-xs text-muted-foreground">{item.category}</p>
         </div>
-        <Badge variant={item.sourceModel === "open-source" ? "secondary" : "outline"} className="shrink-0">
-          {item.sourceModel === "open-source" ? "Free" : item.purchase?.priceLabel ?? "Paid"}
+        <Badge variant={isPaidCatalogItem(item) ? "outline" : "secondary"} className="shrink-0">
+          {isPaidCatalogItem(item) ? item.purchase?.priceLabel ?? "Paid" : "Free"}
         </Badge>
       </div>
     </Link>
@@ -340,7 +340,7 @@ function CollectionCard({ collection, namespace, components }: { collection: imp
             collection.price != null
               ? `$${collection.price / 100}`
               : collection.external
-                ? `on ${collection.external.domain}`
+                ? "Paid"
                 : undefined
           }
         />

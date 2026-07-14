@@ -25,7 +25,6 @@ import {
   type HandleStatus,
   type ProfileInput,
 } from "@/lib/profile";
-import { DEFAULT_EDITOR_THEME } from "@/lib/highlight";
 import { addDomain, discoverDomainConnect, listDomains, removeDomain, verifyDomain, type DomainConnectInfo, type DomainRecord } from "@/lib/domains";
 import { DnsRecordCard, OneClickSetup, type DnsRecordInfo } from "@/components/domain-verify";
 import { linkSocial } from "@/lib/auth-client";
@@ -54,7 +53,6 @@ function Settings() {
     websiteUrl: user.websiteUrl ?? "",
     githubUrl: user.githubUrl ?? "",
     xUrl: user.xUrl ?? "",
-    editorTheme: user.editorTheme ?? DEFAULT_EDITOR_THEME,
   });
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
