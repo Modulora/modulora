@@ -226,17 +226,22 @@ function Settings() {
           </p>
         </div>
 
-        <fieldset className="rounded-xl border border-border/60 bg-background/25">
-          <legend className="px-3 text-sm font-semibold">Profile sections</legend>
-          <p className="px-3 pb-2 text-xs leading-relaxed text-muted-foreground">
-            Choose what appears publicly. Hidden sections keep their content and can be restored anytime.
-          </p>
+        <section
+          aria-labelledby="profile-sections-heading"
+          className="overflow-hidden rounded-xl border border-border/60 bg-background/25"
+        >
+          <div className="border-b border-border/50 px-3 py-3">
+            <h2 id="profile-sections-heading" className="text-sm font-semibold">Profile sections</h2>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Choose what appears publicly. Hidden sections keep their content and can be restored anytime.
+            </p>
+          </div>
           <div className="divide-y divide-border/50">
             {PROFILE_SECTION_OPTIONS.map((option) => {
               const id = `profile-section-${option.key}`;
               return (
                 <div key={option.key} className="flex min-h-14 items-center justify-between gap-4 px-3">
-                  <Label htmlFor={id} className="flex min-h-14 flex-1 cursor-pointer flex-col justify-center gap-0.5">
+                  <Label htmlFor={id} className="flex min-h-14 flex-1 cursor-pointer flex-col items-start justify-center gap-0.5 text-left">
                     <span>{option.label}</span>
                     <span className="text-xs font-normal text-muted-foreground">{option.description}</span>
                   </Label>
@@ -253,7 +258,7 @@ function Settings() {
               );
             })}
           </div>
-        </fieldset>
+        </section>
 
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-muted-foreground">
