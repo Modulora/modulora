@@ -34,6 +34,12 @@ export const PotentialMatch: Story = {
 };
 export const Blocked: Story = { args: { state: "blocked", candidates } };
 export const BlockedTritanopia: Story = { args: { state: "blocked", candidates, themeId: "pierre-dark-tritanopia" } };
+export const HistoricalSourceUnavailable: Story = {
+  args: {
+    state: "potential",
+    candidates: [{ ref: "@archive/legacy-card", confidence: "potential", files: [candidates[0]!.files[0]!] }],
+  },
+};
 export const AuthorizedDerivative: Story = { args: { state: "authorized-derivative", candidates } };
 export const UnderDispute: Story = { args: { state: "under-dispute" } };
 export const Takedown: Story = { args: { state: "takedown" } };

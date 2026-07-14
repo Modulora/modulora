@@ -51,9 +51,9 @@ function SimilarityCodeDiff({ file, candidateRef, themeId }: { file: DiffFile; c
     <div className="border-t border-border/50" data-slot="similarity-code-diff">
       <div className="flex flex-wrap items-center justify-between gap-3 bg-secondary/25 px-3 py-2.5">
         <div>
-          <p className="text-xs font-medium">Code comparison</p>
+          <p className="text-xs font-medium">Raw source comparison</p>
           <p className="mt-1 max-w-[70ch] text-xs leading-relaxed text-muted-foreground">
-            Published reference ({candidateRef}) on the left; held submission on the right.
+            Published raw source ({candidateRef}) on the left; held raw source on the right. The percentage above is normalized token similarity, not a verdict.
           </p>
         </div>
         <div className="flex rounded-md border border-border/70 p-0.5" aria-label="Diff layout">
@@ -86,7 +86,7 @@ function SimilarityCodeDiff({ file, candidateRef, themeId }: { file: DiffFile; c
         />
       </div>
       <p className="border-t border-border/50 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-        Rendered locally from Modulora&apos;s stored release files. Code is not sent to Diffs or another third party.
+        Raw lines are rendered locally from Modulora&apos;s stored release files. Code is not sent to Diffs or another third party.
       </p>
     </div>
   );
@@ -175,7 +175,7 @@ export function SimilarityStatusPanel({
                         {file.path} ↔ {file.candidatePath}
                       </span>
                       <span className="shrink-0 tabular-nums">
-                        {(file.score * 100).toFixed(0)}% · {comparable ? (expanded ? "Hide diff" : "View diff") : "No source"}
+                        {(file.score * 100).toFixed(0)}% normalized · {comparable ? (expanded ? "Hide raw diff" : "View raw diff") : "Raw source unavailable"}
                       </span>
                     </button>
                     {expanded ? <SimilarityCodeDiff file={file} candidateRef={candidate.ref} themeId={themeId} /> : null}
