@@ -9,6 +9,14 @@ import { HiArrowLeft as ArrowLeft, HiCheck as Check, HiArrowTopRightOnSquare as 
 import { Button } from "@/components/ui/button";
 import { fetchComponentForReview } from "@/lib/catalog-db";
 import { decideReview } from "@/lib/review";
+import {
+  REVIEW_CHECKS,
+  REVIEW_STANDARD_LIMITATIONS,
+  REVIEW_STANDARD_VERSION,
+  type Checklist,
+  type ChecklistResult,
+  type ReviewDecision,
+} from "@/lib/review-standard";
 
 export const Route = createFileRoute("/dashboard/review/$id")({
   validateSearch: (search: Record<string, unknown>): { action?: "approve" | "deny" } => ({
@@ -31,13 +39,16 @@ function ReviewDetail() {
   const { action } = useSearch({ from: "/dashboard/review/$id" });
   const router = useRouter();
 
-  const [rejecting, setRejecting] = useState(action === "deny");
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
+  const [checklist, setChecklist] = useState<Checklist>({});
+  const [rationale, setRationale] = useState("");
+  const [busy, setBusy] = useState<ReviewDecision | null>(null);
   const [error, setError] = useState("");
   const [activeFile, setActiveFile] = useState(0);
 
   const files = useMemo(() => item?.files ?? [], [item]);
+  const checksComplete = REVIEW_CHECKS.every((check) => checklist[check.id] !== undefined);
+  const ready = checksComplete && rationale.trim().length > 0;
+  void action;
 
   if (!item) {
     return (
@@ -50,14 +61,18 @@ function ReviewDetail() {
     );
   }
 
-  async function decide(decision: "approve" | "reject") {
+  async function decide(decision: ReviewDecision) {
     setError("");
-    if (decision === "reject" && !reason.trim()) {
-      setError("Add a short reason so the creator can fix it.");
+    if (!checksComplete) {
+      setError("Every check needs an explicit result before deciding.");
+      return;
+    }
+    if (!rationale.trim()) {
+      setError("A rationale is required for every decision, including approval.");
       return;
     }
     setBusy(decision);
-    const res = await decideReview({ data: { componentId: id, decision, reason: reason.trim() } });
+    const res = await decideReview({ data: { componentId: id, decision, rationale: rationale.trim(), checklist } });
     if (!res.ok) {
       setError(res.error ?? "Something went wrong.");
       setBusy(null);
@@ -144,47 +159,89 @@ function ReviewDetail() {
           )}
         </div>
 
-        {/* Right: decision */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        {/* Right: standard checklist + decision */}
+        <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <div className="space-y-3 rounded-xl border border-border p-4">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-sm font-medium">Review standard</p>
+              <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{REVIEW_STANDARD_VERSION}</span>
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">{REVIEW_STANDARD_LIMITATIONS}</p>
+            <ul className="space-y-3">
+              {REVIEW_CHECKS.map((check) => (
+                <li key={check.id}>
+                  <p className="text-xs font-medium">{check.title}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{check.description}</p>
+                  <div role="radiogroup" aria-label={`${check.title} result`} className="mt-1.5 flex gap-1">
+                    {(
+                      [
+                        ["pass", "Pass"],
+                        ["flag", "Flag"],
+                        ["not-applicable", "N/A"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="radio"
+                        aria-checked={checklist[check.id] === value}
+                        onClick={() => setChecklist((current) => ({ ...current, [check.id]: value as ChecklistResult }))}
+                        className={`min-h-9 flex-1 rounded-md border px-2 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                          checklist[check.id] === value
+                            ? value === "flag"
+                              ? "border-ticket/50 bg-ticket/15 text-ticket"
+                              : "border-border bg-accent text-foreground"
+                            : "border-border/50 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div className="space-y-3 rounded-xl border border-border p-4">
             <p className="text-sm font-medium">Decision</p>
             <p className="text-xs text-muted-foreground">
-              Approving lists this publicly. Rejecting sends it back to the creator with your reason.
+              Every outcome — including approval — records the checklist, your rationale, and standard {REVIEW_STANDARD_VERSION} in an append-only review record.
             </p>
-
-            {rejecting ? (
-              <div className="space-y-2">
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={4}
-                  autoFocus
-                  placeholder="What needs to change before this can be listed?"
-                  className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                />
-                <div className="flex gap-2">
-                  <Button variant="destructive" className="flex-1" disabled={busy !== null} onClick={() => decide("reject")}>
-                    {busy === "reject" ? <Loader2 className="size-4 animate-spin" /> : <X className="size-4" />}
-                    Confirm reject
-                  </Button>
-                  <Button variant="ghost" disabled={busy !== null} onClick={() => setRejecting(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Button className="w-full" disabled={busy !== null} onClick={() => decide("approve")}>
-                  {busy === "approve" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-                  Approve &amp; list
+            <textarea
+              value={rationale}
+              onChange={(e) => setRationale(e.target.value)}
+              rows={4}
+              aria-label="Decision rationale"
+              placeholder="Why this outcome? Creators see this verbatim on request-changes and reject."
+              className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            />
+            <div className="space-y-2">
+              <Button className="w-full" disabled={busy !== null || !ready} onClick={() => decide("approve")}>
+                {busy === "approve" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                Approve &amp; list
+              </Button>
+              <Button variant="outline" className="w-full" disabled={busy !== null || !ready} onClick={() => decide("request-changes")}>
+                {busy === "request-changes" ? <Loader2 className="size-4 animate-spin" /> : null}
+                Request changes
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="destructive" className="flex-1" disabled={busy !== null || !ready} onClick={() => decide("reject")}>
+                  {busy === "reject" ? <Loader2 className="size-4 animate-spin" /> : <X className="size-4" />}
+                  Reject
                 </Button>
-                <Button variant="outline" className="w-full" disabled={busy !== null} onClick={() => setRejecting(true)}>
-                  <X className="size-4" /> Reject
+                <Button variant="ghost" className="flex-1" disabled={busy !== null || !ready} onClick={() => decide("escalate")}>
+                  {busy === "escalate" ? <Loader2 className="size-4 animate-spin" /> : null}
+                  Escalate
                 </Button>
               </div>
-            )}
-
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            </div>
+            {!ready ? (
+              <p className="text-xs text-muted-foreground">
+                {checksComplete ? "Add a rationale to enable decisions." : "Give every check an explicit result to enable decisions."}
+              </p>
+            ) : null}
+            {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
           </div>
         </div>
       </div>
