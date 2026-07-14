@@ -138,9 +138,9 @@ export function AvatarPicker({ onUpload, onUploaded, onPendingChange, afterDropz
           <p className="text-sm font-medium">Drop an image here</p>
           <p className="text-xs text-muted-foreground">PNG, JPEG, WebP, or GIF under 2 MB</p>
         </div>
-        <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => inputRef.current?.click()}>
-          <Upload className="size-4" aria-hidden="true" />
-          Choose image
+        <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => inputRef.current?.click()} className="min-w-36">
+          {pending && !cropOpen ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Upload className="size-4" aria-hidden="true" />}
+          {pending && !cropOpen ? "Saving…" : "Choose image"}
         </Button>
       </div>
 
@@ -166,11 +166,9 @@ export function AvatarPicker({ onUpload, onUploaded, onPendingChange, afterDropz
         </div>
       </div>
 
-      {pending && !cropOpen ? (
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground" role="status">
-          <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> Saving avatar…
-        </p>
-      ) : null}
+      <span className="sr-only" role="status" aria-live="polite">
+        {pending ? "Saving avatar" : ""}
+      </span>
       {error && !cropOpen ? <p className="text-xs text-destructive" role="alert">{error}</p> : null}
 
       <Dialog open={cropOpen} onOpenChange={(open) => !pending && setCropOpen(open)}>
@@ -190,7 +188,7 @@ export function AvatarPicker({ onUpload, onUploaded, onPendingChange, afterDropz
 
           <DialogFooter>
             <Button type="button" variant="outline" disabled={pending} onClick={() => setCropOpen(false)}>Cancel</Button>
-            <Button type="button" disabled={pending} onClick={() => void applyCrop()}>
+            <Button type="button" disabled={pending} onClick={() => void applyCrop()} className="min-w-32">
               {pending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
               Save avatar
             </Button>
