@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { HiSquares2X2 as LayoutDashboard, HiArrowRightOnRectangle as LogOut, HiChatBubbleLeft as MessageSquare, HiCog6Tooth as Settings, HiSparkles as Sparkles, HiUser as UserIcon } from "react-icons/hi2";
@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandSearch } from "@/components/command-search";
 import { GitHubIcon } from "@/components/brand-icons";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -131,20 +132,21 @@ function UserMenu({ user }: { user: CurrentUser }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex size-11 items-center justify-center rounded-full border border-border/60 bg-card/60 p-1 text-sm transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:h-10 sm:w-auto sm:gap-2 sm:pl-1 sm:pr-3"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative size-11 rounded-full border border-transparent p-1 hover:border-border/60 hover:bg-card focus-visible:ring-2 focus-visible:ring-ring/50"
           aria-label="Account menu"
         >
-          <Avatar user={user} className="size-7" />
-          <span className="hidden max-w-[10rem] truncate font-medium sm:block">{handle}</span>
-        </button>
+          <UserAvatar user={user} className="size-8" />
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[14rem]">
-        <DropdownMenuLabel className="flex flex-col gap-0.5">
-          <span className="truncate font-medium">{user.name}</span>
-          <span className="truncate text-xs font-normal text-muted-foreground">
-            {user.email}
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="flex items-center gap-3 font-normal">
+          <UserAvatar user={user} className="size-10" />
+          <span className="flex min-w-0 flex-col gap-1">
+            <span className="truncate text-sm font-medium leading-none">{handle}</span>
+            <span className="truncate text-xs leading-none text-muted-foreground">{user.email}</span>
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -215,34 +217,12 @@ function UserMenu({ user }: { user: CurrentUser }) {
   );
 }
 
-function Avatar({ user, className }: { user: CurrentUser; className?: string }) {
+function UserAvatar({ user, className }: { user: CurrentUser; className?: string }) {
   const initial = (user.username ?? user.name ?? "?").charAt(0).toUpperCase();
-  const [imageFailed, setImageFailed] = useState(false);
-  const imageRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    setImageFailed(false);
-    const image = imageRef.current;
-    if (image?.complete && image.naturalWidth === 0) setImageFailed(true);
-  }, [user.image]);
-
-  if (isRenderableImageUrl(user.image) && !imageFailed) {
-    return (
-      <img
-        ref={imageRef}
-        src={user.image}
-        alt=""
-        onError={() => setImageFailed(true)}
-        className={`${className ?? ""} rounded-full object-cover`}
-      />
-    );
-  }
   return (
-    <span
-      className={`${className ?? ""} flex items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground`}
-      aria-hidden
-    >
-      {initial}
-    </span>
+    <Avatar className={className}>
+      {isRenderableImageUrl(user.image) ? <AvatarImage src={user.image} alt="" className="object-cover" /> : null}
+      <AvatarFallback className="font-semibold text-secondary-foreground">{initial}</AvatarFallback>
+    </Avatar>
   );
 }
