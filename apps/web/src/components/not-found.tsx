@@ -3,7 +3,8 @@
  * missing. On-brand joke, honest message, two exits.
  */
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, SearchX } from "lucide-react";
+import { HiArrowLeft as ArrowLeft, HiMagnifyingGlassMinus as SearchX } from "react-icons/hi2";
+
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 

@@ -4,7 +4,8 @@
  * labeled. Saving never affects earnings or rank.
  */
 import { useEffect, useState } from "react";
-import { Bookmark, Check, ListPlus, Loader2, Plus, Sparkles } from "lucide-react";
+import { HiBookmark as Bookmark, HiCheck as Check, HiQueueList as ListPlus, HiArrowPath as Loader2, HiPlus as Plus, HiSparkles as Sparkles } from "react-icons/hi2";
+
 import {
   DropdownMenu,
   DropdownMenuContent,

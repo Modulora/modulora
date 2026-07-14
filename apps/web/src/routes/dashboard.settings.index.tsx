@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { createFileRoute, Link, redirect, useNavigate, useRouter } from "@tanstack/react-router";
-import { BadgeCheck, Check, Copy, Globe, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
+import { HiCheckBadge as BadgeCheck, HiCheck as Check, HiDocumentDuplicate as Copy, HiGlobeAlt as Globe, HiArrowPath as Loader2, HiPlus as Plus, HiTrash as Trash2, HiArrowUpTray as Upload, HiXMark as X } from "react-icons/hi2";
+
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 

@@ -5,7 +5,8 @@
  */
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { FileLock2, Loader2, TerminalSquare, ExternalLink } from "lucide-react";
+import { HiArrowTopRightOnSquare as ExternalLink, HiLockClosed as FileLock2, HiArrowPath as Loader2, HiCommandLine as TerminalSquare } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

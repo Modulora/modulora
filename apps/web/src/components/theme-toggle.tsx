@@ -1,5 +1,6 @@
 /** Footer theme toggle — dark is the default; the choice persists. */
-import { Moon, Sun } from "lucide-react";
+import { HiMoon as Moon, HiSun as Sun } from "react-icons/hi2";
+
 import { usePageTheme } from "@/lib/use-page-theme";
 import { toggleTheme } from "@/lib/theme";
 

@@ -2,7 +2,8 @@
  * REVIEW QUEUE — curator-only. Components awaiting approval.
  * ───────────────────────────────────────────────────────── */
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { CheckCircle2, ClipboardCheck, Clock } from "lucide-react";
+import { HiCheckCircle as CheckCircle2, HiClipboardDocumentCheck as ClipboardCheck, HiClock as Clock } from "react-icons/hi2";
+
 
 import { fetchReviewQueue, type ReviewListItem } from "@/lib/review";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";

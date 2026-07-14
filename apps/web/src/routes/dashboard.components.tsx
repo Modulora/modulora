@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
-import { Blocks, ExternalLink, Loader2, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { HiSquaresPlus as Blocks, HiArrowTopRightOnSquare as ExternalLink, HiArrowPath as Loader2, HiPencil as Pencil, HiPlus as Plus, HiSparkles as Sparkles, HiTag as Tag, HiTrash as Trash2 } from "react-icons/hi2";
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +19,7 @@ import { LiveCardPreview } from "@/components/live-card-preview";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
-import { Tag } from "lucide-react";
+
 import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 
 export const Route = createFileRoute("/dashboard/components")({

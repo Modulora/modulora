@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { LayoutDashboard, LogOut, Settings, Sparkles, User as UserIcon, MessageSquare } from "lucide-react";
+import { HiSquares2X2 as LayoutDashboard, HiArrowRightOnRectangle as LogOut, HiChatBubbleLeft as MessageSquare, HiCog6Tooth as Settings, HiSparkles as Sparkles, HiUser as UserIcon } from "react-icons/hi2";
+
 
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { submitFeedback } from "@/lib/feedback";

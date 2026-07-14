@@ -3,7 +3,8 @@
  * components/earnings.tsx (storybooked); this route wires live data.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight } from "lucide-react";
+import { HiArrowUpRight as ArrowUpRight } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { EarningsEmptyState, EarningsSummary, ProfitSharePanel, SalesList } from "@/components/earnings";

@@ -15,7 +15,8 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { createServerFn } from "@tanstack/react-start";
 import { alphaGateActive } from "@/lib/access";
 import { motion } from "motion/react";
-import { Loader2 } from "lucide-react";
+import { HiArrowPath as Loader2 } from "react-icons/hi2";
+
 
 import { Logo } from "@/components/logo";
 import { GitHubIcon } from "@/components/brand-icons";

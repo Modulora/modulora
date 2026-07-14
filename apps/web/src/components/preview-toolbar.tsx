@@ -4,7 +4,8 @@
  * so both previews feel identical.
  */
 import type { ReactNode } from "react";
-import { Maximize2, Monitor, Moon, RotateCcw, Smartphone, Sun, Tablet } from "lucide-react";
+import { HiArrowsPointingOut as Maximize2, HiComputerDesktop as Monitor, HiMoon as Moon, HiArrowUturnLeft as RotateCcw, HiDevicePhoneMobile as Smartphone, HiSun as Sun, HiDeviceTablet as Tablet } from "react-icons/hi2";
+
 
 export type PreviewViewport = "mobile" | "tablet" | "desktop";
 

@@ -1,5 +1,6 @@
 import { createFileRoute, getRouteApi, Link } from "@tanstack/react-router";
-import { ArrowRight, BarChart3, Blocks, Library, UserRound } from "lucide-react";
+import { HiArrowRight as ArrowRight, HiChartBar as BarChart3, HiSquaresPlus as Blocks, HiBuildingLibrary as Library, HiUserCircle as UserRound } from "react-icons/hi2";
+
 import type { StudioSummary } from "@/lib/studio";
 import { JourneyChecklist, journeyComplete } from "@/components/journey";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";

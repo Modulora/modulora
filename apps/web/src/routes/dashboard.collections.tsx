@@ -4,7 +4,8 @@
  */
 import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { Layers, Loader2, Plus, Trash2 } from "lucide-react";
+import { HiSquare3Stack3D as Layers, HiArrowPath as Loader2, HiPlus as Plus, HiTrash as Trash2 } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { KeyRound, Loader2 } from "lucide-react";
+import { HiKey as KeyRound, HiArrowPath as Loader2 } from "react-icons/hi2";
+
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

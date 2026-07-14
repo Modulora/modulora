@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { IconType } from "react-icons";
+
 
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ export function DashboardPageHeader({
 }: {
   title: string;
   description?: ReactNode;
-  icon?: LucideIcon;
+  icon?: IconType;
   action?: ReactNode;
   className?: string;
 }) {

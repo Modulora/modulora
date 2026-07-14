@@ -3,7 +3,8 @@
  * Honest numbers: views (owner visits excluded), digest-verified installs,
  * paid sales. Views never affect earnings, and the panel says so.
  */
-import { Eye, ShieldCheck, ShoppingBag } from "lucide-react";
+import { HiEye as Eye, HiShieldCheck as ShieldCheck, HiShoppingBag as ShoppingBag } from "react-icons/hi2";
+
 import { EmptyState } from "@/components/ui/empty-state";
 import type { CreatorAnalytics } from "@/lib/analytics";
 

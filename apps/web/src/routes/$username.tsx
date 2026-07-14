@@ -8,11 +8,11 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { Blocks, CalendarDays, Globe, ExternalLink } from "lucide-react";
+import { HiSquaresPlus as Blocks, HiCalendarDays as CalendarDays, HiArrowTopRightOnSquare as ExternalLink, HiGlobeAlt as Globe, HiArrowPath as Loader2, HiSparkles as Sparkles, HiCommandLine as TerminalSquare } from "react-icons/hi2";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
-import { TerminalSquare, Loader2, Sparkles } from "lucide-react";
+
+import { HiCheckBadge } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -269,7 +269,7 @@ function SocialLink({
         <Tooltip>
           <TooltipTrigger asChild>
             <button type="button" aria-label={`Verified via ${verifiedVia}`} className="text-receipt outline-none">
-              <HugeiconsIcon icon={CheckmarkBadge01Icon} size={13} />
+              <HiCheckBadge aria-hidden size={13} />
             </button>
           </TooltipTrigger>
           <TooltipContent side="top">Ownership verified via {verifiedVia}.</TooltipContent>

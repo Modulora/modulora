@@ -3,7 +3,8 @@
  * Presentational: the caller owns submission.
  */
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { HiCheck as Check } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

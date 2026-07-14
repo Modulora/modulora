@@ -1,7 +1,8 @@
 /** Danger zone: irreversible account actions. */
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { HiArrowPath as Loader2 } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Input } from "@/components/ui/input";

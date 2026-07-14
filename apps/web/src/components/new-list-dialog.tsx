@@ -4,7 +4,8 @@
  * the create action.
  */
 import { useState } from "react";
-import { Globe, Lock } from "lucide-react";
+import { HiGlobeAlt as Globe, HiLockClosed as Lock } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

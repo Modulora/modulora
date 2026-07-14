@@ -7,7 +7,8 @@
  * (Storybook-safe).
  */
 import type { ReactNode } from "react";
-import { ArrowRight } from "lucide-react";
+import { HiArrowRight as ArrowRight } from "react-icons/hi2";
+
 import {
   Stepper,
   StepperIndicator,

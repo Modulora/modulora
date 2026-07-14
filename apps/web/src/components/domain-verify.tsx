@@ -8,7 +8,8 @@
  *   never show a button that can't work.
  */
 import { useState } from "react";
-import { Check, Copy, ShieldCheck } from "lucide-react";
+import { HiCheck as Check, HiDocumentDuplicate as Copy, HiShieldCheck as ShieldCheck } from "react-icons/hi2";
+
 import { ProviderButton, ProviderLogo, resolveDnsProvider } from "@/components/dns-providers";
 
 /* ── Record card ─────────────────────────────────────────── */

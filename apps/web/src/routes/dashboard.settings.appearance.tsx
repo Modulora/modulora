@@ -1,7 +1,8 @@
 /** Appearance: how Modulora looks for you — the code theme. */
 import { useState } from "react";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { Check, Loader2 } from "lucide-react";
+import { HiCheck as Check, HiArrowPath as Loader2 } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Label } from "@/components/ui/label";

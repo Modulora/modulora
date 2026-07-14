@@ -1,6 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Github, Loader2, LockKeyhole, TicketCheck } from "lucide-react";
+import { HiArrowPath as Loader2, HiLockClosed as LockKeyhole, HiTicket as TicketCheck } from "react-icons/hi2";
+import { GitHubIcon as Github } from "@/components/brand-icons";
+
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,25 +1,8 @@
 /** Persistent desktop navigation with a compact, collapsible mobile variant. */
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  Banknote,
-  BarChart3,
-  Blocks,
-  Bookmark,
-  ChevronDown,
-  ClipboardCheck,
-  FlaskConical,
-  KeyRound,
-  LayoutDashboard,
-  Library,
-  Plus,
-  Settings,
-  ShieldEllipsis,
-  ShoppingBag,
-  Sparkles,
-  TerminalSquare,
-  UserRound,
-} from "lucide-react";
+import { HiBanknotes as Banknote, HiChartBar as BarChart3, HiSquaresPlus as Blocks, HiBookmark as Bookmark, HiChevronDown as ChevronDown, HiClipboardDocumentCheck as ClipboardCheck, HiBeaker as FlaskConical, HiKey as KeyRound, HiSquares2X2 as LayoutDashboard, HiBuildingLibrary as Library, HiPlus as Plus, HiCog6Tooth as Settings, HiShieldExclamation as ShieldEllipsis, HiShoppingBag as ShoppingBag, HiSparkles as Sparkles, HiCommandLine as TerminalSquare, HiUserCircle as UserRound } from "react-icons/hi2";
+
 
 import { Button } from "@/components/ui/button";
 import type { StudioSummary } from "@/lib/studio";
