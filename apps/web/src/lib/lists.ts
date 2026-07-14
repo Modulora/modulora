@@ -33,7 +33,6 @@ export const fetchMyLists = createServerFn({ method: "GET" }).handler(
     const user = request ? await getCurrentUser(request) : null;
     const db = getDb();
     if (!user || !db) return { plus: false, lists: [] };
-    if (!user.isPlus) return { plus: false, lists: [] };
 
     const rows = await db.select().from(schema.lists).where(eq(schema.lists.userId, user.id)).orderBy(desc(schema.lists.updatedAt));
     const lists: MyList[] = [];
@@ -47,7 +46,7 @@ export const fetchMyLists = createServerFn({ method: "GET" }).handler(
         .orderBy(asc(schema.listItems.createdAt));
       lists.push({ id: list.id, name: list.name, title: list.title, visibility: list.visibility, items });
     }
-    return { plus: true, lists };
+    return { plus: user.isPlus, lists };
   },
 );
 
@@ -127,6 +126,10 @@ export const setListVisibility = createServerFn({ method: "POST" })
     const user = request ? await getCurrentUser(request) : null;
     const db = getDb();
     if (!user || !db) return { ok: false };
+    // Lapsed Plus keeps creator control: existing public lists may be made
+    // private and any list may be deleted, but a private list cannot be newly
+    // published until Plus resumes.
+    if (!user.isPlus && data.visibility === "public") return { ok: false };
     await db
       .update(schema.lists)
       .set({ visibility: data.visibility })
@@ -145,7 +148,14 @@ export const deleteList = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Public lists for a profile: "curated by X", builders unaffected. */
+/**
+ * Public lists for a profile: "curated by X", builders unaffected.
+ *
+ * Lapsed-Plus policy: already-public lists stay published. Subscription state
+ * never rewrites or hides creator-authored public content. Lapsed members can
+ * still make a list private or delete it, but cannot create lists, add items,
+ * or publish a private list until Plus resumes.
+ */
 export interface PublicList {
   name: string;
   title: string;

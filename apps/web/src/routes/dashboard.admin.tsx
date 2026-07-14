@@ -4,7 +4,7 @@
  * exist publicly. Curators do not have access; reviewing content and moving
  * money are different powers.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { runWeeklyDigestNow } from "@/lib/weekly-digest";
 import { createFileRoute, notFound, useNavigate, useRouter } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getCurrentUser } from "@/lib/session";
 import { isOwnerUser } from "@/lib/access";
 import { createPayoutRun, listPayoutRuns, type PayoutRunSummary } from "@/lib/distribution";
-import { listMembers, setCuratorRole, type Member } from "@/lib/roles";
+import { listMembers, searchMembers, setCuratorRole, type Member } from "@/lib/roles";
 import { actOnModerationCase, listModerationCases, type ModerationAction, type ModerationCaseSummary } from "@/lib/moderation";
 import {
   inviteAlphaUser,
@@ -191,6 +191,31 @@ function RolesSection({ members }: { members: Member[] }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "curators" | "members" | "owners">("all");
+  const [filteredMembers, setFilteredMembers] = useState(members);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!query.trim() && roleFilter === "all") {
+      setFilteredMembers(members);
+      setSearching(false);
+      return;
+    }
+    let active = true;
+    setSearching(true);
+    const timer = window.setTimeout(() => {
+      void searchMembers({ data: { query, role: roleFilter } }).then((results) => {
+        if (!active) return;
+        setFilteredMembers(results);
+        setSearching(false);
+      });
+    }, 250);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [members, query, roleFilter]);
 
   async function toggle(member: Member) {
     setBusyId(member.id);
@@ -220,8 +245,30 @@ function RolesSection({ members }: { members: Member[] }) {
           {feedback.text}
         </p>
       ) : null}
-      <ul className="mt-4 flex flex-col gap-2">
-        {members.map((member) => (
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <Input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search username, name, or email"
+          aria-label="Search members"
+          className="sm:flex-1"
+        />
+        <select
+          value={roleFilter}
+          onChange={(event) => setRoleFilter(event.target.value as typeof roleFilter)}
+          aria-label="Filter members by role"
+          className="h-11 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:h-9"
+        >
+          <option value="all" className="bg-popover">All roles</option>
+          <option value="curators" className="bg-popover">Curators</option>
+          <option value="owners" className="bg-popover">Owners</option>
+          <option value="members" className="bg-popover">Members</option>
+        </select>
+      </div>
+      <p role="status" className="mt-2 text-xs text-muted-foreground">{searching ? "Searching members…" : `${filteredMembers.length} matching member${filteredMembers.length === 1 ? "" : "s"}`}</p>
+      <ul className="mt-3 flex flex-col gap-2">
+        {filteredMembers.map((member) => (
           <li key={member.id} className="flex flex-col items-stretch justify-between gap-3 rounded-lg border border-border/60 px-4 py-3 sm:flex-row sm:items-center">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">
@@ -257,6 +304,9 @@ function RolesSection({ members }: { members: Member[] }) {
           </li>
         ))}
       </ul>
+      {filteredMembers.length === 0 ? (
+        <p className="mt-3 rounded-lg border border-dashed border-border/60 p-4 text-xs text-muted-foreground">No members match this search and role filter.</p>
+      ) : null}
     </div>
   );
 }

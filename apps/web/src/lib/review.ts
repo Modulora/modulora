@@ -7,8 +7,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-import { and, desc, eq } from "drizzle-orm";
+import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
+import { desc, eq, sql } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import {
@@ -18,6 +18,8 @@ import {
   type Checklist,
   type ReviewDecision,
 } from "./review-standard";
+
+type Db = NeonHttpDatabase<typeof schema>;
 
 function getDb() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -129,6 +131,78 @@ export interface ReviewDecisionInput {
 
 const DECISIONS: readonly ReviewDecision[] = ["approve", "request-changes", "reject", "escalate"];
 
+export interface ReviewActor {
+  id: string;
+  isCurator: boolean;
+}
+
+interface ReviewNotification {
+  decision: ReviewDecision;
+  name: string;
+  title: string;
+  namespaceId: string;
+}
+
+export async function decideReviewCore(
+  db: Db,
+  actor: ReviewActor | null,
+  data: ReviewDecisionInput,
+  now = new Date(),
+): Promise<{ ok: boolean; error?: string; notification?: ReviewNotification }> {
+  if (!actor?.isCurator) return { ok: false, error: "Curators only." };
+  if (!data.componentId) return { ok: false, error: "Missing component." };
+  if (!data.rationale) return { ok: false, error: "A rationale is required for every decision, including approval." };
+  if (!DECISIONS.includes(data.decision)) return { ok: false, error: "Unknown decision." };
+  const checked = validateChecklist(data.checklist);
+  if (!checked.ok) return { ok: false, error: checked.error };
+
+  const nextStatus = data.decision === "approve" ? "approved" : data.decision === "escalate" ? "pending" : "rejected";
+  const reviewReason = nextStatus === "rejected" ? data.rationale : null;
+  const result = await db.execute<{
+    id: string;
+    name: string;
+    title: string;
+    namespaceId: string;
+  }>(sql`
+    with updated as (
+      update components
+      set review_status = ${nextStatus},
+          review_reason = ${reviewReason},
+          reviewed_by = ${actor.id},
+          reviewed_at = ${now},
+          updated_at = ${now}
+      where id = ${data.componentId}
+        and review_status = 'pending'
+      returning id, name, title, namespace_id, latest_version_id
+    ), recorded as (
+      insert into review_records (
+        component_id, component_version_id, reviewer_user_id,
+        standard_version, decision, checklist, rationale, limitations
+      )
+      select id, latest_version_id, ${actor.id}, ${REVIEW_STANDARD_VERSION},
+        ${data.decision}, ${JSON.stringify(checked.checklist)}::jsonb,
+        ${data.rationale}, ${REVIEW_STANDARD_LIMITATIONS}
+      from updated
+      returning component_id
+    )
+    select updated.id, updated.name, updated.title,
+      updated.namespace_id as "namespaceId"
+    from updated
+    inner join recorded on recorded.component_id = updated.id
+  `);
+  const component = result.rows[0];
+  if (!component) return { ok: false, error: "Already reviewed or no longer pending." };
+  return {
+    ok: true,
+    notification: {
+      decision: data.decision,
+      name: component.name,
+      title: component.title,
+      namespaceId: component.namespaceId,
+    },
+  };
+}
+
 /**
  * Curator-only. Every outcome — including approval — requires an explicit
  * per-check checklist and a rationale, and writes an append-only review
@@ -146,55 +220,14 @@ export const decideReview = createServerFn({ method: "POST" })
     const request = getRequest();
     if (!request) return { ok: false, error: "No request context." };
     const user = await getCurrentUser(request);
-    if (!user?.isCurator) return { ok: false, error: "Curators only." };
-    if (!data.componentId) return { ok: false, error: "Missing component." };
-    if (!data.rationale) {
-      return { ok: false, error: "A rationale is required for every decision, including approval." };
-    }
-    const checked = validateChecklist(data.checklist);
-    if (!checked.ok) return { ok: false, error: checked.error };
     const db = getDb();
     if (!db) return { ok: false, error: "Database is not configured." };
+    const result = await decideReviewCore(db, user ? { id: user.id, isCurator: user.isCurator } : null, data as ReviewDecisionInput);
+    if (!result.ok || !result.notification) return { ok: result.ok, error: result.error };
+    if (result.notification.decision === "escalate") return { ok: true };
 
-    // Escalation records a decision but leaves the submission pending.
-    const nextStatus =
-      data.decision === "approve" ? "approved" : data.decision === "escalate" ? "pending" : "rejected";
-
-    const updated = await db
-      .update(schema.components)
-      .set({
-        reviewStatus: nextStatus,
-        reviewReason: nextStatus === "rejected" ? data.rationale : null,
-        reviewedBy: user.id,
-        reviewedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(and(eq(schema.components.id, data.componentId), eq(schema.components.reviewStatus, "pending")))
-      .returning({
-        id: schema.components.id,
-        name: schema.components.name,
-        title: schema.components.title,
-        namespaceId: schema.components.namespaceId,
-        latestVersionId: schema.components.latestVersionId,
-      });
-    if (updated.length === 0) return { ok: false, error: "Already reviewed or no longer pending." };
-
-    // Append-only audit record; historical records are never rewritten.
-    await db.insert(schema.reviewRecords).values({
-      componentId: data.componentId,
-      componentVersionId: updated[0]!.latestVersionId,
-      reviewerUserId: user.id,
-      standardVersion: REVIEW_STANDARD_VERSION,
-      decision: data.decision,
-      checklist: checked.checklist,
-      rationale: data.rationale,
-      limitations: REVIEW_STANDARD_LIMITATIONS,
-    });
-
-    if (data.decision === "escalate") return { ok: true };
-
-    // Notify the creator (fire-and-forget — the decision never blocks on email).
-    const component = updated[0]!;
+    // Notify the creator after the atomic decision and record commit.
+    const component = result.notification;
     const [owner] = await db
       .select({ email: schema.users.email, namespace: schema.namespaces.name })
       .from(schema.namespaces)
@@ -205,7 +238,7 @@ export const decideReview = createServerFn({ method: "POST" })
       const ref = `@${owner.namespace}/${component.name}`;
       // Awaited: dangling promises are cancelled in the Workers runtime.
       const email = await import("./email");
-      if (data.decision === "approve") await email.emailReviewApproved(owner.email, component.title, ref);
+      if (component.decision === "approve") await email.emailReviewApproved(owner.email, component.title, ref);
       else await email.emailReviewRejected(owner.email, component.title, data.rationale);
     }
 
