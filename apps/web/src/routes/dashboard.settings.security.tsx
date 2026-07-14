@@ -1,7 +1,8 @@
 /** Account security: password + sessions. */
 import { useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
-import { Check, Loader2 } from "lucide-react";
+import { HiCheck as Check, HiArrowPath as Loader2 } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Input } from "@/components/ui/input";

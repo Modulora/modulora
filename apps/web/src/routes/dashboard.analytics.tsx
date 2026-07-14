@@ -4,7 +4,8 @@ import { AnalyticsEmptyState, AnalyticsTable, AnalyticsTotals } from "@/componen
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { fetchAnalyticsSeries, fetchCreatorAnalytics } from "@/lib/analytics";
 import { SparkChart } from "@/components/spark-chart";
-import { Sparkles } from "lucide-react";
+import { HiSparkles as Sparkles } from "react-icons/hi2";
+
 
 export const Route = createFileRoute("/dashboard/analytics")({
   loader: async () => ({ analytics: await fetchCreatorAnalytics(), series: await fetchAnalyticsSeries() }),

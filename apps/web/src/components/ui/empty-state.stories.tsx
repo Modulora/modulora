@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/tanstack-react";
-import { Banknote, Bookmark, SearchX } from "lucide-react";
+import { HiBanknotes as Banknote, HiBookmark as Bookmark, HiMagnifyingGlassMinus as SearchX } from "react-icons/hi2";
+
 
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";

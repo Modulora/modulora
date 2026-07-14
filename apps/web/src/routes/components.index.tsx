@@ -16,25 +16,11 @@ import {
   useQueryStates,
   type inferParserType,
 } from "nuqs";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
+import { HiCheckBadge } from "react-icons/hi2";
 import { PriceSeal, PromotedBadge } from "@/components/money";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  CalendarDays,
-  Gift,
-  Tag,
-  Clock3,
-  Filter,
-  Grid2X2,
-  List,
-  Plus,
-  Search,
-  Sparkles,
-  Table2,
-  Users,
-  X,
- Component } from "lucide-react";
+import { HiCalendarDays as CalendarDays, HiClock as Clock3, HiCube as Component, HiFunnel as Filter, HiGift as Gift, HiSquares2X2 as Grid2X2, HiListBullet as List, HiPlus as Plus, HiMagnifyingGlass as Search, HiSparkles as Sparkles, HiTableCells as Table2, HiTag as Tag, HiUsers as Users, HiXMark as X } from "react-icons/hi2";
+
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -363,7 +349,7 @@ function EvidenceMark({ evidence }: { evidence: { type: string; status: string }
           // A hover target inside the card link: explain, don't navigate.
           onClick={(e) => e.preventDefault()}
         >
-          <HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} />
+          <HiCheckBadge aria-hidden size={14} />
         </span>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-72">

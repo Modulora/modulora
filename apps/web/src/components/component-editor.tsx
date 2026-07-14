@@ -8,22 +8,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Clock,
-  Eye,
-  FileCode2,
-  Loader2,
-  Moon,
-  Plus,
-  Rocket,
-  Settings2,
-  ShieldCheck,
-  Sun,
-  Trash2,
-} from "lucide-react";
+import { HiArrowLeft as ArrowLeft, HiArrowRight as ArrowRight, HiCheck as Check, HiClock as Clock, HiEye as Eye, HiCodeBracketSquare as FileCode2, HiArrowPath as Loader2, HiMoon as Moon, HiPlus as Plus, HiRocketLaunch as Rocket, HiAdjustmentsHorizontal as Settings2, HiShieldCheck as ShieldCheck, HiSun as Sun, HiTrash as Trash2 } from "react-icons/hi2";
+
 
 import { CodeEditor } from "@/components/code-editor";
 import { ComponentSandbox } from "@/components/component-sandbox";

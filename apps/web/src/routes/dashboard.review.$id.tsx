@@ -3,7 +3,8 @@
  * ───────────────────────────────────────────────────────── */
 import { useMemo, useState } from "react";
 import { createFileRoute, redirect, useRouter, useSearch, Link } from "@tanstack/react-router";
-import { ArrowLeft, Check, ExternalLink, FileCode, Loader2, ShieldCheck, X } from "lucide-react";
+import { HiArrowLeft as ArrowLeft, HiCheck as Check, HiArrowTopRightOnSquare as ExternalLink, HiCodeBracketSquare as FileCode, HiArrowPath as Loader2, HiShieldCheck as ShieldCheck, HiXMark as X } from "react-icons/hi2";
+
 
 import { Button } from "@/components/ui/button";
 import { fetchComponentForReview } from "@/lib/catalog-db";

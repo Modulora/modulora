@@ -6,7 +6,8 @@
  */
 import { useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Loader2, TerminalSquare } from "lucide-react";
+import { HiArrowPath as Loader2, HiCommandLine as TerminalSquare } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";

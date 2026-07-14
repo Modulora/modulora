@@ -14,7 +14,8 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { motion } from "motion/react";
-import { Check, Loader2, X } from "lucide-react";
+import { HiCheck as Check, HiArrowPath as Loader2, HiXMark as X } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

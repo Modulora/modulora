@@ -1,6 +1,7 @@
 /** Bookmarks — components you saved. Personal only; never affects rank. */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bookmark } from "lucide-react";
+import { HiBookmark as Bookmark } from "react-icons/hi2";
+
 import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { fetchMyBookmarks } from "@/lib/bookmarks";

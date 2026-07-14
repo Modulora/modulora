@@ -1,5 +1,6 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
+import { HiExclamationTriangle as AlertTriangle } from "react-icons/hi2";
+
 
 import { Button } from "@/components/ui/button";
 

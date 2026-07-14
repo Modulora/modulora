@@ -6,7 +6,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { Check, Loader2, Sparkles } from "lucide-react";
+import { HiCheck as Check, HiArrowPath as Loader2, HiSparkles as Sparkles } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { fetchCurrentUser } from "@/lib/session";
 import { confirmCheckout } from "@/lib/marketplace";

@@ -3,7 +3,8 @@
  * in Storybook with mock data and on the dashboard with live data.
  */
 import type { ReactNode } from "react";
-import { Banknote, PieChart, ShieldCheck, ShoppingBag } from "lucide-react";
+import { HiBanknotes as Banknote, HiChartPie as PieChart, HiShieldCheck as ShieldCheck, HiShoppingBag as ShoppingBag } from "react-icons/hi2";
+
 import type { EarningsData, EarningsSale } from "@/lib/earnings";
 import { PAYOUT_THRESHOLD_CENTS } from "@/lib/profit-share";
 import { EmptyState } from "@/components/ui/empty-state";

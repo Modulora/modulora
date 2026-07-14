@@ -8,7 +8,8 @@
 import { useMemo, useState } from "react";
 import { Popover } from "radix-ui";
 import { motion } from "motion/react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { HiCheck as Check, HiChevronUpDown as ChevronsUpDown, HiMagnifyingGlass as Search } from "react-icons/hi2";
+
 
 import { THEME_PALETTES, type ThemePalette } from "@/lib/theme-palettes.generated";
 

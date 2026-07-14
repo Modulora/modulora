@@ -15,6 +15,15 @@ Required for local dev: `DATABASE_URL` (Neon), `BETTER_AUTH_SECRET`, and
 optional and activate when their keys are present (`STRIPE_SECRET_KEY`,
 `GITHUB_CLIENT_*`, `TWITTER_CLIENT_*`, etc.).
 
+## Icons
+
+Application icons come from `react-icons/hi2` (Heroicons v2 solid, MIT); brand
+marks stay in `src/components/brand-icons.tsx`. `lucide-react` is not a
+dependency, and the shadcn generator has no Heroicons option — when adding a
+shadcn component, convert any generated `lucide-react` imports to the matching
+`react-icons/hi2` icons before committing. Dynamic icon props use `IconType`
+from `react-icons`.
+
 ## Everyday commands (run in `apps/web`)
 
 ```bash

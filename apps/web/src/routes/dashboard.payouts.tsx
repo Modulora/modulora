@@ -4,7 +4,8 @@
  */
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Banknote, Check, Loader2, PieChart } from "lucide-react";
+import { HiArrowUpRight as ArrowUpRight, HiBanknotes as Banknote, HiCheck as Check, HiArrowPath as Loader2, HiChartPie as PieChart } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import {

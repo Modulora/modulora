@@ -5,7 +5,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2, Search } from "lucide-react";
+import { HiArrowPath as Loader2, HiMagnifyingGlass as Search } from "react-icons/hi2";
+
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { PriceSeal } from "@/components/money";
 

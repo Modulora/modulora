@@ -8,7 +8,8 @@
  * registry. Unknown providers fall back to a neutral button.
  */
 import type { ComponentType, SVGProps } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { HiArrowUpRight as ArrowUpRight } from "react-icons/hi2";
+
 import {
   CloudflareMark,
   GoDaddyMark,

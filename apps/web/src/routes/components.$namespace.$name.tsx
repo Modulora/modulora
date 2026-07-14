@@ -7,24 +7,8 @@ import { fetchCollectionDetail } from "@/lib/catalog-db";
 import { PriceSeal } from "@/components/money";
 import { SaveMenu } from "@/components/save-menu";
 import { Tabs } from "radix-ui";
-import {
-  Check,
-  Clipboard,
-  Code2,
-  Copy,
-  ExternalLink,
-  FileCode2,
-  FileLock2,
-  Flag,
-  Folder,
-  Loader2,
-  PackageCheck,
-  ShieldCheck,
-  Sparkles,
-  Terminal,
-  TriangleAlert,
-  X,
-} from "lucide-react";
+import { HiCheck as Check, HiClipboard as Clipboard, HiCodeBracket as Code2, HiDocumentDuplicate as Copy, HiArrowTopRightOnSquare as ExternalLink, HiCodeBracketSquare as FileCode2, HiLockClosed as FileLock2, HiFlag as Flag, HiFolder as Folder, HiArrowPath as Loader2, HiArchiveBox as PackageCheck, HiShieldCheck as ShieldCheck, HiSparkles as Sparkles, HiCommandLine as Terminal, HiExclamationTriangle as TriangleAlert, HiXMark as X } from "react-icons/hi2";
+
 
 import { ComponentPreview } from "@/components/component-preview";
 import { ComponentSandbox } from "@/components/component-sandbox";
@@ -54,8 +38,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
+import { HiCheckBadge } from "react-icons/hi2";
 import { reportComponent, REPORT_REASONS } from "@/lib/report";
 import { fetchCatalogDetail } from "@/lib/catalog-db";
 import { type CatalogItem, type EvidenceRecord } from "../data/catalog";
@@ -696,7 +679,7 @@ function FactCard({ label, value, icon: Icon }: { label: string; value: string; 
 function EvidenceRow({ record }: { record: EvidenceRecord }) {
   const passed = record.status === "passed";
   const leadIcon = passed ? (
-    <span className="mt-0.5 text-receipt"><HugeiconsIcon icon={CheckmarkBadge01Icon} size={18} /></span>
+    <span className="mt-0.5 text-receipt"><HiCheckBadge aria-hidden size={18} /></span>
   ) : record.status === "warning" ? (
     <span className="mt-0.5 flex size-[18px] items-center justify-center rounded-full bg-secondary text-muted-foreground"><TriangleAlert className="size-3" /></span>
   ) : record.status === "failed" ? (

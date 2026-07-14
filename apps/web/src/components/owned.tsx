@@ -5,7 +5,8 @@
  */
 import { useState } from "react";
 import { LiveCardPreview } from "@/components/live-card-preview";
-import { BadgeCheck, Bot, Check, Copy, FileText, TerminalSquare } from "lucide-react";
+import { HiCheckBadge as BadgeCheck, HiCpuChip as Bot, HiCheck as Check, HiDocumentDuplicate as Copy, HiDocumentText as FileText, HiCommandLine as TerminalSquare } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import {

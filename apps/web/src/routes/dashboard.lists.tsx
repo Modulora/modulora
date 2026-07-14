@@ -1,7 +1,8 @@
 /** Lists (Plus) — named public/private groups of anyone's components. */
 import { useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Globe, ListPlus, Loader2, Lock, Plus, Sparkles, Trash2, Check, Link as LinkIcon } from "lucide-react";
+import { HiCheck as Check, HiGlobeAlt as Globe, HiLink as LinkIcon, HiQueueList as ListPlus, HiArrowPath as Loader2, HiLockClosed as Lock, HiPlus as Plus, HiSparkles as Sparkles, HiTrash as Trash2 } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { EmptyState } from "@/components/ui/empty-state";

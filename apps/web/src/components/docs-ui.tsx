@@ -8,13 +8,15 @@
  * page ends with prev/next cards so reading has a direction.
  */
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Banknote, BookOpen, Download, History, TerminalSquare, UploadCloud, type LucideIcon, ShieldCheck } from "lucide-react";
+import { HiArrowLeft as ArrowLeft, HiArrowRight as ArrowRight, HiBanknotes as Banknote, HiBookOpen as BookOpen, HiArrowDownTray as Download, HiClock as History, HiShieldCheck as ShieldCheck, HiCommandLine as TerminalSquare, HiCloudArrowUp as UploadCloud } from "react-icons/hi2";
+import type { IconType } from "react-icons";
+
 import type * as PageTree from "fumadocs-core/page-tree";
 import { findNeighbour } from "fumadocs-core/page-tree";
 import type { TOCItemType } from "fumadocs-core/toc";
 
 /** Per-page icons, by route. Falls back to BookOpen. */
-const PAGE_ICONS: Record<string, LucideIcon> = {
+const PAGE_ICONS: Record<string, IconType> = {
   "/docs": BookOpen,
   "/docs/installing": Download,
   "/docs/publishing": UploadCloud,

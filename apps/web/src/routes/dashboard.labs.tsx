@@ -1,7 +1,8 @@
 /** Labs — feature rollout stages. Plus subscribers get plus-early flags. */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { FlaskConical, Sparkles } from "lucide-react";
+import { HiBeaker as FlaskConical, HiSparkles as Sparkles } from "react-icons/hi2";
+
 import { FLAGS, hasFeature } from "@/lib/flags";
 import { fetchCurrentUser } from "@/lib/session";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";

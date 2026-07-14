@@ -9,7 +9,8 @@ import { runWeeklyDigestNow } from "@/lib/weekly-digest";
 import { createFileRoute, notFound, useNavigate, useRouter } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { ShieldEllipsis } from "lucide-react";
+import { HiShieldExclamation as ShieldEllipsis } from "react-icons/hi2";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";

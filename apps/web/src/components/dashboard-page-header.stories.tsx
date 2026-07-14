@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/tanstack-react";
-import { FlaskConical, Plus } from "lucide-react";
+import { HiBeaker as FlaskConical, HiPlus as Plus } from "react-icons/hi2";
+
 
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "./dashboard-page-header";
