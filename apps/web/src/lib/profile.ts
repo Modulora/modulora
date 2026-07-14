@@ -109,6 +109,31 @@ function normalizeUrl(value: string): string | null {
   return trimmed;
 }
 
+/**
+ * Accepts `@handle`, a bare handle, or a profile URL on any of the given
+ * hosts and returns the canonical `https://<host>/<handle>` — or null when
+ * empty, or undefined when the input can't be read as a handle or profile.
+ */
+function normalizeHandleUrl(value: string, hosts: string[]): string | null | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const handlePattern = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,38}$/;
+  const bare = trimmed.replace(/^@/, "");
+  if (handlePattern.test(bare)) return `https://${hosts[0]}/${bare}`;
+  try {
+    const url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+    const segment = url.pathname.split("/").filter(Boolean)[0] ?? "";
+    const handle = segment.replace(/^@/, "");
+    if (hosts.includes(host) && handlePattern.test(handle)) {
+      return `https://${hosts[0]}/${handle}`;
+    }
+  } catch {
+    // fall through
+  }
+  return undefined;
+}
+
 export const updateProfile = createServerFn({ method: "POST" })
   .validator((data: ProfileInput) => ({
     name: String(data.name ?? "").trim().slice(0, 64),
@@ -133,6 +158,15 @@ export const updateProfile = createServerFn({ method: "POST" })
     if (!check.ok) return { ok: false, error: check.reason, field: "username" };
     if (!data.name) {
       return { ok: false, error: "Display name can't be empty.", field: "name" };
+    }
+
+    const xUrl = normalizeHandleUrl(data.xUrl, ["x.com", "twitter.com"]);
+    if (xUrl === undefined) {
+      return { ok: false, error: "Enter an X handle (@name) or profile URL.", field: "xUrl" };
+    }
+    const githubUrl = normalizeHandleUrl(data.githubUrl, ["github.com"]);
+    if (githubUrl === undefined) {
+      return { ok: false, error: "Enter a GitHub username or profile URL.", field: "githubUrl" };
     }
 
     const db = drizzle(neon(databaseUrl), { schema });
@@ -172,8 +206,8 @@ export const updateProfile = createServerFn({ method: "POST" })
         image: normalizeUrl(data.imageUrl),
         bio: data.bio || null,
         websiteUrl: normalizeUrl(data.websiteUrl),
-        githubUrl: normalizeUrl(data.githubUrl),
-        xUrl: normalizeUrl(data.xUrl),
+        githubUrl,
+        xUrl,
         editorTheme: isEditorTheme(data.editorTheme) ? data.editorTheme : undefined,
         updatedAt: new Date(),
       })

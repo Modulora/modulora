@@ -209,7 +209,7 @@ function buildAuth(databaseUrl: string, secret: string) {
       onPasswordReset: async ({ user }, request) => {
         const token = invitationTokenFromRequest(request);
         if (token) {
-          const consumed = await consumeInvitation(db, user.email, user.id, token);
+          const consumed = await consumeInvitation(db, user.id, token);
           const accepted = consumed || await invitationAcceptedBy(db, user.id, token);
           if (!accepted) {
             throw new APIError("CONFLICT", {
@@ -230,8 +230,10 @@ function buildAuth(databaseUrl: string, secret: string) {
     account: {
       accountLinking: {
         enabled: true,
-        trustedProviders: ["github"],
-        allowDifferentEmails: false,
+        trustedProviders: ["github", "twitter"],
+        // Linking is a deliberate act by an authenticated user (or an
+        // invitation-token holder); provider emails need not match.
+        allowDifferentEmails: true,
       },
     },
     hooks: {
@@ -239,7 +241,7 @@ function buildAuth(databaseUrl: string, secret: string) {
         const session = ctx.context.newSession;
         const token = invitationTokenFromRequest(ctx.request);
         if (session?.user && token) {
-          const consumed = await consumeInvitation(db, session.user.email, session.user.id, token);
+          const consumed = await consumeInvitation(db, session.user.id, token);
           const accepted = consumed || await invitationAcceptedBy(db, session.user.id, token);
           if (accepted) {
             const secure = ctx.request ? new URL(ctx.request.url).protocol === "https:" : process.env.NODE_ENV === "production";
@@ -256,7 +258,7 @@ function buildAuth(databaseUrl: string, secret: string) {
           before: async (user, ctx) => {
             if (!userCreationRequiresInvitation(alphaGateActive(), isAllowedEmail(user.email))) return { data: user };
             const token = invitationTokenFromRequest(ctx?.request);
-            if (!token || !(await activeInvitationFor(db, user.email, token))) {
+            if (!token || !(await activeInvitationFor(db, token))) {
               throw new APIError("FORBIDDEN", {
                 message: "A valid alpha invitation is required to create an account.",
               });
@@ -284,7 +286,7 @@ function buildAuth(databaseUrl: string, secret: string) {
                 .where(eq(schema.users.id, account.userId))
                 .limit(1);
               if (user) {
-                const consumed = await consumeInvitation(db, user.email, user.id, token);
+                const consumed = await consumeInvitation(db, user.id, token);
                 const accepted = consumed || await invitationAcceptedBy(db, user.id, token);
                 if (!accepted) {
                   await db.delete(schema.accounts).where(eq(schema.accounts.id, account.id));

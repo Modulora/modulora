@@ -115,6 +115,15 @@ function Profile() {
                 <Sparkles className="size-2.5" /> Plus
               </span>
             ) : null}
+            {profile.badges.includes("staff") ? (
+              <Badge
+                variant="outline"
+                className="border-receipt/30 bg-receipt/10 text-[10px] uppercase tracking-wide text-receipt"
+                title="Works on Modulora"
+              >
+                Staff
+              </Badge>
+            ) : null}
             {profile.badges.includes("early-adopter") ? (
               <Badge
                 variant="outline"

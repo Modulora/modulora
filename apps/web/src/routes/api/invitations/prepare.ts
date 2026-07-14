@@ -27,7 +27,7 @@ async function handle({ request }: { request: Request }) {
   }
   const db = drizzle(neon(databaseUrl), { schema });
   const invitation = await invitationForToken(db, token);
-  if (!invitation || !(await activeInvitationFor(db, invitation.email, token))) {
+  if (!invitation || !(await activeInvitationFor(db, token))) {
     return new Response(JSON.stringify({ ok: false, error: "This invitation is invalid or no longer active." }), {
       status: 410,
       headers: JSON_HEADERS,
