@@ -25,7 +25,7 @@ function ListsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!mine.plus) {
+  if (!mine.plus && mine.lists.length === 0) {
     return (
       <div className="w-full max-w-3xl">
         <DashboardPageHeader title="Lists" />
@@ -44,10 +44,18 @@ function ListsPage() {
     <div className="w-full max-w-3xl">
       <DashboardPageHeader
         title="Lists"
-        description={<>Group anyone&apos;s components. Public lists show on your profile as &quot;curated by you&quot;; private ones are yours alone.</>}
+        description={mine.plus ? <>Group anyone&apos;s components. Public lists show on your profile as &quot;curated by you&quot;; private ones are yours alone.</> : <>Your existing lists are preserved after Plus lapses. Already-public lists stay on your profile until you make them private or delete them.</>}
       />
 
-      <div className="mt-6 flex flex-wrap items-end gap-2 rounded-xl border border-border/60 bg-card/35 p-4">
+      {!mine.plus ? (
+        <div className="rounded-lg border border-border/60 bg-secondary/25 px-4 py-3 text-sm">
+          <p className="font-medium">Lists are read-only while Plus is inactive</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">You can make a public list private or delete any list. Resume Plus to create lists, add components, or publish a private list.</p>
+          <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/pricing">See Plus</Link></Button>
+        </div>
+      ) : null}
+
+      {mine.plus ? <div className="mt-6 flex flex-wrap items-end gap-2 rounded-xl border border-border/60 bg-card/35 p-4">
         <div className="flex min-w-48 flex-1 flex-col gap-1">
           <label className="text-xs text-muted-foreground">New list</label>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Favorite date pickers" className="h-9" />
@@ -77,7 +85,7 @@ function ListsPage() {
         >
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Create
         </Button>
-      </div>
+      </div> : null}
       {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
 
       <div className="mt-6 flex flex-col gap-3">
@@ -105,7 +113,8 @@ function ListsPage() {
                   variant="ghost"
                   size="sm"
                   className="gap-1.5 text-xs"
-                  title={list.visibility === "public" ? "Make private" : "Make public"}
+                  title={list.visibility === "public" ? "Make private" : mine.plus ? "Make public" : "Resume Plus to publish this list"}
+                  disabled={!mine.plus && list.visibility === "private"}
                   onClick={async () => {
                     await setListVisibility({ data: { listId: list.id, visibility: list.visibility === "public" ? "private" : "public" } });
                     await router.invalidate();

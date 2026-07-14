@@ -614,6 +614,17 @@ export interface PublicCollection {
   owned: boolean;
 }
 
+export interface CreatorReviewRecord {
+  id: string;
+  version: string | null;
+  standardVersion: string;
+  decision: "approve" | "request-changes" | "reject" | "escalate";
+  checklist: Record<string, string>;
+  rationale: string;
+  limitations: string;
+  createdAt: string;
+}
+
 export interface MyComponent {
   name: string;
   title: string;
@@ -624,6 +635,7 @@ export interface MyComponent {
   reviewReason: string | null;
   marketplacePrice: number | null;
   updatedAt: string;
+  reviewHistory: CreatorReviewRecord[];
 }
 
 export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
@@ -649,6 +661,26 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
       .where(eq(schema.components.namespaceId, ns.id))
       .orderBy(desc(schema.components.updatedAt));
 
+    const componentIds = rows.map((row) => row.component.id);
+    const records = componentIds.length > 0
+      ? await database
+          .select({
+            id: schema.reviewRecords.id,
+            componentId: schema.reviewRecords.componentId,
+            version: schema.componentVersions.version,
+            standardVersion: schema.reviewRecords.standardVersion,
+            decision: schema.reviewRecords.decision,
+            checklist: schema.reviewRecords.checklist,
+            rationale: schema.reviewRecords.rationale,
+            limitations: schema.reviewRecords.limitations,
+            createdAt: schema.reviewRecords.createdAt,
+          })
+          .from(schema.reviewRecords)
+          .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.reviewRecords.componentVersionId))
+          .where(inArray(schema.reviewRecords.componentId, componentIds))
+          .orderBy(desc(schema.reviewRecords.createdAt))
+      : [];
+
     return rows.map((row) => ({
       name: row.component.name,
       title: row.component.title,
@@ -659,6 +691,18 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
       reviewReason: row.component.reviewReason,
       marketplacePrice: DIRECT_MARKETPLACE_ENABLED ? row.price ?? null : null,
       updatedAt: row.component.updatedAt.toISOString(),
+      reviewHistory: records
+        .filter((record) => record.componentId === row.component.id)
+        .map((record) => ({
+          id: record.id,
+          version: record.version,
+          standardVersion: record.standardVersion,
+          decision: record.decision,
+          checklist: record.checklist,
+          rationale: record.rationale,
+          limitations: record.limitations,
+          createdAt: record.createdAt.toISOString(),
+        })),
     }));
   },
 );

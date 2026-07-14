@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 
 import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
+import { REVIEW_CHECKS } from "@/lib/review-standard";
 
 export const Route = createFileRoute("/dashboard/components")({
   beforeLoad: ({ context }) => {
@@ -163,6 +164,13 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
   );
 }
 
+const REVIEW_DECISION_LABELS = {
+  approve: "Approved",
+  "request-changes": "Changes requested",
+  reject: "Rejected",
+  escalate: "Escalated",
+} as const;
+
 function ComponentRow({ component, username, payoutsEnabled }: { component: MyComponent; username: string; payoutsEnabled: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -202,6 +210,34 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
         <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">@{username}/{component.name}@{component.version} · {component.category}</p>
         {component.reviewStatus === "rejected" && component.reviewReason ? (
           <p className="mt-1 line-clamp-2 text-xs text-destructive">Changes requested: {component.reviewReason}</p>
+        ) : null}
+        {component.reviewHistory.length > 0 ? (
+          <details className="mt-2 rounded-lg border border-border/50 bg-background/30 px-3 py-2 text-xs">
+            <summary className="min-h-11 cursor-pointer py-3 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+              Review history ({component.reviewHistory.length})
+            </summary>
+            <ol className="flex flex-col gap-3 border-t border-border/40 py-3">
+              {component.reviewHistory.map((record) => (
+                <li key={record.id} className="rounded-md border border-border/40 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium">{REVIEW_DECISION_LABELS[record.decision]}</p>
+                    <p className="text-muted-foreground">{record.version ? `v${record.version} · ` : ""}{new Date(record.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p>
+                  </div>
+                  <p className="mt-2 leading-relaxed">{record.rationale}</p>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">Scope: {record.limitations}</p>
+                  <p className="mt-2 font-medium">Checklist · {record.standardVersion}</p>
+                  <ul className="mt-1 grid gap-1 sm:grid-cols-2">
+                    {REVIEW_CHECKS.map((check) => (
+                      <li key={check.id} className="flex justify-between gap-2 text-muted-foreground">
+                        <span>{check.title}</span>
+                        <span className="shrink-0 capitalize">{(record.checklist[check.id] ?? "not recorded").replace("-", " ")}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ol>
+          </details>
         ) : null}
       </div>
       <div className="flex flex-wrap items-center gap-1 border-t border-border/50 pt-2 sm:shrink-0 sm:border-0 sm:pt-0">
