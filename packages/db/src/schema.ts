@@ -45,6 +45,13 @@ export const users = pgTable("user", {
   // Self-asserted sponsorship/funding link (GitHub Sponsors, Ko-fi, …).
   // Display-only: never implies verification, endorsement, or trust.
   sponsorUrl: text("sponsor_url"),
+  // Public profile presentation. Hiding a section never deletes its content.
+  showProfileBio: boolean("show_profile_bio").notNull().default(true),
+  showProfileLinks: boolean("show_profile_links").notNull().default(true),
+  showProfileSponsor: boolean("show_profile_sponsor").notNull().default(true),
+  showProfileComponents: boolean("show_profile_components").notNull().default(true),
+  showProfileCollections: boolean("show_profile_collections").notNull().default(true),
+  showProfilePublicLists: boolean("show_profile_public_lists").notNull().default(true),
   // GitHub login proven via OAuth sign-in (verified identity). Null = not
   // connected; a hand-typed github_url that differs is treated as unverified.
   githubUsername: text("github_username"),

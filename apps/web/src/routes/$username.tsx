@@ -142,9 +142,11 @@ function Profile() {
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays className="size-3.5" /> Joined {joined}
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Blocks className="size-3.5" /> {components.length} component{components.length === 1 ? "" : "s"}
-            </span>
+            {profile.sections.components ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Blocks className="size-3.5" /> {components.length} component{components.length === 1 ? "" : "s"}
+              </span>
+            ) : null}
             {profile.websiteUrl ? (
               <SocialLink
                 href={profile.websiteUrl}
@@ -188,7 +190,7 @@ function Profile() {
         </div>
       </motion.header>
 
-      {collections.length > 0 ? (
+      {profile.sections.collections && collections.length > 0 ? (
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: stage >= 2 ? 1 : 0 }}
@@ -198,13 +200,13 @@ function Profile() {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Collections</h2>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             {collections.map((collection) => (
-              <CollectionCard key={collection.name} collection={collection} namespace={profile.username} components={components} />
+              <CollectionCard key={collection.name} collection={collection} namespace={profile.username} />
             ))}
           </div>
         </motion.section>
       ) : null}
 
-      {publicLists.length > 0 ? (
+      {profile.sections.publicLists && publicLists.length > 0 ? (
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: stage >= 2 ? 1 : 0 }}
@@ -234,7 +236,7 @@ function Profile() {
         </motion.section>
       ) : null}
 
-      <div className="mt-10">
+      {profile.sections.components ? <div className="mt-10">
         {components.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -259,7 +261,7 @@ function Profile() {
             ))}
           </div>
         )}
-      </div>
+      </div> : null}
     </div>
   );
 }
@@ -320,10 +322,9 @@ function ProfileCard({ item }: { item: CatalogItem }) {
 }
 
 
-function CollectionCard({ collection, namespace, components }: { collection: import("@/lib/catalog-db").PublicCollection; namespace: string; components: CatalogItem[] }) {
+function CollectionCard({ collection, namespace }: { collection: import("@/lib/catalog-db").PublicCollection; namespace: string }) {
   const installCommand = `npx modulora add @${namespace}/${collection.name}`;
-  const byName = new Map(components.map((item) => [item.name, item]));
-  const cover = collection.members.map((member) => byName.get(member.name)).find(Boolean);
+  const cover = collection.cover;
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/40 p-3">
       {/* One compact preview opens the collection page (member rail + live previews). */}

@@ -8,6 +8,7 @@ import { DashboardPageHeader } from "@/components/dashboard-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -25,10 +26,24 @@ import {
   type HandleStatus,
   type ProfileInput,
 } from "@/lib/profile";
+import type { ProfileSectionKey } from "@/lib/profile-sections";
 import { addDomain, discoverDomainConnect, listDomains, removeDomain, verifyDomain, type DomainConnectInfo, type DomainRecord } from "@/lib/domains";
 import { DnsRecordCard, OneClickSetup, type DnsRecordInfo } from "@/components/domain-verify";
 import { linkSocial } from "@/lib/auth-client";
 import { isRenderableImageUrl } from "@/lib/image-url";
+
+const PROFILE_SECTION_OPTIONS: {
+  key: ProfileSectionKey;
+  label: string;
+  description: string;
+}[] = [
+  { key: "bio", label: "Bio", description: "Your public introduction." },
+  { key: "links", label: "Links", description: "Website, GitHub, and X links." },
+  { key: "sponsor", label: "Sponsor link", description: "Your self-asserted funding link." },
+  { key: "components", label: "Components", description: "Your component count, grid, and empty state." },
+  { key: "collections", label: "Collections", description: "Your public component collections." },
+  { key: "publicLists", label: "Public lists", description: "Lists shown as curated by you." },
+];
 
 export const Route = createFileRoute("/dashboard/settings/")({
   loader: async () => {
@@ -54,6 +69,7 @@ function Settings() {
     sponsorUrl: user.sponsorUrl ?? "",
     githubUrl: user.githubUrl ?? "",
     xUrl: user.xUrl ?? "",
+    sections: user.sections,
   });
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -76,13 +92,21 @@ function Settings() {
     return () => clearTimeout(timer);
   }, [form.username, user.username]);
 
-  function set<K extends keyof ProfileInput>(key: K, value: string) {
+  function set<K extends keyof ProfileInput>(key: K, value: ProfileInput[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     setSaved(false);
     if (errorField === key) {
       setError(null);
       setErrorField(null);
     }
+  }
+
+  function setSection(key: ProfileSectionKey, checked: boolean) {
+    setForm((current) => ({
+      ...current,
+      sections: { ...(current.sections ?? user.sections), [key]: checked },
+    }));
+    setSaved(false);
   }
 
   async function onSubmit(event: FormEvent) {
@@ -201,6 +225,35 @@ function Settings() {
             Shown on your public profile as a plainly labeled sponsor link — GitHub Sponsors, Ko-fi, Open Collective, or your own page. Self-asserted; it never implies verification.
           </p>
         </div>
+
+        <fieldset className="rounded-xl border border-border/60 bg-background/25">
+          <legend className="px-3 text-sm font-semibold">Profile sections</legend>
+          <p className="px-3 pb-2 text-xs leading-relaxed text-muted-foreground">
+            Choose what appears publicly. Hidden sections keep their content and can be restored anytime.
+          </p>
+          <div className="divide-y divide-border/50">
+            {PROFILE_SECTION_OPTIONS.map((option) => {
+              const id = `profile-section-${option.key}`;
+              return (
+                <div key={option.key} className="flex min-h-14 items-center justify-between gap-4 px-3">
+                  <Label htmlFor={id} className="flex min-h-14 flex-1 cursor-pointer flex-col justify-center gap-0.5">
+                    <span>{option.label}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{option.description}</span>
+                  </Label>
+                  <Switch
+                    id={id}
+                    checked={form.sections?.[option.key] ?? true}
+                    onCheckedChange={(checked) => setSection(option.key, checked)}
+                    aria-describedby={`${id}-status`}
+                  />
+                  <span id={`${id}-status`} className="sr-only">
+                    {form.sections?.[option.key] ?? true ? "Shown on public profile" : "Hidden from public profile"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </fieldset>
 
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-muted-foreground">
