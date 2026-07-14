@@ -169,6 +169,13 @@
       "when": 1784001035683,
       "tag": "0023_odd_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1784033324674,
+      "tag": "0024_narrow_captain_stacy",
+      "breakpoints": true
     }
   ]
 }

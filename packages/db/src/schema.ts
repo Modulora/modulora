@@ -230,6 +230,8 @@ export const components = pgTable(
     reviewReason: text("review_reason"),
     reviewedBy: text("reviewed_by").references(() => users.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    // Active moderation state, shown publicly in scoped language when set.
+    moderationState: text("moderation_state", { enum: ["restricted", "removed"] }),
     submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -271,6 +273,85 @@ export const reviewRecords = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("review_records_component").on(t.componentId)],
+);
+
+/**
+ * Pre-publication similarity screening (#67). One row per screened release;
+ * blocked screens hold the submission out of the review queue until a curator
+ * resolves them. Similarity is a review signal, never an accusation.
+ */
+export const similarityScreens = pgTable(
+  "similarity_screens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => components.id, { onDelete: "cascade" }),
+    componentVersionId: uuid("component_version_id")
+      .notNull()
+      .references(() => componentVersions.id, { onDelete: "cascade" }),
+    methodVersion: text("method_version").notNull(),
+    status: text("status", { enum: ["clear", "potential", "blocked", "error"] }).notNull(),
+    /** Explainable candidates: matched refs, files, scores, line regions. */
+    results: jsonb("results").$type<Record<string, unknown>>().notNull(),
+    corpusLimitation: text("corpus_limitation").notNull(),
+    /** Submitter's per-candidate classification claims + supporting URLs. */
+    submitterClassification: jsonb("submitter_classification").$type<Record<string, unknown> | null>(),
+    /** Curator resolution for blocked screens. */
+    resolvedBy: text("resolved_by").references(() => users.id, { onDelete: "set null" }),
+    resolution: text("resolution", {
+      enum: ["cleared", "authorized-derivative", "attribution-required", "rejected", "escalated"],
+    }),
+    resolutionRationale: text("resolution_rationale"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("similarity_screens_component").on(t.componentId), index("similarity_screens_status").on(t.status)],
+);
+
+/**
+ * Durable moderation cases (#67): plagiarism, impersonation, copied previews,
+ * attribution, and brand-association reports — account optional. Reporter
+ * contact stays private; state transitions append events, never overwrite.
+ */
+export const moderationCases = pgTable(
+  "moderation_cases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    componentId: uuid("component_id").references(() => components.id, { onDelete: "set null" }),
+    componentRef: text("component_ref").notNull(),
+    reason: text("reason").notNull(),
+    details: text("details").notNull(),
+    /** Private — never exposed publicly. */
+    reporterEmail: text("reporter_email").notNull(),
+    reporterUserId: text("reporter_user_id").references(() => users.id, { onDelete: "set null" }),
+    status: text("status", {
+      enum: ["open", "restricted", "takedown", "corrected", "revoked", "appealed", "closed"],
+    })
+      .notNull()
+      .default("open"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("moderation_cases_status").on(t.status)],
+);
+
+/** Append-only moderation history: notices, responses, decisions, appeals. */
+export const moderationCaseEvents = pgTable(
+  "moderation_case_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => moderationCases.id, { onDelete: "cascade" }),
+    action: text("action", {
+      enum: ["opened", "noted", "restricted", "takedown", "corrected", "revoked", "appealed", "reopened", "closed"],
+    }).notNull(),
+    actorUserId: text("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("moderation_case_events_case").on(t.caseId)],
 );
 
 /** Append-only role-change audit: who granted/revoked curator, and when. */
@@ -363,6 +444,7 @@ export const evidenceRecords = pgTable(
         "install-parity",
         "domain-verified",
         "secret-scan",
+        "similarity-screen",
         "source-not-assessed",
         "deprecated",
         "revoked",

@@ -49,6 +49,29 @@ on the review page, and each check gets an explicit result — *pass*,
 decision against these checks. It is not a security audit, ownership or
 originality certification, accessibility certification, or legal review.
 
+## Similarity screening
+
+Before a submission enters the queue, Modulora screens it against **its own
+published release corpus** using exact content digests and normalized token
+fingerprints. Exact or high-confidence matches against another creator's
+release hold the submission until a curator resolves it; the submitter can
+classify each match (original work, authorized republication, derivative,
+false positive) with supporting links.
+
+Similarity is a **review signal, never a verdict**: it cannot prove
+plagiarism or originality, the screening does not search external sources,
+and no listing ever carries an “originality verified” or “plagiarism free”
+claim. Scanner failures fail closed — a submission never silently skips
+screening into review.
+
+Creators can report plagiarism, impersonation, copied previews, incorrect
+attribution, or unauthorized brand association **without a Modulora
+account** from any component page. Reports become durable moderation cases
+with an append-only history; reporter contact stays private. Cases can lead
+to temporary listing restriction, takedown, attribution correction, or
+release revocation — each shown publicly in scoped language — and every
+action supports appeal.
+
 ## Decisions and records
 
 Curators choose **approve**, **request changes**, **reject**, or

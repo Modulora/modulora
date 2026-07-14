@@ -248,6 +248,8 @@ export async function resolveRegistryItem(
   if (c.visibility !== "public" || c.reviewStatus !== "approved" || c.sourceModel !== "open-source") {
     return notFound;
   }
+  // Active moderation restriction/takedown stops installs immediately.
+  if (c.moderationState != null) return notFound;
 
   // Marketplace-priced components require an entitlement: the buyer (or the
   // owner), authenticated via session cookie or a CLI bearer token.

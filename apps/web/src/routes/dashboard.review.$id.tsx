@@ -17,6 +17,8 @@ import {
   type ChecklistResult,
   type ReviewDecision,
 } from "@/lib/review-standard";
+import { applySignals, signalsFromEvidence } from "@/lib/review-signals";
+import { SimilarityStatusPanel } from "@/components/similarity-status";
 
 export const Route = createFileRoute("/dashboard/review/$id")({
   validateSearch: (search: Record<string, unknown>): { action?: "approve" | "deny" } => ({
@@ -46,6 +48,8 @@ function ReviewDetail() {
   const [activeFile, setActiveFile] = useState(0);
 
   const files = useMemo(() => item?.files ?? [], [item]);
+  const signals = useMemo(() => signalsFromEvidence(item?.evidence ?? []), [item]);
+  const signalCount = Object.keys(signals).length;
   const checksComplete = REVIEW_CHECKS.every((check) => checklist[check.id] !== undefined);
   const ready = checksComplete && rationale.trim().length > 0;
   void action;
@@ -141,6 +145,14 @@ function ReviewDetail() {
             </p>
           )}
 
+          {item.similarityScreen ? (
+            <SimilarityStatusPanel
+              state={item.similarityScreen.state}
+              candidates={item.similarityScreen.candidates}
+              corpusLimitation={item.similarityScreen.corpusLimitation}
+            />
+          ) : null}
+
           {/* Evidence */}
           {item.evidence && item.evidence.length > 0 && (
             <div className="rounded-lg border border-border p-4">
@@ -167,11 +179,27 @@ function ReviewDetail() {
               <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{REVIEW_STANDARD_VERSION}</span>
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">{REVIEW_STANDARD_LIMITATIONS}</p>
+            {signalCount > 0 ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setChecklist((current) => applySignals(current, signals))}
+              >
+                Apply {signalCount} evidence signal{signalCount === 1 ? "" : "s"} as prefill
+              </Button>
+            ) : null}
             <ul className="space-y-3">
               {REVIEW_CHECKS.map((check) => (
                 <li key={check.id}>
                   <p className="text-xs font-medium">{check.title}</p>
                   <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{check.description}</p>
+                  {signals[check.id] ? (
+                    <p className={`mt-1 text-[11px] leading-snug ${signals[check.id]!.result === "flag" ? "text-ticket" : "text-muted-foreground"}`}>
+                      Signal: {signals[check.id]!.reason}
+                    </p>
+                  ) : null}
                   <div role="radiogroup" aria-label={`${check.title} result`} className="mt-1.5 flex gap-1">
                     {(
                       [

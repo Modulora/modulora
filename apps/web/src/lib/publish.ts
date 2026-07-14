@@ -17,6 +17,7 @@ import { isCategoryId, isComponentTypeId } from "./taxonomy";
 import { verifyShadcnParity } from "./parity";
 import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
 import { fireReviewWebhook } from "./review";
+import { runSimilarityGate } from "./similarity-gate";
 import { POLICY_VERSION } from "./publishing-policy";
 import { roleFor } from "./scaffold";
 import { stripSrc } from "./registry";
@@ -54,13 +55,24 @@ export interface PublishInput {
   draft?: boolean;
 }
 
+export interface SimilarityHoldSummary {
+  screenId: string | null;
+  candidates: {
+    ref: string;
+    confidence: string | null;
+    files: { path: string; candidatePath: string; score: number }[];
+  }[];
+}
+
 export interface PublishResult {
   ok: boolean;
   error?: string;
   namespace?: string;
   name?: string;
   version?: string;
-  status?: "pending";
+  status?: "pending" | "similarity-hold";
+  /** Present when the submission is held for curator similarity resolution. */
+  similarity?: SimilarityHoldSummary;
 }
 
 /** Next patch version, or 0.1.0 for a brand-new component. */
@@ -431,6 +443,36 @@ export async function publishCore(data: PublishInput, request: Request): Promise
       .set({ latestVersionId: createdVersion!.id, updatedAt: new Date() })
       .where(eq(schema.components.id, componentId));
 
+    // Pre-publication similarity screening (#67): submissions with exact or
+    // high-confidence cross-owner matches hold as drafts until a curator
+    // resolves them, and scanner failures fail closed — never into review.
+    let similarityHold: { screenId: string | null; candidates: { ref: string; confidence: string | null; files: { path: string; candidatePath: string; score: number }[] }[] } | null = null;
+    if (!isDraft && !isPaid && installFiles.length > 0) {
+      const gate = await runSimilarityGate(db, {
+        componentId,
+        componentVersionId: createdVersion!.id,
+        ownerUserId: user.id,
+        files: installFiles.map((file) => ({ path: file.path, content: file.content })),
+      });
+      if (gate.status === "error") {
+        await db
+          .update(schema.components)
+          .set({ reviewStatus: "draft", updatedAt: new Date() })
+          .where(eq(schema.components.id, componentId));
+        return {
+          ok: false,
+          error: "Similarity screening could not complete, so the submission was saved as a draft instead of entering review. Try submitting again.",
+        };
+      }
+      if (gate.status === "blocked") {
+        await db
+          .update(schema.components)
+          .set({ reviewStatus: "draft", updatedAt: new Date() })
+          .where(eq(schema.components.id, componentId));
+        similarityHold = { screenId: gate.screenId, candidates: gate.candidates };
+      }
+    }
+
     if (!isPaid && installFiles.length > 0) {
       await db
         .update(schema.componentVersions)
@@ -439,7 +481,8 @@ export async function publishCore(data: PublishInput, request: Request): Promise
     }
 
     // Announce the submission to the curation channel. The component stays
-    // pending and hidden from browse until a curator approves it.
+    // pending and hidden from browse until a curator approves it. Similarity
+    // holds are announced too — curators resolve them from the queue.
     const origin = requestOrigin(request);
     await fireReviewWebhook({
       componentId,
@@ -459,11 +502,21 @@ export async function publishCore(data: PublishInput, request: Request): Promise
 
     // Awaited: dangling promises are cancelled in the Workers runtime, so
     // fire-and-forget emails silently vanish. sendEmail never throws.
-    if (!isDraft) {
+    if (!isDraft && !similarityHold) {
       const { emailSubmissionReceived } = await import("./email");
       await emailSubmissionReceived(user.email, title, `@${user.username}/${name}`);
     }
 
+    if (similarityHold) {
+      return {
+        ok: true,
+        namespace: user.username,
+        name,
+        version,
+        status: "similarity-hold" as const,
+        similarity: similarityHold,
+      };
+    }
     return { ok: true, namespace: user.username, name, version, status: "pending" as const };
   }
 }

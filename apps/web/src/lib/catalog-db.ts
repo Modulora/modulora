@@ -8,7 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { and, asc, desc, eq, gt } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { catalog as demoCatalog, findItem, type CatalogItem } from "../data/catalog";
 import { categoryLabel, componentTypeLabel } from "./taxonomy";
@@ -70,6 +70,7 @@ function toCatalogItem(
     files: files.length ? files : undefined,
     live: true,
     evidence,
+    moderationState: (component.moderationState as CatalogItem["moderationState"]) ?? null,
   };
 }
 
@@ -103,7 +104,7 @@ export const fetchCatalog = createServerFn({ method: "GET" }).handler(
       .from(schema.components)
       .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
       .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
-      .where(and(eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved")))
+      .where(and(eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved"), isNull(schema.components.moderationState)))
       .orderBy(desc(schema.components.createdAt));
 
     // Collection membership per component (first collection shown on cards).
@@ -142,6 +143,7 @@ export const fetchFeatured = createServerFn({ method: "GET" }).handler(
           gt(schema.promotions.endsAt, now),
           eq(schema.components.visibility, "public"),
           eq(schema.components.reviewStatus, "approved"),
+          isNull(schema.components.moderationState),
         ),
       )
       .orderBy(desc(schema.promotions.startsAt))
@@ -303,13 +305,47 @@ export const fetchComponentForReview = createServerFn({ method: "GET" })
       : [];
     const evidence = row.version ? await loadEvidence(database, row.version.id) : [];
 
-    return toCatalogItem(
-      row.namespace,
-      row.component,
-      row.version,
-      files.map((file) => ({ path: file.path, content: file.content ?? "" })),
-      evidence,
-    );
+    // Latest similarity screen for the curator comparison surface (#67).
+    let similarityScreen: CatalogItem["similarityScreen"] = null;
+    if (row.version) {
+      const [screen] = await database
+        .select()
+        .from(schema.similarityScreens)
+        .where(eq(schema.similarityScreens.componentVersionId, row.version.id))
+        .orderBy(desc(schema.similarityScreens.createdAt))
+        .limit(1);
+      if (screen && screen.status !== "error") {
+        const candidates = ((screen.results as { candidates?: { ref: string; confidence: string | null; matches?: { path: string; candidatePath: string; score: number; scaffolding: boolean }[] }[] })?.candidates ?? []).map(
+          (candidate) => ({
+            ref: candidate.ref,
+            confidence: candidate.confidence,
+            files: (candidate.matches ?? [])
+              .filter((match) => !match.scaffolding)
+              .slice(0, 6)
+              .map((match) => ({ path: match.path, candidatePath: match.candidatePath, score: match.score })),
+          }),
+        );
+        similarityScreen = {
+          state:
+            screen.resolution === "authorized-derivative"
+              ? "authorized-derivative"
+              : (screen.status as "clear" | "potential" | "blocked"),
+          candidates,
+          corpusLimitation: screen.corpusLimitation,
+        };
+      }
+    }
+
+    return {
+      ...toCatalogItem(
+        row.namespace,
+        row.component,
+        row.version,
+        files.map((file) => ({ path: file.path, content: file.content ?? "" })),
+        evidence,
+      ),
+      similarityScreen,
+    };
   });
 
 export interface PublicProfile {
@@ -371,7 +407,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
       .from(schema.components)
       .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
       .leftJoin(schema.componentVersions, eq(schema.componentVersions.id, schema.components.latestVersionId))
-      .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved")))
+      .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.visibility, "public"), eq(schema.components.reviewStatus, "approved"), isNull(schema.components.moderationState)))
       .orderBy(desc(schema.components.createdAt));
 
     // Collections: listed with their approved-member count, bundle price,
