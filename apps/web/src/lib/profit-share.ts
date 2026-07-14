@@ -25,7 +25,7 @@ export const PROFIT_SHARE_MODEL: ExplainerSection[] = [
     title: "Earning during alpha",
     body: [
       "Profit share: your free, open components earn a share of Modulora's distributable profit based on how often they're actually installed — no listing required.",
-      "External sales remain available on verified creator domains. Creators handle checkout and fulfillment; Modulora records no purchase and takes no fee.",
+      "External sales remain available through creator-operated purchase pages. Domain verification is optional during alpha and unverified destinations are disclosed; creators handle checkout and fulfillment while Modulora records no purchase and takes no fee.",
       "Direct checkout through Modulora is shelved for alpha.",
     ],
   },

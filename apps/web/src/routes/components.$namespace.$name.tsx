@@ -60,6 +60,7 @@ import { reportComponent, REPORT_REASONS } from "@/lib/report";
 import { fetchCatalogDetail } from "@/lib/catalog-db";
 import { type CatalogItem, type EvidenceRecord } from "../data/catalog";
 import { ComponentDetailError, ComponentDetailLoading } from "@/components/component-detail-state";
+import { externalDomainDisclosure } from "@/lib/external-sales";
 
 interface HighlightedFile {
   path: string;
@@ -315,7 +316,7 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
             <div className="mb-3 flex items-center gap-2"><ShieldCheck className="size-4" /><h2 className="text-sm font-semibold">Provenance &amp; integrity</h2></div>
             <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
               {isPaid
-                ? "Modulora hosts no source or install artifact for this release. The records below cover only the named identity, domain, and listing facts — not the creator-fulfilled code."
+                ? "Modulora hosts no source or install artifact for this release. The records below cover only the facts they name — not the creator-fulfilled code."
                 : "Installs copy exactly these files and never run install scripts. Each record below is scoped to this release and independently checkable — not a guarantee the code is safe to run."}
             </p>
             <TooltipProvider delayDuration={150}>
@@ -545,7 +546,7 @@ function LockedCode({ item }: { item: CatalogItem }) {
           </>
         ) : (
           <>
-            <div><p className="font-semibold">Paid component</p><p className="mt-1 max-w-xs text-sm text-muted-foreground">Purchase and fulfillment are handled by the creator. Modulora hosts no source and has not assessed it.</p></div>
+            <div><p className="font-semibold">Paid component</p><p className="mt-1 max-w-xs text-sm text-muted-foreground">Purchase and fulfillment are handled by the creator. Modulora hosts no source and has not assessed it. {externalDomainDisclosure(verifiedDomainTimestamp(item))}</p></div>
             {item.purchase ? <Button asChild className="w-full sm:w-auto"><a href={item.purchase.url} target="_blank" rel="noreferrer">View on {item.purchase.domain}<ExternalLink /></a></Button> : null}
           </>
         )}
@@ -588,10 +589,14 @@ function InstallTabIcon({ tab }: { tab: string }) {
 function CommercialTray({ item }: { item: CatalogItem }) {
   return (
     <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4 sm:flex-row sm:items-center">
-      <div><p className="text-sm font-medium">Available from the creator</p><p className="mt-1 text-xs text-muted-foreground">No source or install artifact is distributed by Modulora.</p></div>
+      <div><p className="text-sm font-medium">Available from the creator</p><p className="mt-1 text-xs text-muted-foreground">No source or install artifact is distributed by Modulora. {externalDomainDisclosure(verifiedDomainTimestamp(item))}</p></div>
       {item.purchase ? <Button asChild className="w-full sm:w-auto"><a href={item.purchase.url} target="_blank" rel="noreferrer">View on {item.purchase.domain}{item.purchase.priceLabel ? ` · ${item.purchase.priceLabel}` : ""}<ExternalLink /></a></Button> : null}
     </div>
   );
+}
+
+function verifiedDomainTimestamp(item: CatalogItem): string | null {
+  return item.evidence.find((record) => record.type === "domain-verified" && record.status === "passed")?.timestamp ?? null;
 }
 
 function ReportComponent({ namespace, name }: { namespace: string; name: string }) {

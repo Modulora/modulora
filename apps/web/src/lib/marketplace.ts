@@ -18,7 +18,8 @@ import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { getStripe, applicationFee } from "./stripe";
 import { LICENSE_TEMPLATES, resolveLicenseText } from "./license";
-import { DIRECT_MARKETPLACE_ENABLED } from "./flags";
+import { DIRECT_MARKETPLACE_ENABLED, EXTERNAL_DOMAIN_VERIFICATION_REQUIRED } from "./flags";
+import { externalDomainAllowed } from "./external-sales";
 import { requestOrigin } from "./request-origin";
 
 const MARKETPLACE_DISABLED_ERROR = "Direct sales through Modulora are not available during alpha.";
@@ -323,9 +324,8 @@ export const setCollectionPrice = createServerFn({ method: "POST" })
   });
 
 /**
- * List a collection as sold on the creator's own site. The URL must be on
- * a domain the creator has verified; setting it deactivates any Modulora
- * price (mutually exclusive). Pass null to clear.
+ * List a collection as sold on the creator's own site. Setting the URL
+ * deactivates any Modulora price (mutually exclusive). Pass null to clear.
  */
 export const setCollectionExternalUrl = createServerFn({ method: "POST" })
   .validator((data: { name: string; url: string | null }) => ({
@@ -343,21 +343,22 @@ export const setCollectionExternalUrl = createServerFn({ method: "POST" })
       if (!/^https?:\/\//i.test(data.url)) return { ok: false, error: "Enter a full URL (https://…)." };
       const { normalizeDomain } = await import("./domains");
       const host = normalizeDomain(data.url);
-      const owned = host
-        ? await db
-            .select({ id: schema.verifiedDomains.id })
-            .from(schema.verifiedDomains)
-            .where(
-              and(
-                eq(schema.verifiedDomains.ownerUserId, user.id),
-                eq(schema.verifiedDomains.domain, host),
-                isNotNull(schema.verifiedDomains.verifiedAt),
-              ),
-            )
-            .limit(1)
-        : [];
-      if (owned.length === 0) {
-        return { ok: false, error: `URL must be on a domain you've verified (${host ?? "invalid URL"}).` };
+      if (!host) return { ok: false, error: "Enter a valid external purchase URL." };
+      if (EXTERNAL_DOMAIN_VERIFICATION_REQUIRED) {
+        const owned = await db
+          .select({ id: schema.verifiedDomains.id })
+          .from(schema.verifiedDomains)
+          .where(
+            and(
+              eq(schema.verifiedDomains.ownerUserId, user.id),
+              eq(schema.verifiedDomains.domain, host),
+              isNotNull(schema.verifiedDomains.verifiedAt),
+            ),
+          )
+          .limit(1);
+        if (!externalDomainAllowed(owned.length > 0)) {
+          return { ok: false, error: `URL must be on a domain you've verified (${host ?? "invalid URL"}).` };
+        }
       }
     }
 

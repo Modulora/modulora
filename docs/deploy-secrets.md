@@ -61,6 +61,9 @@ degrades gracefully (submission still succeeds, but no message is posted).
 - `VITE_SANDPACK_BUNDLER_URL` — build-time only. Points the live preview at the
   self-hosted Sandpack bundler. Prod: `https://sandpack.modulora.dev` (deploy
   the assets worker in `modulora-infra/workers/sandpack`; see Modulora/modulora#44).
+- `VITE_EXTERNAL_DOMAIN_VERIFICATION_REQUIRED` — build-time feature flag.
+  Keep `false` during alpha to accept external component and collection links
+  without DNS verification. Set `true` to restore server and editor enforcement.
 
 ## R2 bucket
 

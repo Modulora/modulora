@@ -12,10 +12,11 @@ Modulora is a creator-first component registry for developers and coding agents.
 ## Alpha commerce boundary
 
 Modulora doesn't process component or collection purchases during alpha.
-Commercial listings can link to a purchase page on a domain the creator has
-verified. The creator handles checkout, licensing, delivery, updates, refunds,
-and support; Modulora doesn't host or assess the paid source, record the
-purchase, or take a transaction fee.
+Commercial listings can link to a creator-operated purchase page. Domain
+verification is optional during alpha, and public listings disclose when the
+destination isn't verified. The creator handles checkout, licensing, delivery,
+updates, refunds, and support; Modulora doesn't host or assess the paid source,
+record the purchase, or take a transaction fee.
 
 Direct marketplace code remains disabled behind
 `VITE_DIRECT_MARKETPLACE_ENABLED=false`. Profit-share payouts for verified CLI

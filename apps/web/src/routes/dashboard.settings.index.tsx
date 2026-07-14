@@ -281,7 +281,7 @@ function DomainsSection({ initial }: { initial: DomainRecord[] }) {
       <div>
         <h2 className="text-sm font-semibold">Verified domains</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Prove you own a domain with a DNS TXT record. Verified domains back your website badge and let you sell components from that domain.
+          Prove you own a domain with a DNS TXT record. Verified domains back scoped website and purchase-destination evidence; verification is optional for external sales during alpha.
         </p>
       </div>
 

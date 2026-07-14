@@ -13,6 +13,10 @@ import type { CurrentUser } from "./session";
  */
 export const DIRECT_MARKETPLACE_ENABLED = import.meta.env.VITE_DIRECT_MARKETPLACE_ENABLED === "true";
 
+/** Require DNS ownership before accepting an external purchase destination. */
+export const EXTERNAL_DOMAIN_VERIFICATION_REQUIRED =
+  import.meta.env.VITE_EXTERNAL_DOMAIN_VERIFICATION_REQUIRED === "true";
+
 export type FlagStage = "off" | "plus-early" | "everyone";
 
 export interface FeatureFlag {

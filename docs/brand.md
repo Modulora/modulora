@@ -219,7 +219,7 @@ See who published a release, where it came from, and which checks ran—without 
 
 ## Open or commercial. Always creator-led.
 
-Open-source components remain free to browse and install. Commercial components send you to the creator’s verified purchase page.
+Open-source components remain free to browse and install. Commercial components send you to the creator's purchase page; the listing states whether Modulora verified the destination domain.
 
 ## Sample product copy
 
@@ -231,7 +231,13 @@ Open-source components remain free to browse and install. Commercial components 
 ### External commercial component
 
 > Commercial component  
-> Purchase and fulfillment are handled by the creator. Modulora has verified the destination domain but has not assessed the source.
+> Purchase and fulfillment are handled by the creator. Modulora has not assessed the source.
+>
+> Domain evidence: The creator proved control of the destination domain on 2026-07-13.
+
+When no passing domain evidence exists, replace the final line with:
+
+> Domain evidence: Destination-domain control has not been verified during alpha.
 
 ### Sponsored component
 

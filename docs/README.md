@@ -5,10 +5,11 @@ These documents define the current product, architecture, security, organization
 ## Current alpha boundary
 
 Direct marketplace checkout isn't live. The alpha supports free hosted source,
-verified installs, creator profit share, and external commercial links on
-verified creator domains. External creators own the transaction and fulfillment;
-Modulora doesn't hold paid source, grant buyer entitlements, record purchases,
-or collect a transaction fee.
+verified installs, creator profit share, and external commercial links. Domain
+verification is optional during alpha; unverified destinations are disclosed.
+External creators own the transaction and fulfillment; Modulora doesn't hold
+paid source, grant buyer entitlements, record purchases, or collect a
+transaction fee.
 
 ## Reading order
 

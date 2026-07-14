@@ -102,7 +102,7 @@ The first deploy may bundle web and API into one Worker. Package boundaries rema
 - Component, creator, category, tag, compatibility, source-model, and license records.
 - Public component pages using screenshots only.
 - PostgreSQL search and filters.
-- External commercial listing with verified purchase domain and “Source not assessed” disclosure.
+- External commercial listing with “Source not assessed” disclosure; domain verification is optional during alpha and unverified destinations are labeled.
 - Report, takedown, and moderation audit events.
 
 ### Acceptance

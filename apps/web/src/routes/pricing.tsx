@@ -29,7 +29,7 @@ export const Route = createFileRoute("/pricing")({
 const FREE = [
   "Publish unlimited components",
   "Verified installs (CLI digest checks)",
-  "Link external sales from verified domains",
+  "Link external sales with destination disclosure",
   "Profit share on verified installs",
   "Public profile, evidence, analytics",
 ];

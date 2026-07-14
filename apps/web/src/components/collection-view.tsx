@@ -21,6 +21,7 @@ import { CopyChip } from "@/components/owned";
 import { buyCollection } from "@/lib/marketplace";
 import { usePageTheme } from "@/lib/use-page-theme";
 import type { CollectionDetail } from "@/lib/catalog-db";
+import { externalDomainDisclosure } from "@/lib/external-sales";
 
 export function CollectionView({ collection }: { collection: CollectionDetail }) {
   const pageTheme = usePageTheme();
@@ -70,16 +71,17 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
 
       <div className="mt-6">
         {collection.external ? (
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4">
+          <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-border/60 bg-card/35 p-4 sm:flex-row sm:items-center">
             <div>
               <p className="text-sm font-medium">Available from the creator</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Sold and fulfilled on {collection.external.domain}. Modulora hosts no source for this
-                collection and records no purchase — installs aren&apos;t digest-verified.
+                collection and records no purchase — installs aren&apos;t digest-verified.{" "}
+                {externalDomainDisclosure(collection.external.verifiedAt)}
               </p>
             </div>
-            <Button asChild>
-              <a href={collection.external.url} rel="noreferrer">
+            <Button asChild className="w-full sm:w-auto">
+              <a href={collection.external.url} target="_blank" rel="noreferrer">
                 Get it on {collection.external.domain} <ExternalLink />
               </a>
             </Button>

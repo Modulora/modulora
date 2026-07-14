@@ -24,6 +24,7 @@ import { setCollectionExternalUrl, setCollectionPrice } from "@/lib/marketplace"
 import { getPayoutStatus } from "@/lib/payouts";
 import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
 import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
+import { EXTERNAL_DOMAIN_VERIFICATION_REQUIRED } from "@/lib/flags";
 
 export const Route = createFileRoute("/dashboard/collections")({
   loader: async () => ({
@@ -253,7 +254,7 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
           <DialogDescription>
             {DIRECT_MARKETPLACE_ENABLED && mode === "modulora"
               ? "One price for the whole collection. Buyers get every current member — the purchase snapshots entitlements, so later edits don't change what they bought. You keep 90%."
-              : "List the collection as sold on your own site. Modulora hosts no source, records no purchase, and takes no fee — buyers are linked out. The URL must be on a domain you've verified."}
+              : `List the collection as sold on your own site. Modulora hosts no source, records no purchase, and takes no fee — buyers are linked out.${EXTERNAL_DOMAIN_VERIFICATION_REQUIRED ? " The URL must be on a domain you've verified." : " Domain verification is optional during alpha, and unverified destinations are disclosed."}`}
           </DialogDescription>
         </DialogHeader>
         {DIRECT_MARKETPLACE_ENABLED ? <div className="mt-3 flex rounded-md border border-border/60 p-0.5">

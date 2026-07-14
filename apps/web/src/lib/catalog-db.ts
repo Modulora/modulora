@@ -26,12 +26,7 @@ function db() {
 }
 
 function domainOf(url: string | null): string | undefined {
-  if (!url) return undefined;
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return undefined;
-  }
+  return normalizeDomain(url ?? "") ?? undefined;
 }
 
 type ComponentRow = typeof schema.components.$inferSelect;
@@ -398,12 +393,29 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
             .where(and(eq(schema.collectionPrices.collectionId, collection.id), eq(schema.collectionPrices.active, true)))
             .limit(1))[0]
         : undefined;
+      const externalDomain = collection.externalUrl ? domainOf(collection.externalUrl) : null;
+      const [verifiedExternalDomain] = externalDomain && ns.ownerUserId
+        ? await database
+            .select({ verifiedAt: schema.verifiedDomains.verifiedAt })
+            .from(schema.verifiedDomains)
+            .where(
+              and(
+                eq(schema.verifiedDomains.ownerUserId, ns.ownerUserId),
+                eq(schema.verifiedDomains.domain, externalDomain),
+              ),
+            )
+            .limit(1)
+        : [];
       collections.push({
         name: collection.name,
         title: collection.title,
         description: collection.description,
         external: collection.externalUrl
-          ? { url: collection.externalUrl, domain: domainOf(collection.externalUrl) ?? "" }
+          ? {
+              url: collection.externalUrl,
+              domain: externalDomain ?? "",
+              verifiedAt: verifiedExternalDomain?.verifiedAt?.toISOString() ?? null,
+            }
           : null,
         members: live.map((m) => ({ name: m.name, title: m.title })),
         cliInstallable: live.some((m) => (m.distributionChannels ?? []).includes("modulora-cli")),
@@ -442,7 +454,7 @@ export interface PublicCollection {
   cliInstallable: boolean;
   price: number | null;
   /** Sold on the creator's own site — mutually exclusive with price. */
-  external: { url: string; domain: string } | null;
+  external: { url: string; domain: string; verifiedAt: string | null } | null;
   license: { name: string; text: string } | null;
   owned: boolean;
 }
@@ -589,7 +601,7 @@ export interface CollectionDetail {
   description: string;
   price: number | null;
   /** Sold on the creator's own site — mutually exclusive with price. */
-  external: { url: string; domain: string } | null;
+  external: { url: string; domain: string; verifiedAt: string | null } | null;
   license: { name: string; text: string } | null;
   owned: boolean;
   members: (CatalogItem & { locked: boolean })[];
@@ -625,6 +637,19 @@ export const fetchCollectionDetail = createServerFn({ method: "GET" })
     const owned = price
       ? await hasCollectionEntitlement(row.collection.id, viewer?.id ?? null, row.ownerUserId)
       : false;
+    const externalDomain = row.collection.externalUrl ? domainOf(row.collection.externalUrl) : null;
+    const [verifiedExternalDomain] = externalDomain && row.ownerUserId
+      ? await database
+          .select({ verifiedAt: schema.verifiedDomains.verifiedAt })
+          .from(schema.verifiedDomains)
+          .where(
+            and(
+              eq(schema.verifiedDomains.ownerUserId, row.ownerUserId),
+              eq(schema.verifiedDomains.domain, externalDomain),
+            ),
+          )
+          .limit(1)
+      : [];
 
     const memberRows = await database
       .select({ component: schema.components, version: schema.componentVersions })
@@ -668,7 +693,11 @@ export const fetchCollectionDetail = createServerFn({ method: "GET" })
       description: row.collection.description,
       price: price?.unitAmount ?? null,
       external: row.collection.externalUrl
-        ? { url: row.collection.externalUrl, domain: domainOf(row.collection.externalUrl) ?? "" }
+        ? {
+            url: row.collection.externalUrl,
+            domain: externalDomain ?? "",
+            verifiedAt: verifiedExternalDomain?.verifiedAt?.toISOString() ?? null,
+          }
         : null,
       license: price ? { name: licenseTemplate(price.licenseTemplate).name, text: resolveLicenseText(price.licenseTemplate, price.licenseText) } : null,
       owned,

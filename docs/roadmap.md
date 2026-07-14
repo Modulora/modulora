@@ -4,9 +4,10 @@
 
 ## Current scope decision
 
-Direct marketplace checkout is shelved for alpha. External commercial links on
-verified creator domains remain in scope, as do creator profit-share payouts
-for verified CLI installs. Any future first-party checkout must pass the later
+Direct marketplace checkout is shelved for alpha. External commercial links
+remain in scope, and domain verification is temporarily optional with explicit
+unverified-destination disclosure. Creator profit-share payouts for verified
+CLI installs remain in scope. Any future first-party checkout must pass the later
 commerce, licensing, support, tax, refund, dispute, and security gates in this
 roadmap before the feature flag can be enabled.
 
@@ -87,7 +88,7 @@ Do not optimize page views, raw copied commands, or unverified install pings as 
 - Browse/search component listings.
 - View creator profiles, screenshots, docs, compatibility, dependencies, license/source model, and evidence placeholders.
 - Open the canonical source for open components.
-- Follow verified creator purchase links for external commercial components.
+- Follow creator purchase links for external commercial components, with explicit destination-verification status.
 - Create a free creator profile and claim a namespace through GitHub App/domain verification.
 
 ### Technical scope

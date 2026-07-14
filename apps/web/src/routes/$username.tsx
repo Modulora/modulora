@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { PriceSeal } from "@/components/money";
+import { externalDomainDisclosure } from "@/lib/external-sales";
 import { CopyChip } from "@/components/owned";
 import { confirmCheckout } from "@/lib/marketplace";
 import { BuyCollectionDialog } from "@/components/collection-view";
@@ -329,10 +330,14 @@ function CollectionCard({ collection, namespace, components }: { collection: imp
       {collection.external ? (
         <a
           href={collection.external.url}
+          target="_blank"
           rel="noreferrer"
-          className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+          className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
         >
-          Sold by the creator on {collection.external.domain}
+          <span>
+            Sold by the creator on {collection.external.domain}.{" "}
+            {externalDomainDisclosure(collection.external.verifiedAt)}
+          </span>
           <ExternalLink className="size-3.5 shrink-0" />
         </a>
       ) : (collection.price == null || collection.owned) && collection.cliInstallable ? (

@@ -6,6 +6,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { requestOrigin } from "./request-origin";
+import { externalDomainAllowed } from "./external-sales";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq, isNotNull } from "drizzle-orm";
@@ -164,30 +165,30 @@ export async function publishCore(data: PublishInput, request: Request): Promise
 
     const isPaid = data.pricing === "paid";
     const purchaseUrl = String(data.purchaseUrl ?? "").trim();
+    let purchaseDomain: string | null = null;
+    let purchaseDomainVerified = false;
     if (isPaid && !isDraft) {
       if (!/^https?:\/\//i.test(purchaseUrl)) {
         return { ok: false, error: "Paid components need a purchase URL." };
       }
-      // The purchase URL must live on a domain this creator has verified —
-      // the docs promised this gate; enforce it for real.
-      const host = normalizeDomain(purchaseUrl);
-      const owned = host
-        ? await drizzle(neon(databaseUrl), { schema })
-            .select({ id: schema.verifiedDomains.id })
-            .from(schema.verifiedDomains)
-            .where(
-              and(
-                eq(schema.verifiedDomains.ownerUserId, user.id),
-                eq(schema.verifiedDomains.domain, host),
-                isNotNull(schema.verifiedDomains.verifiedAt),
-              ),
-            )
-            .limit(1)
-        : [];
-      if (owned.length === 0) {
+      purchaseDomain = normalizeDomain(purchaseUrl);
+      if (!purchaseDomain) return { ok: false, error: "Enter a valid purchase URL." };
+      const owned = await drizzle(neon(databaseUrl), { schema })
+        .select({ id: schema.verifiedDomains.id })
+        .from(schema.verifiedDomains)
+        .where(
+          and(
+            eq(schema.verifiedDomains.ownerUserId, user.id),
+            eq(schema.verifiedDomains.domain, purchaseDomain),
+            isNotNull(schema.verifiedDomains.verifiedAt),
+          ),
+        )
+        .limit(1);
+      purchaseDomainVerified = owned.length > 0;
+      if (!externalDomainAllowed(purchaseDomainVerified)) {
         return {
           ok: false,
-          error: `Purchase URL must be on a domain you've verified (${host ?? "invalid URL"}). Verify it in Settings first.`,
+          error: `Purchase URL must be on a domain you've verified (${purchaseDomain}). Verify it in Settings first.`,
         };
       }
     }
@@ -411,6 +412,16 @@ export async function publishCore(data: PublishInput, request: Request): Promise
         scope: "Paid source is fulfilled by the creator and is not available to Modulora.",
         limitations: "Modulora has not received, scanned, or reviewed this source.",
       });
+      if (purchaseDomainVerified && purchaseDomain) {
+        evidence.push({
+          componentVersionId: createdVersion!.id,
+          type: "domain-verified",
+          status: "passed",
+          issuer: "modulora-platform",
+          scope: `The publisher proved DNS control of ${purchaseDomain} before this release was submitted.`,
+          limitations: "Confirms control at submission time, not the safety, contents, availability, or terms of the linked purchase page.",
+        });
+      }
     }
 
     await db.insert(schema.evidenceRecords).values(evidence);
