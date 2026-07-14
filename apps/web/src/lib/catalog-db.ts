@@ -461,6 +461,8 @@ export interface PublicProfile {
   websiteUrl: string | null;
   githubUrl: string | null;
   xUrl: string | null;
+  /** Self-asserted sponsorship link — display-only, never a trust claim. */
+  sponsorUrl: string | null;
   githubUsername: string | null;
   xUsername: string | null;
   websiteVerified: boolean;
@@ -582,6 +584,7 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         websiteUrl: user.websiteUrl,
         githubUrl: user.githubUrl,
         xUrl: user.xUrl,
+        sponsorUrl: user.sponsorUrl,
         githubUsername: user.githubUsername,
         xUsername: user.xUsername,
         websiteVerified,

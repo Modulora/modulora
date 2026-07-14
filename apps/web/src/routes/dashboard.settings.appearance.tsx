@@ -58,6 +58,7 @@ function AppearancePage() {
       websiteUrl: user.websiteUrl ?? "",
       githubUrl: user.githubUrl ?? "",
       xUrl: user.xUrl ?? "",
+      sponsorUrl: user.sponsorUrl ?? "",
       colorVisionMode: mode,
     };
     const result = await updateProfile({ data: input });

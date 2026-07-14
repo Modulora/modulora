@@ -31,6 +31,7 @@ export interface ProfileInput {
   websiteUrl: string;
   githubUrl: string;
   xUrl: string;
+  sponsorUrl: string;
   colorVisionMode?: string;
 }
 
@@ -143,6 +144,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     websiteUrl: String(data.websiteUrl ?? "").trim(),
     githubUrl: String(data.githubUrl ?? "").trim(),
     xUrl: String(data.xUrl ?? "").trim(),
+    sponsorUrl: String(data.sponsorUrl ?? "").trim().slice(0, 300),
     colorVisionMode: String(data.colorVisionMode ?? "").trim(),
   }))
   .handler(async ({ data }): Promise<ProfileResult> => {
@@ -167,6 +169,15 @@ export const updateProfile = createServerFn({ method: "POST" })
     const githubUrl = normalizeHandleUrl(data.githubUrl, ["github.com"]);
     if (githubUrl === undefined) {
       return { ok: false, error: "Enter a GitHub username or profile URL.", field: "githubUrl" };
+    }
+    const sponsorUrl = normalizeUrl(data.sponsorUrl);
+    if (sponsorUrl !== null) {
+      try {
+        const parsed = new URL(sponsorUrl);
+        if (parsed.protocol !== "https:" || !parsed.hostname.includes(".")) throw new Error("invalid");
+      } catch {
+        return { ok: false, error: "Enter a full https sponsor link (e.g. github.com/sponsors/you).", field: "sponsorUrl" };
+      }
     }
 
     const db = drizzle(neon(databaseUrl), { schema });
@@ -208,6 +219,7 @@ export const updateProfile = createServerFn({ method: "POST" })
         websiteUrl: normalizeUrl(data.websiteUrl),
         githubUrl,
         xUrl,
+        sponsorUrl,
         colorVisionMode: isColorVisionMode(data.colorVisionMode) ? data.colorVisionMode : undefined,
         updatedAt: new Date(),
       })

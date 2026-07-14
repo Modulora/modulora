@@ -51,6 +51,7 @@ function Settings() {
     imageUrl: user.image ?? "",
     bio: user.bio ?? "",
     websiteUrl: user.websiteUrl ?? "",
+    sponsorUrl: user.sponsorUrl ?? "",
     githubUrl: user.githubUrl ?? "",
     xUrl: user.xUrl ?? "",
   });
@@ -192,6 +193,13 @@ function Settings() {
           <Field id="websiteUrl" label="Website" value={form.websiteUrl} onChange={(v) => set("websiteUrl", v)} placeholder="you.dev" />
           <Field id="githubUrl" label="GitHub" value={form.githubUrl} onChange={(v) => set("githubUrl", v)} placeholder="@you or github.com/you" />
           <Field id="xUrl" label="X" value={form.xUrl} onChange={(v) => set("xUrl", v)} placeholder="@you or x.com/you" />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Field id="sponsorUrl" label="Sponsor link" value={form.sponsorUrl} onChange={(v) => set("sponsorUrl", v)} placeholder="github.com/sponsors/you" />
+          <p className="text-xs text-muted-foreground">
+            Shown on your public profile as a plainly labeled sponsor link — GitHub Sponsors, Ko-fi, Open Collective, or your own page. Self-asserted; it never implies verification.
+          </p>
         </div>
 
         <div className="flex items-center justify-between gap-3">

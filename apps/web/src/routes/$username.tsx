@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { HiSquaresPlus as Blocks, HiCalendarDays as CalendarDays, HiArrowTopRightOnSquare as ExternalLink, HiGlobeAlt as Globe, HiArrowPath as Loader2, HiSparkles as Sparkles, HiCommandLine as TerminalSquare } from "react-icons/hi2";
+import { HiSquaresPlus as Blocks, HiCalendarDays as CalendarDays, HiArrowTopRightOnSquare as ExternalLink, HiGlobeAlt as Globe, HiHeart as Heart, HiArrowPath as Loader2, HiSparkles as Sparkles, HiCommandLine as TerminalSquare } from "react-icons/hi2";
 
 
 import { HiCheckBadge } from "react-icons/hi2";
@@ -172,6 +172,16 @@ function Profile() {
               />
             ) : profile.xUrl ? (
               <SocialLink href={profile.xUrl} icon={<XIcon className="size-3" />} label={xHandleOf(profile.xUrl)} />
+            ) : null}
+            {profile.sponsorUrl ? (
+              <a
+                href={profile.sponsorUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-border/60 px-2.5 font-medium text-foreground/80 hover:border-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:min-h-7"
+              >
+                <Heart className="size-3.5" /> Sponsor · {hostOf(profile.sponsorUrl) ?? "link"}
+              </a>
             ) : null}
           </div>
           </TooltipProvider>

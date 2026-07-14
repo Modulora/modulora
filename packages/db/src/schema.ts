@@ -42,6 +42,9 @@ export const users = pgTable("user", {
   websiteUrl: text("website_url"),
   githubUrl: text("github_url"),
   xUrl: text("x_url"),
+  // Self-asserted sponsorship/funding link (GitHub Sponsors, Ko-fi, …).
+  // Display-only: never implies verification, endorsement, or trust.
+  sponsorUrl: text("sponsor_url"),
   // GitHub login proven via OAuth sign-in (verified identity). Null = not
   // connected; a hand-typed github_url that differs is treated as unverified.
   githubUsername: text("github_username"),

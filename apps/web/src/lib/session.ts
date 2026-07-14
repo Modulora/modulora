@@ -24,6 +24,7 @@ export interface CurrentUser {
   websiteUrl: string | null;
   githubUrl: string | null;
   xUrl: string | null;
+  sponsorUrl: string | null;
   githubUsername: string | null;
   xUsername: string | null;
   stripeAccountId: string | null;
@@ -71,6 +72,7 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
     websiteUrl: row.websiteUrl,
     githubUrl: row.githubUrl,
     xUrl: row.xUrl,
+    sponsorUrl: row.sponsorUrl,
     githubUsername: row.githubUsername,
     xUsername: row.xUsername,
     stripeAccountId: row.stripeAccountId,
