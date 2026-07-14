@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "vite dev",
     "docs:generate": "fumadocs-mdx source.config.ts",
+    "docs:credits:check": "node scripts/check-open-source-credits.mjs",
+    "prebuild": "pnpm docs:credits:check",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
