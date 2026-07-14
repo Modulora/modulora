@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { alphaGateActive, isAllowedEmail } from "./access";
 import { getAuth } from "./auth";
+import { hasAcceptedInvitation } from "./invitation-core";
 
 export interface CurrentUser {
   id: string;
@@ -40,10 +41,18 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) return null;
 
-  // Alpha gate: non-allowlisted accounts are signed out everywhere (#29).
-  if (session.user.email && !isAllowedEmail(session.user.email)) return null;
-
   const db = drizzle(neon(databaseUrl), { schema });
+  // Alpha gate: allow either the legacy operations allowlist or a redeemed,
+  // non-revoked invitation. Fail closed if invitation lookup fails.
+  if (alphaGateActive() && session.user.email && !isAllowedEmail(session.user.email)) {
+    try {
+      if (!(await hasAcceptedInvitation(db, session.user.id))) return null;
+    } catch (error) {
+      console.error("alpha invitation access check failed", error);
+      return null;
+    }
+  }
+
   const [row] = await db
     .select()
     .from(schema.users)

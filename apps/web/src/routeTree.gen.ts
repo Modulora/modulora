@@ -14,6 +14,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SandboxTestRouteImport } from './routes/sandbox-test'
 import { Route as ReviewRouteImport } from './routes/review'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PublishingPolicyRouteImport } from './routes/publishing-policy'
 import { Route as ProfitShareRouteImport } from './routes/profit-share'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -25,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ComponentsIndexRouteImport } from './routes/components.index'
 import { Route as RSplatRouteImport } from './routes/r.$'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ISplatRouteImport } from './routes/i.$'
 import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
 import { Route as DocsSplatRouteImport } from './routes/docs.$'
@@ -54,6 +56,7 @@ import { Route as DashboardReviewIdRouteImport } from './routes/dashboard.review
 import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as ApiInvitationsPrepareRouteImport } from './routes/api/invitations/prepare'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const TermsRoute = TermsRouteImport.update({
@@ -79,6 +82,11 @@ const SandboxTestRoute = SandboxTestRouteImport.update({
 const ReviewRoute = ReviewRouteImport.update({
   id: '/review',
   path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublishingPolicyRoute = PublishingPolicyRouteImport.update({
@@ -134,6 +142,11 @@ const ComponentsIndexRoute = ComponentsIndexRouteImport.update({
 const RSplatRoute = RSplatRouteImport.update({
   id: '/r/$',
   path: '/r/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ISplatRoute = ISplatRouteImport.update({
@@ -283,6 +296,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInvitationsPrepareRoute = ApiInvitationsPrepareRouteImport.update({
+  id: '/api/invitations/prepare',
+  path: '/api/invitations/prepare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -298,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
@@ -322,10 +341,12 @@ export interface FileRoutesByFullPath {
   '/docs/$': typeof DocsSplatRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/i/$': typeof ISplatRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/r/$': typeof RSplatRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/invitations/prepare': typeof ApiInvitationsPrepareRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -345,6 +366,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
@@ -368,10 +390,12 @@ export interface FileRoutesByTo {
   '/docs/$': typeof DocsSplatRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/i/$': typeof ISplatRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/r/$': typeof RSplatRoute
   '/components': typeof ComponentsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/invitations/prepare': typeof ApiInvitationsPrepareRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -393,6 +417,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profit-share': typeof ProfitShareRoute
   '/publishing-policy': typeof PublishingPolicyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/sandbox-test': typeof SandboxTestRoute
   '/settings': typeof SettingsRoute
@@ -417,10 +442,12 @@ export interface FileRoutesById {
   '/docs/$': typeof DocsSplatRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/i/$': typeof ISplatRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/r/$': typeof RSplatRoute
   '/components/': typeof ComponentsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/invitations/prepare': typeof ApiInvitationsPrepareRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
@@ -443,6 +470,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
+    | '/reset-password'
     | '/review'
     | '/sandbox-test'
     | '/settings'
@@ -467,10 +495,12 @@ export interface FileRouteTypes {
     | '/docs/$'
     | '/docs/changelog'
     | '/i/$'
+    | '/invite/$token'
     | '/r/$'
     | '/components/'
     | '/dashboard/'
     | '/api/auth/$'
+    | '/api/invitations/prepare'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -490,6 +520,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
+    | '/reset-password'
     | '/review'
     | '/sandbox-test'
     | '/settings'
@@ -513,10 +544,12 @@ export interface FileRouteTypes {
     | '/docs/$'
     | '/docs/changelog'
     | '/i/$'
+    | '/invite/$token'
     | '/r/$'
     | '/components'
     | '/dashboard'
     | '/api/auth/$'
+    | '/api/invitations/prepare'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -537,6 +570,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profit-share'
     | '/publishing-policy'
+    | '/reset-password'
     | '/review'
     | '/sandbox-test'
     | '/settings'
@@ -561,10 +595,12 @@ export interface FileRouteTypes {
     | '/docs/$'
     | '/docs/changelog'
     | '/i/$'
+    | '/invite/$token'
     | '/r/$'
     | '/components/'
     | '/dashboard/'
     | '/api/auth/$'
+    | '/api/invitations/prepare'
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
@@ -586,6 +622,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfitShareRoute: typeof ProfitShareRoute
   PublishingPolicyRoute: typeof PublishingPolicyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRoute
   SandboxTestRoute: typeof SandboxTestRoute
   SettingsRoute: typeof SettingsRoute
@@ -598,9 +635,11 @@ export interface RootRouteChildren {
   DocsSplatRoute: typeof DocsSplatRoute
   DocsChangelogRoute: typeof DocsChangelogRoute
   ISplatRoute: typeof ISplatRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   RSplatRoute: typeof RSplatRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiInvitationsPrepareRoute: typeof ApiInvitationsPrepareRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ComponentsNamespaceNameRoute: typeof ComponentsNamespaceNameRoute
   PreviewNamespaceNameRoute: typeof PreviewNamespaceNameRoute
@@ -641,6 +680,13 @@ declare module '@tanstack/react-router' {
       path: '/review'
       fullPath: '/review'
       preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/publishing-policy': {
@@ -718,6 +764,13 @@ declare module '@tanstack/react-router' {
       path: '/r/$'
       fullPath: '/r/$'
       preLoaderRoute: typeof RSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/i/$': {
@@ -923,6 +976,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/invitations/prepare': {
+      id: '/api/invitations/prepare'
+      path: '/api/invitations/prepare'
+      fullPath: '/api/invitations/prepare'
+      preLoaderRoute: typeof ApiInvitationsPrepareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -1001,6 +1061,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfitShareRoute: ProfitShareRoute,
   PublishingPolicyRoute: PublishingPolicyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRoute,
   SandboxTestRoute: SandboxTestRoute,
   SettingsRoute: SettingsRoute,
@@ -1013,9 +1074,11 @@ const rootRouteChildren: RootRouteChildren = {
   DocsSplatRoute: DocsSplatRoute,
   DocsChangelogRoute: DocsChangelogRoute,
   ISplatRoute: ISplatRoute,
+  InviteTokenRoute: InviteTokenRoute,
   RSplatRoute: RSplatRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiInvitationsPrepareRoute: ApiInvitationsPrepareRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ComponentsNamespaceNameRoute: ComponentsNamespaceNameRoute,
   PreviewNamespaceNameRoute: PreviewNamespaceNameRoute,

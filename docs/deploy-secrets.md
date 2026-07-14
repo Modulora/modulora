@@ -77,12 +77,16 @@ npx wrangler r2 bucket create modulora-media
 
 ## Alpha access gate
 
-`ALPHA_ALLOWLIST` — comma-separated emails. When set, the entire product
-requires a signed-in allowlisted account: every app route redirects to
-/signin except the landing page, sign-in, and legal pages, and the public
-APIs (/r/ registry, /api/search, install receipts) return 401 without an
-authenticated session or CLI bearer token. Non-allowlisted accounts resolve
-as signed out everywhere. Set it in production until the alpha opens. See #29.
+`ALPHA_ALLOWLIST` — comma-separated bootstrap operator emails. When set, the
+product requires either an allowlisted account or an accepted, non-revoked
+alpha invitation. Invitation and password-reset pages remain public so a
+waitlist member can finish setup; other gated routes redirect to `/signin`,
+and gated APIs return 401 without an eligible authenticated session or CLI
+bearer token. Keep the owner account allowlisted until the alpha opens.
+
+Production `BETTER_AUTH_URL` must be exactly `https://modulora.dev`; otherwise
+GitHub generates a localhost OAuth callback. The GitHub OAuth App callback is
+`https://modulora.dev/api/auth/callback/github`.
 
 ## Platform owner
 

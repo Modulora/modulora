@@ -115,6 +115,15 @@ function Profile() {
                 <Sparkles className="size-2.5" /> Plus
               </span>
             ) : null}
+            {profile.badges.includes("early-adopter") ? (
+              <Badge
+                variant="outline"
+                className="border-ticket/30 bg-ticket/10 text-[10px] uppercase tracking-wide text-ticket"
+                title="Joined during the Modulora alpha"
+              >
+                Early adopter
+              </Badge>
+            ) : null}
           </span>
           <p className="text-sm text-muted-foreground">@{profile.username}</p>
           {profile.bio ? <p className="mt-3 max-w-2xl text-sm leading-relaxed">{profile.bio}</p> : null}

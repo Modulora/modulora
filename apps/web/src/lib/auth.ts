@@ -10,6 +10,7 @@
  * username as their namespace (see claimNamespaceForUser).
  */
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins/bearer";
 import { deviceAuthorization } from "better-auth/plugins/device-authorization";
@@ -17,6 +18,15 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
+import { alphaGateActive, isAllowedEmail } from "./access";
+import {
+  activeInvitationFor,
+  clearInvitationCookie,
+  consumeInvitation,
+  invitationAcceptedBy,
+  invitationTokenFromRequest,
+  userCreationRequiresInvitation,
+} from "./invitation-core";
 
 type Db = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -182,8 +192,33 @@ function buildAuth(databaseUrl: string, secret: string) {
   return betterAuth({
     secret,
     baseURL: process.env.BETTER_AUTH_URL,
+    trustedOrigins: [
+      "https://modulora.dev",
+      "https://www.modulora.dev",
+      "http://localhost:5173",
+      process.env.BETTER_AUTH_URL,
+    ].filter((origin): origin is string => Boolean(origin)),
     database: drizzleAdapter(db, { provider: "pg", schema: authSchema }),
-    emailAndPassword: { enabled: true },
+    emailAndPassword: {
+      enabled: true,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) => {
+        const { emailPasswordReset } = await import("./email");
+        await emailPasswordReset(user.email, url);
+      },
+      onPasswordReset: async ({ user }, request) => {
+        const token = invitationTokenFromRequest(request);
+        if (token) {
+          const consumed = await consumeInvitation(db, user.email, user.id, token);
+          const accepted = consumed || await invitationAcceptedBy(db, user.id, token);
+          if (!accepted) {
+            throw new APIError("CONFLICT", {
+              message: "Your password was updated, but alpha access could not claim the reserved username. Contact Modulora support.",
+            });
+          }
+        }
+      },
+    },
     socialProviders: {
       ...(githubClientId && githubClientSecret
         ? { github: { clientId: githubClientId, clientSecret: githubClientSecret } }
@@ -192,17 +227,81 @@ function buildAuth(databaseUrl: string, secret: string) {
         ? { twitter: { clientId: xClientId, clientSecret: xClientSecret } }
         : {}),
     },
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["github"],
+        allowDifferentEmails: false,
+      },
+    },
+    hooks: {
+      after: createAuthMiddleware(async (ctx) => {
+        const session = ctx.context.newSession;
+        const token = invitationTokenFromRequest(ctx.request);
+        if (session?.user && token) {
+          const consumed = await consumeInvitation(db, session.user.email, session.user.id, token);
+          const accepted = consumed || await invitationAcceptedBy(db, session.user.id, token);
+          if (accepted) {
+            const secure = ctx.request ? new URL(ctx.request.url).protocol === "https:" : process.env.NODE_ENV === "production";
+            const cookie = clearInvitationCookie(secure);
+            if (ctx.context.responseHeaders) ctx.context.responseHeaders.append("set-cookie", cookie);
+            else ctx.context.responseHeaders = new Headers({ "set-cookie": cookie });
+          }
+        }
+      }),
+    },
     databaseHooks: {
       user: {
         create: {
-          after: async (user) => {
+          before: async (user, ctx) => {
+            if (!userCreationRequiresInvitation(alphaGateActive(), isAllowedEmail(user.email))) return { data: user };
+            const token = invitationTokenFromRequest(ctx?.request);
+            if (!token || !(await activeInvitationFor(db, user.email, token))) {
+              throw new APIError("FORBIDDEN", {
+                message: "A valid alpha invitation is required to create an account.",
+              });
+            }
+            return { data: { ...user, email: user.email.toLowerCase() } };
+          },
+          after: async (user, ctx) => {
+            const token = invitationTokenFromRequest(ctx?.request);
+            // Wait until Better Auth has created the credential/social account
+            // before consuming the invitation. The account hook below cleans
+            // up failed redemptions instead of stranding the email.
+            if (token) return;
             await claimNamespaceForUser(db, user);
           },
         },
       },
       account: {
         create: {
-          after: async (account) => {
+          after: async (account, ctx) => {
+            const token = invitationTokenFromRequest(ctx?.request);
+            if (token) {
+              const [user] = await db
+                .select({ id: schema.users.id, email: schema.users.email })
+                .from(schema.users)
+                .where(eq(schema.users.id, account.userId))
+                .limit(1);
+              if (user) {
+                const consumed = await consumeInvitation(db, user.email, user.id, token);
+                const accepted = consumed || await invitationAcceptedBy(db, user.id, token);
+                if (!accepted) {
+                  await db.delete(schema.accounts).where(eq(schema.accounts.id, account.id));
+                  const [otherAccount] = await db
+                    .select({ id: schema.accounts.id })
+                    .from(schema.accounts)
+                    .where(eq(schema.accounts.userId, user.id))
+                    .limit(1);
+                  if (!otherAccount && !isAllowedEmail(user.email)) {
+                    await db.delete(schema.users).where(eq(schema.users.id, user.id));
+                  }
+                  throw new APIError("CONFLICT", {
+                    message: "The invitation could not claim its reserved username. No account was created.",
+                  });
+                }
+              }
+            }
             await captureGithubIdentity(db, account);
             await captureXIdentity(db, account);
           },
