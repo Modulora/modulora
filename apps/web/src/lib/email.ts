@@ -25,9 +25,12 @@ const TEMPLATE_ALIAS = process.env.RESEND_TRANSACTIONAL_TEMPLATE ?? "transaction
 
 export async function sendEmail(input: EmailInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    // Dev without a key: log instead of silently dropping, so flows are testable.
-    console.log(`[email] would send: "${input.subject}" → ${input.to}`);
+  // Never send real email from a non-HTTPS (local dev) origin — dev shares the
+  // production database, and a localhost BETTER_AUTH_URL would otherwise mail
+  // real recipients links that point at localhost.
+  if (!apiKey || !ORIGIN.startsWith("https://")) {
+    // Log instead of silently dropping, so flows stay testable in dev.
+    console.log(`[email] would send: "${input.subject}" → ${input.to}${input.cta ? ` (${input.cta.url})` : ""}`);
     return;
   }
   // Transactional sender — distinct from the waitlist's RESEND_FROM.
