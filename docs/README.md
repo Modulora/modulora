@@ -19,7 +19,8 @@ transaction fee.
 4. [`security.md`](./security.md) — threat model, account/publisher/artifact/CLI/sandbox controls, and release gates.
 5. [`github-organization.md`](./github-organization.md) — public/private repositories, access, rulesets, CODEOWNERS, Actions, and transfer plan.
 6. [`roadmap.md`](./roadmap.md) — gated phases, metrics, staffing, first backlog, and deferred scope.
-7. [`research-and-decisions.md`](./research-and-decisions.md) — historical research and earlier iterations; not the current source of truth.
+7. [`payout-human-verification.md`](./payout-human-verification.md) — human test-mode acceptance and live-money stop conditions for Stripe Connect and profit-share transfers.
+8. [`research-and-decisions.md`](./research-and-decisions.md) — historical research and earlier iterations; not the current source of truth.
 
 ## Sources of truth
 
