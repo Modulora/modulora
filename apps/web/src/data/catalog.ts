@@ -87,6 +87,14 @@ export interface CatalogItem {
   creatorShadcnCommand?: string;
   // Whether the current viewer may install (owner or paid purchase).
   entitled?: boolean;
+  /** Active moderation state, rendered publicly in scoped language when set. */
+  moderationState?: "restricted" | "removed" | null;
+  /** Latest similarity screen for this release (curator review surface). */
+  similarityScreen?: {
+    state: "clear" | "potential" | "blocked" | "authorized-derivative";
+    candidates: { ref: string; confidence: string | null; files: { path: string; candidatePath: string; score: number }[] }[];
+    corpusLimitation: string;
+  } | null;
 }
 
 export const catalog: CatalogItem[] = [

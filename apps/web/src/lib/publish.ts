@@ -17,6 +17,7 @@ import { isCategoryId, isComponentTypeId } from "./taxonomy";
 import { verifyShadcnParity } from "./parity";
 import { scanFilesForSecrets, SECRET_SCAN_TOOL } from "./secret-scan";
 import { fireReviewWebhook } from "./review";
+import { runSimilarityGate } from "./similarity-gate";
 import { POLICY_VERSION } from "./publishing-policy";
 import { roleFor } from "./scaffold";
 import { stripSrc } from "./registry";
@@ -54,13 +55,24 @@ export interface PublishInput {
   draft?: boolean;
 }
 
+export interface SimilarityHoldSummary {
+  screenId: string | null;
+  candidates: {
+    ref: string;
+    confidence: string | null;
+    files: { path: string; candidatePath: string; score: number }[];
+  }[];
+}
+
 export interface PublishResult {
   ok: boolean;
   error?: string;
   namespace?: string;
   name?: string;
   version?: string;
-  status?: "pending";
+  status?: "pending" | "similarity-hold";
+  /** Present when the submission is held for curator similarity resolution. */
+  similarity?: SimilarityHoldSummary;
 }
 
 /** Next patch version, or 0.1.0 for a brand-new component. */
@@ -280,9 +292,10 @@ export async function publishCore(data: PublishInput, request: Request): Promise
           originalUrl: originalUrl || null,
           inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
-          // Any new submission re-enters curation before it is public again;
-          // drafts stay out of the queue until the creator submits.
-          reviewStatus: isDraft ? "draft" : "pending",
+          // Any new submission re-enters curation before it is public again.
+          // Everything starts as a draft; the submission is promoted to
+          // pending only AFTER similarity screening succeeds (fail closed).
+          reviewStatus: "draft",
           reviewReason: null,
           reviewedBy: null,
           reviewedAt: null,
@@ -309,7 +322,7 @@ export async function publishCore(data: PublishInput, request: Request): Promise
           originalUrl: originalUrl || null,
           inspiredBy,
           purchaseUrl: isPaid ? purchaseUrl : null,
-          reviewStatus: isDraft ? "draft" : "pending",
+          reviewStatus: "draft",
         })
         .returning({ id: schema.components.id });
       componentId = created!.id;
@@ -438,8 +451,46 @@ export async function publishCore(data: PublishInput, request: Request): Promise
         .where(eq(schema.componentVersions.id, createdVersion!.id));
     }
 
+    // Pre-publication similarity screening (#67). The component is still a
+    // draft here — it is promoted to pending only after a clean or potential
+    // screen, so any failure (including thrown persistence errors) fails
+    // closed and never lets a submission skip screening into review.
+    let similarityHold: { screenId: string | null; candidates: { ref: string; confidence: string | null; files: { path: string; candidatePath: string; score: number }[] }[] } | null = null;
+    if (!isDraft) {
+      if (!isPaid && installFiles.length > 0) {
+        let gate: Awaited<ReturnType<typeof runSimilarityGate>>;
+        try {
+          gate = await runSimilarityGate(db, {
+            componentId,
+            componentVersionId: createdVersion!.id,
+            ownerUserId: user.id,
+            files: installFiles.map((file) => ({ path: file.path, content: file.content })),
+          });
+        } catch (error) {
+          console.error("similarity gate threw", error);
+          gate = { status: "error", screenId: null, candidates: [] };
+        }
+        if (gate.status === "error") {
+          return {
+            ok: false,
+            error: "Similarity screening could not complete, so the submission was saved as a draft instead of entering review. Try submitting again.",
+          };
+        }
+        if (gate.status === "blocked") {
+          similarityHold = { screenId: gate.screenId, candidates: gate.candidates };
+        }
+      }
+      if (!similarityHold) {
+        await db
+          .update(schema.components)
+          .set({ reviewStatus: "pending", submittedAt: new Date(), updatedAt: new Date() })
+          .where(eq(schema.components.id, componentId));
+      }
+    }
+
     // Announce the submission to the curation channel. The component stays
-    // pending and hidden from browse until a curator approves it.
+    // pending and hidden from browse until a curator approves it. Similarity
+    // holds are announced too — curators resolve them from the queue.
     const origin = requestOrigin(request);
     await fireReviewWebhook({
       componentId,
@@ -459,11 +510,21 @@ export async function publishCore(data: PublishInput, request: Request): Promise
 
     // Awaited: dangling promises are cancelled in the Workers runtime, so
     // fire-and-forget emails silently vanish. sendEmail never throws.
-    if (!isDraft) {
+    if (!isDraft && !similarityHold) {
       const { emailSubmissionReceived } = await import("./email");
       await emailSubmissionReceived(user.email, title, `@${user.username}/${name}`);
     }
 
+    if (similarityHold) {
+      return {
+        ok: true,
+        namespace: user.username,
+        name,
+        version,
+        status: "similarity-hold" as const,
+        similarity: similarityHold,
+      };
+    }
     return { ok: true, namespace: user.username, name, version, status: "pending" as const };
   }
 }

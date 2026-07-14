@@ -19,6 +19,7 @@ import { getCurrentUser } from "@/lib/session";
 import { isOwnerUser } from "@/lib/access";
 import { createPayoutRun, listPayoutRuns, type PayoutRunSummary } from "@/lib/distribution";
 import { listMembers, setCuratorRole, type Member } from "@/lib/roles";
+import { actOnModerationCase, listModerationCases, type ModerationAction, type ModerationCaseSummary } from "@/lib/moderation";
 import {
   inviteAlphaUser,
   listAlphaWaitlistCandidates,
@@ -37,6 +38,7 @@ const fetchAdmin = createServerFn({ method: "GET" })
     runs: await listPayoutRuns(),
     members: await listMembers(),
     invitations: await listAlphaWaitlistCandidates({ data: { page: data.invitationPage, pageSize: 10 } }),
+    cases: await listModerationCases(),
   };
 });
 
@@ -54,7 +56,7 @@ export const Route = createFileRoute("/dashboard/admin")({
 });
 
 function AdminPage() {
-  const { runs, members, invitations } = Route.useLoaderData();
+  const { runs, members, invitations, cases } = Route.useLoaderData();
   return (
     <div className="w-full max-w-3xl">
       <DashboardPageHeader
@@ -66,6 +68,7 @@ function AdminPage() {
       <InvitationsSection invitations={invitations} />
       <DistributionsSection runs={runs} />
       <RolesSection members={members} />
+      <ModerationSection cases={cases} />
     </div>
   );
 }
@@ -254,6 +257,108 @@ function RolesSection({ members }: { members: Member[] }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+const MODERATION_ACTIONS: { id: ModerationAction; label: string; destructive?: boolean }[] = [
+  { id: "noted", label: "Add note" },
+  { id: "restricted", label: "Restrict listing" },
+  { id: "takedown", label: "Take down", destructive: true },
+  { id: "corrected", label: "Attribution corrected" },
+  { id: "revoked", label: "Revoke release", destructive: true },
+  { id: "appealed", label: "Record appeal" },
+  { id: "reopened", label: "Reopen" },
+  { id: "closed", label: "Close" },
+];
+
+function ModerationSection({ cases }: { cases: ModerationCaseSummary[] }) {
+  const router = useRouter();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function act(caseId: string, action: ModerationAction) {
+    setError("");
+    if (!note.trim()) {
+      setError("A note is required — it becomes the case record.");
+      return;
+    }
+    setBusy(true);
+    const res = await actOnModerationCase({ data: { caseId, action, note: note.trim() } });
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error ?? "Action failed.");
+      return;
+    }
+    setNote("");
+    setOpenId(null);
+    await router.invalidate();
+  }
+
+  return (
+    <div className="mt-12">
+      <h2 className="text-sm font-semibold">Moderation cases</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Account-optional reports become durable cases. Reporter contact stays private, every action appends an
+        immutable event, and restriction/takedown/revocation apply scoped listing effects — never silent deletions.
+      </p>
+      {cases.length === 0 ? (
+        <p className="mt-4 rounded-lg border border-dashed border-border/60 p-4 text-xs text-muted-foreground">No cases.</p>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-2">
+          {cases.map((moderationCase) => (
+            <li key={moderationCase.id} className="rounded-lg border border-border/60 px-4 py-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {moderationCase.componentRef}
+                    <span className="ml-2 rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{moderationCase.status}</span>
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {moderationCase.reason} · {moderationCase.reporter} · {new Date(moderationCase.createdAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
+                  </p>
+                  {moderationCase.details ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{moderationCase.details}</p> : null}
+                </div>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => setOpenId(openId === moderationCase.id ? null : moderationCase.id)}>
+                  {openId === moderationCase.id ? "Hide" : "Handle"}
+                </Button>
+              </div>
+              {openId === moderationCase.id ? (
+                <div className="mt-3 space-y-2 border-t border-border/40 pt-3">
+                  {moderationCase.events.length > 0 ? (
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      {moderationCase.events.map((event, index) => (
+                        <li key={index}>
+                          {new Date(event.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })} — {event.action}
+                          {event.note ? `: ${event.note}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <textarea
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    rows={2}
+                    aria-label="Case note"
+                    placeholder="Note for the case record (required)"
+                    className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {MODERATION_ACTIONS.map((action) => (
+                      <Button key={action.id} size="sm" variant={action.destructive ? "destructive" : "outline"} disabled={busy} onClick={() => act(moderationCase.id, action.id)}>
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {error ? <p className="text-xs text-destructive" role="alert">{error}</p> : null}
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

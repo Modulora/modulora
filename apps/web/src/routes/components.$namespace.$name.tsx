@@ -81,6 +81,7 @@ const EVIDENCE_LABELS: Record<string, string> = {
   "domain-verified": "Domain verified",
   "secret-scan": "Secret scan",
   "source-not-assessed": "Source not assessed",
+  "similarity-screen": "Similarity screening",
   "dependency-scan": "Dependency scan",
   "license-scan": "License scan",
   "static-analysis": "Static analysis",
@@ -165,6 +166,13 @@ function ComponentDetailInner({ item, files, viewerTheme, viewerPlus }: { item: 
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
+        {item.moderationState ? (
+          <div role="status" className="rounded-lg border border-ticket/40 bg-ticket/10 p-4 text-sm">
+            {item.moderationState === "removed"
+              ? "This listing was removed following a moderation decision. Installs are disabled and it no longer appears in browse. Removal reflects a listing decision on a specific report, not a legal or factual finding."
+              : "This listing is temporarily restricted while a moderation report is reviewed. It doesn't appear in browse and installs are paused. A restriction is not a finding against the creator."}
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>
             by <Link to="/$username" params={{ username: item.namespace }} className="rounded-sm text-foreground/80 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">{item.namespace}</Link>

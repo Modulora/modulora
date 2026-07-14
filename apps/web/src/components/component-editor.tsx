@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CATEGORIES, COMPONENT_TYPES } from "@/lib/taxonomy";
-import { publishComponent, type PublishFile } from "@/lib/publish";
+import { publishComponent, type PublishFile, type SimilarityHoldSummary } from "@/lib/publish";
+import { classifySimilarityMatches } from "@/lib/similarity";
+import { MATCH_CLASSIFICATIONS, type MatchClassification } from "@/lib/similarity-core";
 import { setComponentPrice } from "@/lib/marketplace";
 import { listDomains } from "@/lib/domains";
 import { getPayoutStatus } from "@/lib/payouts";
@@ -146,6 +148,7 @@ export function ComponentEditor({
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [published, setPublished] = useState<{ namespace: string; name: string } | null>(null);
+  const [hold, setHold] = useState<SimilarityHoldSummary | null>(null);
   const seq = useRef(0);
 
   useEffect(() => {
@@ -315,7 +318,15 @@ export function ComponentEditor({
         return;
       }
     }
+    if (result.status === "similarity-hold" && result.similarity) {
+      setHold(result.similarity);
+      return;
+    }
     setPublished({ namespace: result.namespace!, name: result.name! });
+  }
+
+  if (hold) {
+    return <SimilarityHoldCard hold={hold} onDone={() => navigate({ to: "/dashboard/components" })} />;
   }
 
   if (published) {
@@ -1082,6 +1093,98 @@ function Segment({ active, onClick, children }: { active: boolean; onClick: () =
     >
       {children}
     </button>
+  );
+}
+
+function SimilarityHoldCard({ hold, onDone }: { hold: SimilarityHoldSummary; onDone: () => void }) {
+  const [entries, setEntries] = useState<Record<string, { classification: MatchClassification; url: string }>>({});
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    if (!hold.screenId) return onDone();
+    setBusy(true);
+    setError(null);
+    const res = await classifySimilarityMatches({
+      data: {
+        screenId: hold.screenId,
+        entries: hold.candidates.map((candidate) => ({
+          ref: candidate.ref,
+          classification: entries[candidate.ref]?.classification ?? "false-positive",
+          url: entries[candidate.ref]?.url ?? "",
+          note: "",
+        })),
+      },
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error ?? "Could not save your classification.");
+      return;
+    }
+    setSent(true);
+  }
+
+  return (
+    <div className="mx-auto flex max-w-xl flex-col gap-5 py-16">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Held for a similarity check</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Your submission closely matches published work by another creator, so it's saved as a draft while a curator
+          takes a look. This is a neutral signal from comparing against Modulora's own published releases — it is not
+          an accusation, and classifying the matches below helps the curator resolve it quickly.
+        </p>
+      </div>
+      {sent ? (
+        <p className="rounded-lg border border-border/60 bg-card/40 p-4 text-center text-sm" role="status">
+          Classification sent — a curator will resolve the hold and your submission enters review automatically if cleared.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {hold.candidates.map((candidate) => (
+            <div key={candidate.ref} className="rounded-lg border border-border/60 bg-card/40 p-4">
+              <p className="text-sm font-medium">{candidate.ref}{candidate.confidence ? <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">{candidate.confidence} match</span> : null}</p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">
+                {candidate.files.map((file) => `${file.path} ↔ ${file.candidatePath}`).join(", ")}
+              </p>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <select
+                  aria-label={`Relationship to ${candidate.ref}`}
+                  value={entries[candidate.ref]?.classification ?? ""}
+                  onChange={(event) => setEntries((current) => ({ ...current, [candidate.ref]: { classification: event.target.value as MatchClassification, url: current[candidate.ref]?.url ?? "" } }))}
+                  className="min-h-10 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                  <option value="" disabled>How does this relate to your work?</option>
+                  {MATCH_CLASSIFICATIONS.map((option) => (
+                    <option key={option.id} value={option.id}>{option.label}</option>
+                  ))}
+                </select>
+                <Input
+                  aria-label={`Supporting URL for ${candidate.ref}`}
+                  placeholder="Supporting URL (original source, license, permission)"
+                  value={entries[candidate.ref]?.url ?? ""}
+                  onChange={(event) => setEntries((current) => ({ ...current, [candidate.ref]: { classification: current[candidate.ref]?.classification ?? "false-positive", url: event.target.value } }))}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          ))}
+          {error ? <p className="text-xs text-destructive" role="alert">{error}</p> : null}
+        </div>
+      )}
+      <div className="flex justify-center gap-2">
+        {sent ? (
+          <Button type="button" onClick={onDone}>View my components</Button>
+        ) : (
+          <>
+            <Button type="button" disabled={busy || hold.candidates.some((candidate) => !entries[candidate.ref]?.classification)} onClick={submit}>
+              Send classification
+            </Button>
+            <Button type="button" variant="ghost" onClick={onDone}>Skip for now</Button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 

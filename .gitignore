@@ -11,3 +11,6 @@ dist/
 
 *storybook.log
 storybook-static
+
+# Local subagent artifacts
+.pi-subagents/

@@ -1,10 +1,15 @@
 /**
- * Report a component (e.g. stolen source, license abuse). Sends a Discord
- * webhook with a contact email and the reported component. An account is
- * optional so creators can report impersonation or attribution problems.
+ * Report a component (e.g. stolen source, license abuse). Persists a durable
+ * moderation case (#67) and notifies the review channel. An account is
+ * optional so creators can report impersonation or attribution problems;
+ * reporter contact stays private and is never exposed publicly.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { and, eq } from "drizzle-orm";
+import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 
 export const REPORT_REASONS = [
@@ -57,8 +62,37 @@ export const reportComponent = createServerFn({ method: "POST" })
       return { ok: false, error: "Choose a reason." };
     }
 
+    // Persist the durable case first — the webhook is best-effort notification.
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) return { ok: false, error: "Reporting is not configured." };
+    const db = drizzle(neon(databaseUrl), { schema });
+    const [component] = await db
+      .select({ id: schema.components.id })
+      .from(schema.components)
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+      .where(and(eq(schema.namespaces.name, data.namespace), eq(schema.components.name, data.name)))
+      .limit(1);
+    const [moderationCase] = await db
+      .insert(schema.moderationCases)
+      .values({
+        componentId: component?.id ?? null,
+        componentRef: `@${data.namespace}/${data.name}`,
+        reason: data.reason,
+        details: data.details,
+        reporterEmail,
+        reporterUserId: user?.id ?? null,
+      })
+      .returning({ id: schema.moderationCases.id });
+    if (!moderationCase) return { ok: false, error: "Could not record the report." };
+    await db.insert(schema.moderationCaseEvents).values({
+      caseId: moderationCase.id,
+      action: "opened",
+      actorUserId: user?.id ?? null,
+      note: null,
+    });
+
     const webhookUrl = process.env.REPORT_WEBHOOK_URL;
-    if (!webhookUrl) return { ok: false, error: "Reporting is not configured." };
+    if (!webhookUrl) return { ok: true };
 
     const label = REPORT_REASONS.find((reason) => reason.id === data.reason)?.label ?? data.reason;
     try {
@@ -83,9 +117,9 @@ export const reportComponent = createServerFn({ method: "POST" })
           ],
         }),
       });
-      if (!res.ok) return { ok: false, error: "Could not submit the report." };
+      void res; // The case is already persisted; notification is best-effort.
     } catch {
-      return { ok: false, error: "Could not submit the report." };
+      // Ignore webhook failures — the durable case is the source of truth.
     }
     return { ok: true };
   });
