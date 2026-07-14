@@ -1,0 +1,118 @@
+---
+title: Open source credits
+description: The open-source projects that power Modulora and the role each one plays.
+---
+
+Modulora stands on open-source work maintained by people and teams across the
+web platform. This page records every direct production dependency declared by
+the web application, its license, and the role it plays in Modulora.
+
+Versions come from `apps/web/package.json` and the lockfile. License identifiers
+come from the installed package manifests through `pnpm licenses list --prod`.
+Transitive packages retain their own licenses and notices.
+
+{/* prettier-ignore */}
+
+> [!NOTE]
+> Modulora's public core is `AGPL-3.0-only`, but that does not replace or alter
+> the licenses of the projects below. Creator components also retain their own
+> declared licenses. See the repository's
+> [licensing policy](https://github.com/Modulora/modulora/blob/main/LICENSING.md)
+> for the full boundary.
+
+## Application foundation
+
+These projects provide the application runtime, routing, authentication, data
+access, and payment API integration.
+
+| Project | License | Role in Modulora |
+| --- | --- | --- |
+| [React](https://react.dev/) (`react`) | MIT | Component runtime and rendering model. |
+| [React DOM](https://react.dev/) (`react-dom`) | MIT | Browser rendering and hydration. |
+| [TanStack Start](https://tanstack.com/start) (`@tanstack/react-start`) | MIT | Full-stack application framework and server functions. |
+| [TanStack Router](https://tanstack.com/router) (`@tanstack/react-router`) | MIT | Typed routes, loaders, and navigation. |
+| [Better Auth](https://better-auth.com/) (`better-auth`) | MIT | Sessions, accounts, and authentication flows. |
+| [Drizzle ORM](https://orm.drizzle.team/) (`drizzle-orm`) | Apache-2.0 | Typed PostgreSQL queries and schema access. |
+| [Neon serverless driver](https://github.com/neondatabase/serverless) (`@neondatabase/serverless`) | MIT | PostgreSQL access from Cloudflare Workers. |
+| [node-postgres](https://node-postgres.com/) (`pg`) | MIT | PostgreSQL tooling used by server-side database paths. |
+| [Modulora database package](https://github.com/Modulora/modulora/tree/main/packages/db) (`@modulora/db`) | AGPL-3.0-only | Shared PostgreSQL schema and database exports maintained in this repository. |
+| [Stripe Node](https://github.com/stripe/stripe-node) (`stripe`) | MIT | Stripe and Connect API client. Direct marketplace checkout remains disabled during alpha. |
+
+## Interface and interaction
+
+These projects supply accessible primitives, styling utilities, icons,
+typography, animation, and URL state.
+
+| Project | License | Role in Modulora |
+| --- | --- | --- |
+| [Radix Primitives](https://www.radix-ui.com/primitives) (`radix-ui`) | MIT | Accessible behavior underneath shadcn-style interface components. |
+| [class-variance-authority](https://cva.style/) (`class-variance-authority`) | Apache-2.0 | Typed component variants. |
+| [clsx](https://github.com/lukeed/clsx) (`clsx`) | MIT | Conditional class-name composition. |
+| [tailwind-merge](https://github.com/dcastil/tailwind-merge) (`tailwind-merge`) | MIT | Deterministic Tailwind class conflict resolution. |
+| [React Icons](https://react-icons.github.io/react-icons/) (`react-icons`) | MIT | Icon delivery. Modulora's application icons use the MIT-licensed Heroicons v2 solid set. |
+| [Inter via Fontsource](https://fontsource.org/fonts/inter) (`@fontsource-variable/inter`) | OFL-1.1 | Self-hosted variable interface typeface. |
+| [Motion](https://motion.dev/) (`motion`) | MIT | Reduced-motion-aware transitions and staged interface animation. |
+| [nuqs](https://nuqs.dev/) (`nuqs`) | MIT | Type-safe URL query state. |
+
+## Code, diffs, and live previews
+
+These projects power the editor, syntax rendering, curator source comparison,
+and isolated live component runtime.
+
+| Project | License | Role in Modulora |
+| --- | --- | --- |
+| [Sandpack](https://github.com/codesandbox/sandpack) (`@codesandbox/sandpack-react`) | Apache-2.0 | Client integration for live component compilation on Modulora's isolated bundler origin. |
+| [Pierre Diffs](https://github.com/pierrecomputer/pierre/tree/main/packages/diffs) (`@pierre/diffs`) | Apache-2.0 | Local curator source diffs; unpublished source is not sent to a third party. |
+| [Pierre Theme](https://github.com/pierrecomputer/pierre/tree/main/packages/theme) (`@pierre/theme`) | MIT | Light, dark, and color-vision-safe code palettes. |
+| [Shiki](https://shiki.style/) (`shiki`) | MIT | Syntax tokenization and highlighted source rendering. |
+| [React CodeMirror](https://uiwjs.github.io/react-codemirror/) (`@uiw/react-codemirror`) | MIT | React integration for the source editor. |
+| [CodeMirror GitHub theme](https://uiwjs.github.io/react-codemirror/#/theme/data/github/light) (`@uiw/codemirror-theme-github`) | MIT | Base editor theme adapter; Modulora maps it to Pierre tokens. |
+| [CodeMirror CSS language](https://github.com/codemirror/lang-css) (`@codemirror/lang-css`) | MIT | CSS parsing and editor language support. |
+| [CodeMirror JavaScript language](https://github.com/codemirror/lang-javascript) (`@codemirror/lang-javascript`) | MIT | JavaScript, TypeScript, JSX, and TSX editor language support. |
+| [CodeMirror language](https://github.com/codemirror/language) (`@codemirror/language`) | MIT | Shared language services. |
+| [CodeMirror state](https://github.com/codemirror/state) (`@codemirror/state`) | MIT | Editor state and transactions. |
+| [CodeMirror view](https://github.com/codemirror/view) (`@codemirror/view`) | MIT | Editor DOM and interaction layer. |
+| [Lezer highlight](https://github.com/lezer-parser/highlight) (`@lezer/highlight`) | MIT | Syntax highlighting tags used by CodeMirror. |
+| [Marked](https://marked.js.org/) (`marked`) | MIT | Markdown rendering in authored component documentation. |
+| [Paper Shaders](https://github.com/paper-design/shaders) (`@paper-design/shaders-react`) | Apache-2.0 | GPU shader effects used by selected visual surfaces. |
+
+## Documentation and content
+
+These projects compile and render the documentation you are reading.
+
+| Project | License | Role in Modulora |
+| --- | --- | --- |
+| [Fumadocs Core](https://fumadocs.dev/) (`fumadocs-core`) | MIT | Headless documentation source and navigation primitives. |
+| [Fumadocs MDX](https://fumadocs.dev/) (`fumadocs-mdx`) | MIT | MDX compilation and generated documentation source. |
+| [MDX type definitions](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/mdx) (`@types/mdx`) | MIT | TypeScript definitions for MDX content. |
+
+## Charts and analytics
+
+Modulora uses the composable visx packages below for charts without importing a
+monolithic charting runtime.
+
+| Project | License | Role in Modulora |
+| --- | --- | --- |
+| [visx event](https://github.com/airbnb/visx) (`@visx/event`) | MIT | Pointer and chart event coordinates. |
+| [visx group](https://github.com/airbnb/visx) (`@visx/group`) | MIT | SVG grouping and transforms. |
+| [visx responsive](https://github.com/airbnb/visx) (`@visx/responsive`) | MIT | Container-aware chart sizing. |
+| [visx scale](https://github.com/airbnb/visx) (`@visx/scale`) | MIT | Data-to-visual scale construction. |
+| [visx shape](https://github.com/airbnb/visx) (`@visx/shape`) | MIT | SVG paths and chart geometry. |
+| [visx tooltip](https://github.com/airbnb/visx) (`@visx/tooltip`) | MIT | Positioned chart details. |
+| [visx vendor](https://github.com/airbnb/visx) (`@visx/vendor`) | MIT and ISC | Vendored chart utilities used by visx. |
+
+## Keeping this page accurate
+
+This page covers direct production dependencies, not every package in the
+transitive dependency graph. When a direct dependency changes, maintainers run
+`pnpm --filter web docs:credits:check`. The check fails when a package is
+missing or when its displayed license does not match the installed manifest.
+
+For the complete machine-generated inventory at any commit, run:
+
+```bash
+pnpm licenses list --prod
+```
+
+Thank you to every maintainer and contributor whose work makes Modulora
+possible.
