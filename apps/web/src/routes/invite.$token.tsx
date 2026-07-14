@@ -10,8 +10,8 @@ import { inspectAlphaInvitation } from "@/lib/invitations";
 
 export const Route = createFileRoute("/invite/$token")({
   validateSearch: (search: Record<string, unknown>) => ({
-    providerError: typeof search.providerError === "string" ? search.providerError : "",
-    error: typeof search.error === "string" ? search.error : "",
+    providerError: typeof search.providerError === "string" ? search.providerError : undefined,
+    error: typeof search.error === "string" ? search.error : undefined,
   }),
   loader: ({ params }) => inspectAlphaInvitation({ data: { token: params.token } }),
   component: InvitationSetupPage,
