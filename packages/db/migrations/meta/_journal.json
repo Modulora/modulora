@@ -183,6 +183,13 @@
       "when": 1784051268926,
       "tag": "0025_noisy_kitty_pryde",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1784053004113,
+      "tag": "0026_busy_proudstar",
+      "breakpoints": true
     }
   ]
 }

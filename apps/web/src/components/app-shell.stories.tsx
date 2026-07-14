@@ -20,6 +20,7 @@ const mockUser: CurrentUser = {
   payoutsEnabled: false,
   isCurator: true,
   isPlus: true,
+  sponsorUrl: null,
   colorVisionMode: "standard",
 };
 
