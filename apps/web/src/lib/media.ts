@@ -4,6 +4,7 @@
  * Cloudflare Vite plugin's simulated R2 so uploads work without a real bucket.
  */
 import { env } from "cloudflare:workers";
+import { hasValidImageSignature } from "./avatar";
 
 export interface MediaEnv {
   MEDIA?: R2Bucket;
@@ -42,8 +43,13 @@ export async function storeImage(
     return { ok: false, error: "Image must be under 2 MB." };
   }
 
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!hasValidImageSignature(bytes, file.type)) {
+    return { ok: false, error: "The file contents do not match its image format." };
+  }
+
   const key = `${prefix}/${crypto.randomUUID()}.${extension}`;
-  await bucket.put(key, await file.arrayBuffer(), {
+  await bucket.put(key, bytes, {
     httpMetadata: { contentType: file.type, cacheControl: "public, max-age=31536000, immutable" },
   });
   return { ok: true, url: `/i/${key}` };
