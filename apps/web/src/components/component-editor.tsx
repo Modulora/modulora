@@ -38,7 +38,7 @@ import { listDomains } from "@/lib/domains";
 import { getPayoutStatus } from "@/lib/payouts";
 import { EarningsBreakdown, LicensePicker } from "@/components/money";
 import { XIcon } from "@/components/brand-icons";
-import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
+import { DIRECT_MARKETPLACE_ENABLED, EXTERNAL_DOMAIN_VERIFICATION_REQUIRED } from "@/lib/flags";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { demoFiles, isSystemFile, roleFor, scaffoldFiles } from "@/lib/scaffold";
 import { usePageTheme } from "@/lib/use-page-theme";
@@ -136,7 +136,9 @@ export function ComponentEditor({
     if (DIRECT_MARKETPLACE_ENABLED) {
       void getPayoutStatus().then((status) => setPayoutsEnabled(status.payoutsEnabled));
     }
-    void listDomains().then((rows) => setVerifiedDomains(rows.filter((r) => r.verified).map((r) => r.domain)));
+    if (EXTERNAL_DOMAIN_VERIFICATION_REQUIRED) {
+      void listDomains().then((rows) => setVerifiedDomains(rows.filter((r) => r.verified).map((r) => r.domain)));
+    }
   }, []);
   const [purchaseUrl, setPurchaseUrl] = useState(initial?.purchaseUrl ?? "");
   const purchaseHost = (() => {
@@ -196,7 +198,9 @@ export function ComponentEditor({
         ? null
         : !/^https?:\/\//i.test(purchaseUrl.trim())
           ? "A purchase URL is required."
-          : verifiedDomains !== null && purchaseHost !== null && !verifiedDomains.includes(purchaseHost)
+          : purchaseHost === null
+            ? "Enter a valid purchase URL."
+          : EXTERNAL_DOMAIN_VERIFICATION_REQUIRED && verifiedDomains !== null && purchaseHost !== null && !verifiedDomains.includes(purchaseHost)
             ? `${purchaseHost} isn't a domain you've verified.`
             : null,
     price: pricing === "marketplace" && !(parseFloat(price) >= 1 && parseFloat(price) <= 1000)
@@ -868,13 +872,19 @@ function DetailsStep(props: {
           <MetaField label="Purchase URL">
             <Input value={p.purchaseUrl} onChange={(e) => p.setPurchaseUrl(e.target.value)} placeholder="https://you.dev/pro" />
             <FieldError show={p.purchaseUrl.length > 0} error={p.errors.purchaseUrl} />
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Must resolve to a domain you&apos;ve verified —{" "}
-              <Link to="/dashboard/settings" className="underline underline-offset-2 transition-colors hover:text-foreground">
-                verify one in settings
-              </Link>
-              .
-            </p>
+            {EXTERNAL_DOMAIN_VERIFICATION_REQUIRED ? (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Must resolve to a domain you&apos;ve verified —{" "}
+                <Link to="/dashboard/settings" className="underline underline-offset-2 transition-colors hover:text-foreground">
+                  verify one in settings
+                </Link>
+                .
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Domain verification is optional during alpha. Unverified destinations are disclosed on the public listing.
+              </p>
+            )}
           </MetaField>
         ) : null}
 

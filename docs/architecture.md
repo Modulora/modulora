@@ -6,9 +6,11 @@
 
 The direct marketplace is disabled for alpha. Modulora doesn't process
 component or collection checkout, issue buyer entitlements, maintain a purchase
-library, or deliver paid source. External commercial listings point to verified
-creator domains, and creators retain responsibility for every transaction and
-fulfillment obligation.
+library, or deliver paid source. External commercial listings point to
+creator-operated purchase pages, and creators retain responsibility for every
+transaction and fulfillment obligation. Domain verification is feature-flagged
+with `VITE_EXTERNAL_DOMAIN_VERIFICATION_REQUIRED`; it is false during alpha,
+and public listings disclose unverified destinations.
 
 Marketplace tables and code paths can remain dormant for later evaluation, but
 public catalog and registry reads must ignore dormant prices while
@@ -190,7 +192,7 @@ Every authorization decision is server-side and scoped to a concrete resource.
 
 Launch scope:
 
-- Verified creator domain and purchase URL.
+- Creator purchase URL and its scoped domain-verification status.
 - URL reputation/availability checks and redirect monitoring.
 - Price label supplied by creator and timestamped as creator-provided.
 - No claim that Modulora verified unseen commercial source.
@@ -230,7 +232,7 @@ Important invariants:
 4. Select a repository and prove namespace ownership.
 5. Import a shadcn registry item or use the publishing CLI.
 6. Choose open-source or external-commercial source model.
-7. Supply license/source or verified purchase-domain metadata.
+7. Supply license/source or purchase-domain metadata, including whether domain control was verified.
 8. Review normalized files, dependencies, targets, and generated install behavior.
 9. Explicitly authorize an immutable release.
 10. Modulora validates, scans, signs/attests, and publishes evidence.
