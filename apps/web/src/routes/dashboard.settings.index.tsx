@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createFileRoute, Link, redirect, useNavigate, useRouter } from "@tanstack/react-router";
-import { HiCheckBadge as BadgeCheck, HiCheck as Check, HiDocumentDuplicate as Copy, HiGlobeAlt as Globe, HiArrowPath as Loader2, HiPlus as Plus, HiTrash as Trash2, HiArrowUpTray as Upload, HiXMark as X } from "react-icons/hi2";
+import { HiCheckBadge as BadgeCheck, HiCheck as Check, HiDocumentDuplicate as Copy, HiGlobeAlt as Globe, HiArrowPath as Loader2, HiPlus as Plus, HiTrash as Trash2, HiXMark as X } from "react-icons/hi2";
 
+import { AvatarPicker } from "@/components/avatar-picker";
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 
@@ -72,10 +73,12 @@ function Settings() {
     sections: user.sections,
   });
   const [pending, setPending] = useState(false);
+  const [avatarPending, setAvatarPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorField, setErrorField] = useState<keyof ProfileInput | null>(null);
   const [handle, setHandle] = useState<HandleStatus>({ state: "current" });
+  const [showImageUrl, setShowImageUrl] = useState(Boolean(user.image && !user.image.startsWith("/i/avatars/")));
   const handleSeq = useRef(0);
   const usernameLockedUntil = usernameChangeAvailableAt(user.usernameChangedAt);
 
@@ -111,6 +114,7 @@ function Settings() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (avatarPending) return;
     setPending(true);
     setError(null);
     setErrorField(null);
@@ -141,21 +145,39 @@ function Settings() {
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <Avatar username={form.username} name={form.name} imageUrl={form.imageUrl} />
           <div className="flex-1">
-            <Label htmlFor="imageUrl">Avatar</Label>
-            <div className="mt-2 flex items-center gap-2">
-              <Input
-                id="imageUrl"
-                value={form.imageUrl}
-                onChange={(event) => set("imageUrl", event.target.value)}
-                placeholder="https://…/avatar.png"
-                autoComplete="off"
-                className="flex-1"
-              />
-              <AvatarUpload
-                onUploaded={(url) => set("imageUrl", url)}
+            <p className="text-sm font-medium">Avatar</p>
+            <div className="mt-2">
+              <AvatarPicker
+                onUpload={uploadAvatar}
+                onPendingChange={setAvatarPending}
+                onUploaded={async (url) => {
+                  set("imageUrl", url);
+                  setShowImageUrl(false);
+                  await router.invalidate();
+                }}
+                afterDropzone={showImageUrl ? (
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="imageUrl">Image URL</Label>
+                    <Input
+                      id="imageUrl"
+                      value={form.imageUrl}
+                      onChange={(event) => set("imageUrl", event.target.value)}
+                      placeholder="https://example.com/avatar.png"
+                      autoComplete="off"
+                    />
+                    <p className="text-xs text-muted-foreground">The URL is saved with the rest of your profile.</p>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="w-fit text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                    onClick={() => setShowImageUrl(true)}
+                  >
+                    or use a URL
+                  </button>
+                )}
               />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Upload an image (PNG/JPEG/WebP, under 2 MB) or paste a URL.</p>
           </div>
         </div>
 
@@ -271,7 +293,7 @@ function Settings() {
                 <Check className="size-3.5" /> Saved
               </span>
             ) : null}
-            <Button type="submit" disabled={pending || handle.state === "taken" || handle.state === "invalid"}>
+            <Button type="submit" disabled={pending || avatarPending || handle.state === "taken" || handle.state === "invalid"}>
               {pending ? <Loader2 className="size-4 animate-spin" /> : null}
               Save changes
             </Button>
@@ -501,42 +523,13 @@ function HandleStatusLine({ status, username }: { status: HandleStatus; username
   );
 }
 
-function AvatarUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    setPending(true);
-    setError(null);
-    try {
-      const body = new FormData();
-      body.set("file", file);
-      const res = await fetch("/api/upload-avatar", { method: "POST", body });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
-        setError(data.error ?? "Upload failed.");
-        return;
-      }
-      onUploaded(data.url);
-    } finally {
-      setPending(false);
-    }
-  }
-
-  return (
-    <>
-      <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={onFile} />
-      <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => inputRef.current?.click()}>
-        {pending ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-        Upload
-      </Button>
-      {error ? <span className="text-xs text-destructive">{error}</span> : null}
-    </>
-  );
+async function uploadAvatar(file: File): Promise<string> {
+  const body = new FormData();
+  body.set("file", file);
+  const response = await fetch("/api/upload-avatar", { method: "POST", body });
+  const data = (await response.json()) as { url?: string; error?: string };
+  if (!response.ok || !data.url) throw new Error(data.error ?? "Upload failed.");
+  return data.url;
 }
 
 function Avatar({ username, name, imageUrl }: { username: string; name: string; imageUrl: string }) {

@@ -221,6 +221,7 @@ function Avatar({ user, className }: { user: CurrentUser; className?: string }) 
   const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
+    setImageFailed(false);
     const image = imageRef.current;
     if (image?.complete && image.naturalWidth === 0) setImageFailed(true);
   }, [user.image]);

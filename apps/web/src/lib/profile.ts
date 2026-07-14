@@ -17,6 +17,7 @@ import {
   sanitizeProfileSectionPatch,
   type ProfileSectionVisibility,
 } from "./profile-sections";
+import { isInternalAvatarPath } from "./avatar";
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 15;
 const COOLDOWN_MS = USERNAME_CHANGE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
@@ -114,6 +115,12 @@ function normalizeUrl(value: string): string | null {
   if (!trimmed) return null;
   if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`;
   return trimmed;
+}
+
+function normalizeAvatarUrl(value: string): string | null {
+  const trimmed = value.trim();
+  if (isInternalAvatarPath(trimmed)) return trimmed;
+  return normalizeUrl(trimmed);
 }
 
 /**
@@ -223,7 +230,7 @@ export const updateProfile = createServerFn({ method: "POST" })
         username: data.username,
         usernameChangedAt:
           data.username !== user.username ? new Date() : undefined,
-        image: normalizeUrl(data.imageUrl),
+        image: normalizeAvatarUrl(data.imageUrl),
         bio: data.bio || null,
         websiteUrl: normalizeUrl(data.websiteUrl),
         githubUrl,
