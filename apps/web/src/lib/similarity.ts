@@ -216,7 +216,15 @@ export const resolveSimilarityHold = createServerFn({ method: "POST" })
       await db
         .update(schema.components)
         .set({ reviewStatus: "pending", submittedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(schema.components.id, componentId), eq(schema.components.reviewStatus, "draft")));
+        .where(
+          and(
+            eq(schema.components.id, componentId),
+            eq(schema.components.reviewStatus, "draft"),
+            // Atomic version-match: a draft swapped in between the check
+            // above and this promotion can never enter review unscreened.
+            eq(schema.components.latestVersionId, held.screenedVersionId),
+          ),
+        );
     } else if (resolution === "rejected" || resolution === "attribution-required") {
       // Guarded to the held draft: a stale hold can never delist a release
       // that was since re-screened and approved.

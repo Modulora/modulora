@@ -30,7 +30,7 @@ afterEach(async () => {
 });
 
 describe.skipIf(!databaseUrl)("similarity gate against the real corpus", () => {
-  it("blocks a renamed cross-owner copy and persists an explainable screen", async () => {
+  it("blocks a renamed cross-owner copy and persists an explainable screen", async (ctx) => {
     const componentsRows = await db!
       .select({
         id: schema.components.id,
@@ -41,7 +41,7 @@ describe.skipIf(!databaseUrl)("similarity gate against the real corpus", () => {
       .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
       .where(and(eq(schema.components.reviewStatus, "approved"), eq(schema.components.visibility, "public")))
       .limit(2);
-    if (componentsRows.length < 2) return; // needs two published components to exercise self-exclusion
+    if (componentsRows.length < 2) return ctx.skip(); // needs two published components to exercise self-exclusion
     const component = componentsRows[0]!;
     // Attribute the synthetic submission to a DIFFERENT existing component so
     // the corpus self-exclusion doesn't hide the copied source.
@@ -58,7 +58,7 @@ describe.skipIf(!databaseUrl)("similarity gate against the real corpus", () => {
     // Any user who does NOT own the copied component works as the submitter.
     const users = await db!.select({ id: schema.users.id }).from(schema.users).limit(10);
     const otherOwner = users.find((row) => row.id !== component.ownerUserId);
-    if (!otherOwner) return;
+    if (!otherOwner) return ctx.skip();
 
     cleanupEvidenceVersion = component.latest!;
     const outcome = await runSimilarityGate(db!, {
