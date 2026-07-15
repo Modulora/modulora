@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { HiArrowTopRightOnSquare as External, HiGlobeAlt as Globe, HiArrowPath as Loader } from "react-icons/hi2";
 
+import { ExternalSitePreview } from "@/components/external-site-preview";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DnsRecordCard, OneClickSetup } from "@/components/domain-verify";
@@ -123,13 +124,16 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
       <div className="min-h-[34rem] overflow-hidden rounded-xl border border-border/60 bg-card/30">
         {preview ? (
           <div className="flex h-full flex-col">
-            <div className="relative aspect-[16/10] min-h-80 border-b border-border/60 bg-secondary/20">
-              <iframe src={preview.canonicalUrl} title={`Live preview of ${preview.title || title}`} sandbox="allow-scripts" referrerPolicy="no-referrer" className="size-full bg-white" />
-              {preview.imageUrl ? <img src={preview.imageUrl} alt="" referrerPolicy="no-referrer" className="pointer-events-none absolute bottom-3 right-3 h-20 w-32 rounded-md border border-white/20 object-cover shadow-lg" /> : null}
-            </div>
+            <ExternalSitePreview
+              url={preview.canonicalUrl}
+              title={`Live preview of ${preview.title || title}`}
+              imageUrl={preview.imageUrl}
+              imageAlt={`Open Graph preview for ${preview.title || title}`}
+              className="aspect-[16/10] min-h-80 border-b border-border/60"
+            />
             <div className="flex flex-1 flex-col gap-2 p-5">
               <div className="flex items-start justify-between gap-4"><div><p className="text-lg font-semibold">{title || preview.title}</p><p className="text-sm text-muted-foreground">{description || preview.description}</p></div><External className="mt-1 size-4 shrink-0 text-muted-foreground" /></div>
-              <p className="mt-auto text-xs text-muted-foreground">The iframe uses an opaque sandbox without same-origin access. Sites that block framing still retain their mirrored Open Graph image.</p>
+              <p className="mt-auto text-xs text-muted-foreground">The live preview keeps forms and popups disabled. If a site blocks framing or cannot run embedded, switch to its Open Graph image or open it in a new tab.</p>
             </div>
           </div>
         ) : <div className="flex h-full min-h-[34rem] flex-col items-center justify-center gap-3 p-8 text-center text-muted-foreground"><Globe className="size-8" /><p className="text-sm font-medium text-foreground">Inspect a verified site</p><p className="max-w-sm text-xs">Modulora will fetch its Open Graph metadata, mirror the preview image, and prepare the isolated live preview.</p></div>}

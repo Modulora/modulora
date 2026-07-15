@@ -1,5 +1,6 @@
 import { normalizeDomain } from "./domains";
 import { storeImage } from "./media";
+import { fetchWithManualRedirects } from "./manual-redirect-fetch";
 import { extractToolMetadata, isPrivateOrReservedIp, type ToolMetadata } from "./tool-metadata-core";
 
 const MAX_HTML_BYTES = 512 * 1024;
@@ -84,20 +85,38 @@ async function fetchVerifiedPage(inputUrl: string, verifiedDomain: string): Prom
   throw new Error("The site redirected too many times.");
 }
 
+async function fetchPublicImage(inputUrl: URL): Promise<Response | null> {
+  const result = await fetchWithManualRedirects({
+    inputUrl,
+    validateUrl: async (url) => {
+      if (url.protocol !== "https:") return false;
+      await assertPublicHostname(url.hostname);
+      return true;
+    },
+    init: {
+      headers: { accept: "image/png,image/jpeg,image/webp" },
+      signal: AbortSignal.timeout(8_000),
+    },
+  });
+  return result?.response ?? null;
+}
+
 async function mirrorOgImage(imageUrl: string | null, userId: string): Promise<string | null> {
   if (!imageUrl) return null;
-  const url = new URL(imageUrl);
-  await assertPublicHostname(url.hostname);
-  const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(8_000) });
-  if (!response.ok) return null;
-  const type = (response.headers.get("content-type") ?? "").split(";")[0] ?? "";
-  if (!["image/png", "image/jpeg", "image/webp"].includes(type)) return null;
-  let bytes: Uint8Array;
-  try { bytes = await readBoundedBytes(response, 2 * 1024 * 1024); }
-  catch { return null; }
-  const ownedBytes = new Uint8Array(bytes);
-  const result = await storeImage(`tool-previews/${userId}`, new File([ownedBytes.buffer], "og-image", { type }));
-  return result.ok ? result.url ?? null : null;
+  try {
+    const response = await fetchPublicImage(new URL(imageUrl));
+    if (!response?.ok) return null;
+    const type = (response.headers.get("content-type") ?? "").split(";")[0] ?? "";
+    if (!["image/png", "image/jpeg", "image/webp"].includes(type)) return null;
+    const bytes = await readBoundedBytes(response, 2 * 1024 * 1024);
+    const ownedBytes = new Uint8Array(bytes);
+    const result = await storeImage(`tool-previews/${userId}`, new File([ownedBytes.buffer], "og-image", { type }));
+    return result.ok ? result.url ?? null : null;
+  } catch {
+    // A preview image is optional. DNS, redirect, size, or storage failures
+    // fail closed by omitting the image rather than blocking the listing.
+    return null;
+  }
 }
 
 export async function fetchToolMetadata(inputUrl: string, verifiedDomain: string, userId: string, options: { mirrorImage?: boolean } = { mirrorImage: true }): Promise<ToolMetadata & { canonicalUrl: string }> {
