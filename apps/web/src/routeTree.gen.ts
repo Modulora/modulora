@@ -42,6 +42,7 @@ import { Route as DashboardCollectionsRouteImport } from './routes/dashboard.col
 import { Route as DashboardBookmarksRouteImport } from './routes/dashboard.bookmarks'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as ApiUploadToolImageRouteImport } from './routes/api/upload-tool-image'
 import { Route as ApiUploadProfileBackgroundRouteImport } from './routes/api/upload-profile-background'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
@@ -228,6 +229,11 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiUploadToolImageRoute = ApiUploadToolImageRouteImport.update({
+  id: '/api/upload-tool-image',
+  path: '/api/upload-tool-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiUploadProfileBackgroundRoute =
   ApiUploadProfileBackgroundRouteImport.update({
     id: '/api/upload-profile-background',
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/api/upload-profile-background': typeof ApiUploadProfileBackgroundRoute
+  '/api/upload-tool-image': typeof ApiUploadToolImageRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -406,6 +413,7 @@ export interface FileRoutesByTo {
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/api/upload-profile-background': typeof ApiUploadProfileBackgroundRoute
+  '/api/upload-tool-image': typeof ApiUploadToolImageRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -461,6 +469,7 @@ export interface FileRoutesById {
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
   '/api/upload-profile-background': typeof ApiUploadProfileBackgroundRoute
+  '/api/upload-tool-image': typeof ApiUploadToolImageRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -518,6 +527,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/upload-avatar'
     | '/api/upload-profile-background'
+    | '/api/upload-tool-image'
     | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookmarks'
@@ -572,6 +582,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/upload-avatar'
     | '/api/upload-profile-background'
+    | '/api/upload-tool-image'
     | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookmarks'
@@ -626,6 +637,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/upload-avatar'
     | '/api/upload-profile-background'
+    | '/api/upload-tool-image'
     | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookmarks'
@@ -682,6 +694,7 @@ export interface RootRouteChildren {
   ApiSearchRoute: typeof ApiSearchRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   ApiUploadProfileBackgroundRoute: typeof ApiUploadProfileBackgroundRoute
+  ApiUploadToolImageRoute: typeof ApiUploadToolImageRoute
   DocsSplatRoute: typeof DocsSplatRoute
   DocsChangelogRoute: typeof DocsChangelogRoute
   ISplatRoute: typeof ISplatRoute
@@ -929,6 +942,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/upload-tool-image': {
+      id: '/api/upload-tool-image'
+      path: '/api/upload-tool-image'
+      fullPath: '/api/upload-tool-image'
+      preLoaderRoute: typeof ApiUploadToolImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/upload-profile-background': {
       id: '/api/upload-profile-background'
       path: '/api/upload-profile-background'
@@ -1155,6 +1175,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSearchRoute: ApiSearchRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   ApiUploadProfileBackgroundRoute: ApiUploadProfileBackgroundRoute,
+  ApiUploadToolImageRoute: ApiUploadToolImageRoute,
   DocsSplatRoute: DocsSplatRoute,
   DocsChangelogRoute: DocsChangelogRoute,
   ISplatRoute: ISplatRoute,

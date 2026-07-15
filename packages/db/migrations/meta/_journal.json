@@ -239,6 +239,13 @@
       "when": 1784081310193,
       "tag": "0033_mute_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1784153479105,
+      "tag": "0034_many_longshot",
+      "breakpoints": true
     }
   ]
 }

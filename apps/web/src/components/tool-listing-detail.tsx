@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { HiArrowLeft as ArrowLeft, HiArrowTopRightOnSquare as External, HiCheckBadge as Check, HiGlobeAlt as Globe } from "react-icons/hi2";
 import { ExternalSitePreview } from "@/components/external-site-preview";
+import { ToolImageCarousel } from "@/components/tool-image-carousel";
 import { ToolListingImage } from "@/components/tool-listing-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import type { CatalogItem } from "@/data/catalog";
 export function ToolListingDetail({ item }: { item: CatalogItem }) {
   const site = item.site;
   if (!site) return null;
+  const images = site.showcaseImageUrls.length ? site.showcaseImageUrls : site.ogImageUrl ? [site.ogImageUrl] : [];
   const domainEvidence = item.evidence.find((record) => record.type === "domain-verified" && record.status === "passed");
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
@@ -17,7 +19,7 @@ export function ToolListingDetail({ item }: { item: CatalogItem }) {
       </Button>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="mb-2 flex flex-wrap items-center gap-2"><Badge variant="outline">Tool</Badge><Badge variant="secondary">{item.category}</Badge></div>
+          <div className="mb-2 flex flex-wrap items-center gap-2"><Badge variant="outline">Tool</Badge><Badge variant="secondary">{site.pricing === "freemium" ? "Freemium" : site.pricing === "paid" ? "Paid" : "Free"}</Badge><Badge variant="secondary">{item.category}</Badge></div>
           <h1 className="text-3xl font-bold tracking-tight">{item.title}</h1>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">{item.description}</p>
           <p className="mt-3 text-xs text-muted-foreground">Listed by <Link to="/$username" params={{ username: item.namespace }} className="underline underline-offset-2">@{item.namespace}</Link></p>
@@ -26,6 +28,12 @@ export function ToolListingDetail({ item }: { item: CatalogItem }) {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+        <ToolImageCarousel images={images} domain={site.domain} title={item.title} className="aspect-[16/9] min-h-[28rem]" />
+      </div>
+
+      <div className="mt-6">
+        <h2 className="mb-3 text-sm font-semibold">Live site preview</h2>
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
         <ExternalSitePreview
           url={site.url}
           title={`Live preview of ${item.title}`}
@@ -33,6 +41,7 @@ export function ToolListingDetail({ item }: { item: CatalogItem }) {
           imageAlt={`Open Graph preview for ${item.title}`}
           className="aspect-[16/9] min-h-[28rem]"
         />
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">

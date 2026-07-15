@@ -75,6 +75,8 @@ export interface CatalogItem {
     ogTitle: string | null;
     ogDescription: string | null;
     ogImageUrl: string | null;
+    showcaseImageUrls: string[];
+    pricing: "free" | "freemium" | "paid";
   };
   distributionChannels?: DistributionChannel[];
   /** shadcn-style type label (Button, Dialog, …). */

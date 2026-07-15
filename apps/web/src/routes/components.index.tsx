@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LiveCardPreview } from "@/components/live-card-preview";
-import { ToolListingImage } from "@/components/tool-listing-image";
+import { ToolImageCarousel } from "@/components/tool-image-carousel";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fetchCatalog, fetchFeatured } from "@/lib/catalog-db";
@@ -51,7 +51,7 @@ const EVIDENCE_FILTERS = [
   "secret-scan",
   "source-not-assessed",
 ] as const satisfies readonly EvidenceType[];
-const PRICES = ["free", "paid"] as const;
+const PRICES = ["free", "freemium", "paid"] as const;
 const VIEWS = ["featured", "newest", "authors"] as const;
 const LAYOUTS = ["grid", "list"] as const;
 
@@ -104,12 +104,12 @@ const EVIDENCE_OPTIONS: { value: (typeof EVIDENCE_FILTERS)[number]; label: strin
 function Catalog() {
   const { catalog, featured } = Route.useLoaderData();
   const componentTypes = useMemo(
-    () => [...new Set(catalog.map((item) => item.componentType).filter((t): t is string => Boolean(t)))].sort(),
+    () => [...new Set(catalog.filter((item) => item.listingKind !== "tool").map((item) => item.componentType).filter((t): t is string => Boolean(t)))].sort(),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [catalog],
   );
   const categories = useMemo(
-    () => [...new Set(catalog.map((item) => item.category))].sort(),
+    () => [...new Set([...(catalog.some((item) => item.listingKind === "tool") ? ["Tools"] : []), ...catalog.map((item) => item.category)])].sort(),
     [catalog],
   );
   const [search, setSearch] = useQueryStates(catalogSearchParams, {
@@ -186,6 +186,7 @@ function Catalog() {
           <div className="flex flex-col gap-1">
             <RailHeading>Price</RailHeading>
             <RailButton icon={Gift} active={search.price === "free"} onClick={() => toggle("price", "free")}>Free</RailButton>
+            <RailButton icon={Sparkles} active={search.price === "freemium"} onClick={() => toggle("price", "freemium")}>Freemium</RailButton>
             <RailButton icon={Tag} active={search.price === "paid"} onClick={() => toggle("price", "paid")}>Paid</RailButton>
           </div>
 
@@ -196,7 +197,7 @@ function Catalog() {
                 key={category}
                 icon={category === "Date & Time" ? CalendarDays : Table2}
                 active={search.category === category}
-                count={catalog.filter((item) => item.category === category).length}
+                count={catalog.filter((item) => category === "Tools" ? item.listingKind === "tool" : item.category === category).length}
                 onClick={() => toggle("category", category)}
               >
                 {category}
@@ -313,13 +314,14 @@ function Catalog() {
 }
 
 function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
+  if (item.listingKind === "tool") return <ToolGalleryItem item={item} list={list} />;
   return (
     <Link
       to="/components/$namespace/$name"
       params={{ namespace: item.namespace, name: item.name }}
       className={`group flex overflow-hidden rounded-xl border border-border/60 bg-card/40 transition-colors hover:border-foreground/20 hover:bg-card/70 ${list ? "items-center gap-5 p-3" : "flex-col p-3"}`}
     >
-      {item.listingKind === "tool" ? <ToolCardPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} /> : <LiveCardPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} />}
+      <LiveCardPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} />
       <div className="flex min-w-0 flex-1 items-start justify-between gap-3 px-1 pb-1 pt-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
@@ -328,19 +330,31 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">by {item.namespace}{item.inCollection ? ` in ${item.inCollection}` : ""} · {item.category}</p>
         </div>
-        {item.listingKind === "tool" ? <Badge variant="outline">Tool</Badge> : <PriceSeal paid={isPaidCatalogItem(item)} label={isPaidCatalogItem(item) ? item.purchase?.priceLabel ?? "Paid" : "Free"} />}
+        <PriceSeal paid={isPaidCatalogItem(item)} label={isPaidCatalogItem(item) ? item.purchase?.priceLabel ?? "Paid" : "Free"} />
       </div>
     </Link>
   );
 }
 
-function ToolCardPreview({ item, className }: { item: CatalogItem; className?: string }) {
+function ToolGalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
+  const images = item.site?.showcaseImageUrls.length ? item.site.showcaseImageUrls : item.site?.ogImageUrl ? [item.site.ogImageUrl] : [];
   return (
-    <div className={`relative aspect-[4/3] overflow-hidden rounded-lg border border-border/60 bg-secondary/30 ${className ?? ""}`}>
-      <ToolListingImage src={item.site?.ogImageUrl} domain={item.site?.domain} className="size-full" imageClassName="transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none" />
-      <span className="absolute bottom-2 left-2 rounded-md bg-background/85 px-2 py-1 text-[10px] font-medium backdrop-blur-sm">Live site · {item.site?.domain}</span>
-    </div>
+    <article className={`group relative flex overflow-hidden rounded-xl border border-border/60 bg-card/40 transition-colors hover:border-foreground/20 hover:bg-card/70 ${list ? "items-center gap-5 p-3" : "flex-col p-3"}`}>
+      <Link to="/components/$namespace/$name" params={{ namespace: item.namespace, name: item.name }} aria-label={`Open ${item.title}`} className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+      <div className={`relative z-20 pointer-events-none ${list ? "w-56 shrink-0" : "w-full"}`}>
+        <ToolImageCarousel images={images} domain={item.site?.domain ?? "External tool"} title={item.title} className="aspect-[4/3] w-full rounded-lg border border-border/60 bg-secondary/30" imageClassName="transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none" />
+        <span className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-background/85 px-2 py-1 text-[10px] font-medium backdrop-blur-sm">{item.site?.domain}</span>
+      </div>
+      <div className="pointer-events-none relative z-20 flex min-w-0 flex-1 items-start justify-between gap-3 px-1 pb-1 pt-3">
+        <div className="min-w-0"><div className="flex items-center gap-1.5"><h2 className="truncate text-sm font-medium">{item.title}</h2><span className="pointer-events-auto"><EvidenceMark evidence={item.evidence} /></span></div><p className="mt-1 truncate text-xs text-muted-foreground">by {item.namespace} · {item.category}</p></div>
+        <div className="flex shrink-0 items-center gap-1.5"><Badge variant="secondary">{toolPricingLabel(item.site?.pricing)}</Badge><Badge variant="outline">Tool</Badge></div>
+      </div>
+    </article>
   );
+}
+
+function toolPricingLabel(pricing: "free" | "freemium" | "paid" | undefined): string {
+  return pricing === "freemium" ? "Freemium" : pricing === "paid" ? "Paid" : "Free";
 }
 
 /**
@@ -424,12 +438,15 @@ function matches(item: CatalogItem, search: CatalogSearch) {
     const haystack = `${item.namespace} ${item.name} ${item.title} ${item.description}`.toLowerCase();
     if (!haystack.includes(search.q.toLowerCase())) return false;
   }
-  if (search.category && item.category !== search.category) return false;
+  if (search.category && (search.category === "Tools" ? item.listingKind !== "tool" : item.category !== search.category)) return false;
   if (search.type && item.componentType !== search.type) return false;
   if (search.price) {
-    const isFree = !isPaidCatalogItem(item);
-    if (search.price === "free" && !isFree) return false;
-    if (search.price === "paid" && isFree) return false;
+    if (item.listingKind === "tool") {
+      if ((item.site?.pricing ?? "free") !== search.price) return false;
+    } else {
+      const componentPricing = isPaidCatalogItem(item) ? "paid" : "free";
+      if (componentPricing !== search.price) return false;
+    }
   }
   if (search.source && item.sourceModel !== search.source) return false;
   if (search.license) {

@@ -248,6 +248,8 @@ export const components = pgTable(
     ogTitle: text("og_title"),
     ogDescription: text("og_description"),
     ogImageUrl: text("og_image_url"),
+    showcaseImageUrls: jsonb("showcase_image_urls").$type<string[]>().notNull().default([]),
+    toolPricing: text("tool_pricing", { enum: ["free", "freemium", "paid"] }),
     // Closed-source / external redirect:
     purchaseUrl: text("purchase_url"),
     purchaseDomain: text("purchase_domain"),

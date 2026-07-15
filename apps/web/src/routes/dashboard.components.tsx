@@ -17,7 +17,7 @@ import { deleteMyComponent, fetchMyComponents, type MyComponent } from "@/lib/ca
 import { confirmCheckout, setComponentPrice, startPromotion } from "@/lib/marketplace";
 import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
 import { LiveCardPreview } from "@/components/live-card-preview";
-import { ToolListingImage } from "@/components/tool-listing-image";
+import { ToolImageCarousel } from "@/components/tool-image-carousel";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
@@ -234,11 +234,11 @@ function ComponentCard({ component, username, payoutsEnabled }: { component: MyC
     <article className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/45 shadow-sm transition-[background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:border-foreground/15 hover:bg-card/65 hover:shadow-md motion-reduce:transition-none">
       <div className="relative overflow-hidden border-b border-border/60 bg-secondary/20">
         {component.listingKind === "tool" ? (
-          <ToolListingImage src={component.previewImageUrl} domain={component.siteDomain} className="aspect-[16/10] w-full" />
+          <ToolImageCarousel images={component.showcaseImageUrls.length ? component.showcaseImageUrls : component.previewImageUrl ? [component.previewImageUrl] : []} domain={component.siteDomain ?? "External tool"} title={component.title} className="aspect-[4/3] w-full" />
         ) : <LiveCardPreview item={{ namespace: username, name: component.name, title: component.title, live: true }} className="w-full rounded-none border-0" />}
         <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
           <ReviewBadge status={component.reviewStatus} />
-          {component.listingKind === "tool" ? <Badge variant="secondary">Tool</Badge> : <PriceSeal paid={component.sourceModel !== "open-source" || (DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null)} label={DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />}
+          {component.listingKind === "tool" ? <div className="flex gap-1.5"><Badge variant="secondary">{component.toolPricing === "freemium" ? "Freemium" : component.toolPricing === "paid" ? "Paid" : "Free"}</Badge><Badge variant="secondary">Tool</Badge></div> : <PriceSeal paid={component.sourceModel !== "open-source" || (DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null)} label={DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />}
         </div>
       </div>
 

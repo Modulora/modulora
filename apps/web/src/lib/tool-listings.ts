@@ -6,10 +6,12 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { schema } from "@modulora/db";
 
 import { normalizeDomain } from "./domains";
+import { getMediaBucket } from "./media";
 import { getCurrentUser } from "./session";
 import { fireReviewWebhook } from "./review";
 import { fetchToolMetadata } from "./tool-metadata";
 import { isCategoryId } from "./taxonomy";
+import { isToolPricing, normalizeToolShowcaseImages, type ToolPricing } from "./tool-showcase";
 import {
   TOOL_REVIEW_LIMITATIONS,
   TOOL_REVIEW_STANDARD_VERSION,
@@ -60,6 +62,8 @@ export interface ToolListingInput {
   description: string;
   category: string;
   siteUrl: string;
+  showcaseImageUrls: string[];
+  pricing: ToolPricing;
 }
 
 export const previewToolListing = createServerFn({ method: "POST" })
@@ -90,6 +94,8 @@ export const submitToolListing = createServerFn({ method: "POST" })
     description: String(data.description ?? "").trim(),
     category: String(data.category ?? "").trim(),
     siteUrl: String(data.siteUrl ?? "").trim(),
+    showcaseImageUrls: Array.isArray(data.showcaseImageUrls) ? data.showcaseImageUrls.map(String) : [],
+    pricing: String(data.pricing ?? "free") as ToolListingInput["pricing"],
   }))
   .handler(async ({ data }) => {
     const request = getRequest();
@@ -100,6 +106,13 @@ export const submitToolListing = createServerFn({ method: "POST" })
     if (data.title.length < 2 || data.title.length > 120) return { ok: false as const, error: "Title must be 2–120 characters." };
     if (data.description.length < 24 || data.description.length > 500) return { ok: false as const, error: "Description must be 24–500 characters." };
     if (!isCategoryId(data.category)) return { ok: false as const, error: "Choose a supported category." };
+    const showcaseImageUrls = normalizeToolShowcaseImages(data.showcaseImageUrls, user.id);
+    if (!showcaseImageUrls) return { ok: false as const, error: "Upload 1–6 showcase images before submitting." };
+    const media = getMediaBucket();
+    if (!media) return { ok: false as const, error: "Media storage is not configured." };
+    const storedImages = await Promise.all(showcaseImageUrls.map((url) => media.head(url.slice("/i/".length))));
+    if (storedImages.some((image) => !image)) return { ok: false as const, error: "One or more showcase images are no longer available. Upload them again." };
+    if (!isToolPricing(data.pricing)) return { ok: false as const, error: "Choose Free, Freemium, or Paid pricing." };
     const parsed = normalizeSiteUrl(data.siteUrl);
     if (!parsed) return { ok: false as const, error: "Enter a valid HTTPS site URL." };
     const domain = await verifiedDomainForUser(db, user.id, parsed.toString());
@@ -119,16 +132,16 @@ export const submitToolListing = createServerFn({ method: "POST" })
       await db.update(schema.components).set({
         title: data.title, description: data.description, category: data.category, originalUrl: metadata.canonicalUrl, siteUrl: metadata.canonicalUrl, siteDomain: domain,
         ogTitle: metadata.title || null, ogDescription: metadata.description || null, ogImageUrl: metadata.imageUrl,
-        previewImageUrl: metadata.imageUrl, reviewStatus: "pending", reviewReason: null, reviewedBy: null, reviewedAt: null,
+        showcaseImageUrls, toolPricing: data.pricing, previewImageUrl: showcaseImageUrls[0], reviewStatus: "pending", reviewReason: null, reviewedBy: null, reviewedAt: null,
         submittedAt: new Date(), updatedAt: new Date(),
       }).where(eq(schema.components.id, componentId));
     } else {
       const [created] = await db.insert(schema.components).values({
         namespaceId: namespace.id, name: data.name, title: data.title, description: data.description, category: data.category,
         listingKind: "tool", componentType: "tool", framework: "web", itemType: "modulora:tool", sourceModel: "external-site",
-        visibility: "public", distributionChannels: [], originalUrl: metadata.canonicalUrl, previewImageUrl: metadata.imageUrl,
+        visibility: "public", distributionChannels: [], originalUrl: metadata.canonicalUrl, previewImageUrl: showcaseImageUrls[0],
         siteUrl: metadata.canonicalUrl, siteDomain: domain, ogTitle: metadata.title || null, ogDescription: metadata.description || null,
-        ogImageUrl: metadata.imageUrl, reviewStatus: "pending",
+        ogImageUrl: metadata.imageUrl, showcaseImageUrls, toolPricing: data.pricing, reviewStatus: "pending",
       }).returning({ id: schema.components.id });
       if (!created) return { ok: false as const, error: "Could not create the listing." };
       componentId = created.id;
@@ -136,7 +149,7 @@ export const submitToolListing = createServerFn({ method: "POST" })
 
     const [latest] = await db.select({ version: schema.componentVersions.version }).from(schema.componentVersions).where(eq(schema.componentVersions.componentId, componentId)).orderBy(desc(schema.componentVersions.publishedAt)).limit(1);
     const version = nextPatch(latest?.version ?? null);
-    const snapshot = { kind: "tool", siteUrl: metadata.canonicalUrl, domain, title: data.title, description: data.description, category: data.category, og: metadata };
+    const snapshot = { kind: "tool", siteUrl: metadata.canonicalUrl, domain, title: data.title, description: data.description, category: data.category, pricing: data.pricing, showcaseImageUrls, og: metadata };
     const [createdVersion] = await db.insert(schema.componentVersions).values({ componentId, version, licenseKind: "custom", registryItem: snapshot, shadcnItemUrl: metadata.canonicalUrl }).returning({ id: schema.componentVersions.id });
     if (!createdVersion) return { ok: false as const, error: "Could not create the listing version." };
     await db.update(schema.components).set({ latestVersionId: createdVersion.id }).where(eq(schema.components.id, componentId));
@@ -151,7 +164,7 @@ export const submitToolListing = createServerFn({ method: "POST" })
 
 export interface ToolReviewItem {
   id: string; name: string; namespace: string; title: string; description: string; category: string; siteUrl: string;
-  siteDomain: string; ogTitle: string | null; ogDescription: string | null; ogImageUrl: string | null; submittedAt: string;
+  siteDomain: string; ogTitle: string | null; ogDescription: string | null; ogImageUrl: string | null; showcaseImageUrls: string[]; pricing: "free" | "freemium" | "paid"; submittedAt: string;
 }
 
 export const fetchToolForReview = createServerFn({ method: "GET" })
@@ -161,7 +174,7 @@ export const fetchToolForReview = createServerFn({ method: "GET" })
     if (!actor?.isCurator || !db) return null;
     const [row] = await db.select({ component: schema.components, namespace: schema.namespaces.name }).from(schema.components).innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId)).where(and(eq(schema.components.id, data.id), eq(schema.components.listingKind, "tool"))).limit(1);
     if (!row?.component.siteUrl || !row.component.siteDomain) return null;
-    return { id: row.component.id, name: row.component.name, namespace: row.namespace, title: row.component.title, description: row.component.description, category: row.component.category, siteUrl: row.component.siteUrl, siteDomain: row.component.siteDomain, ogTitle: row.component.ogTitle, ogDescription: row.component.ogDescription, ogImageUrl: row.component.ogImageUrl, submittedAt: row.component.submittedAt.toISOString() };
+    return { id: row.component.id, name: row.component.name, namespace: row.namespace, title: row.component.title, description: row.component.description, category: row.component.category, siteUrl: row.component.siteUrl, siteDomain: row.component.siteDomain, ogTitle: row.component.ogTitle, ogDescription: row.component.ogDescription, ogImageUrl: row.component.ogImageUrl, showcaseImageUrls: row.component.showcaseImageUrls, pricing: row.component.toolPricing ?? "free", submittedAt: row.component.submittedAt.toISOString() };
   });
 
 export const decideToolReview = createServerFn({ method: "POST" })

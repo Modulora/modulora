@@ -79,6 +79,8 @@ function toCatalogItem(
           ogTitle: component.ogTitle,
           ogDescription: component.ogDescription,
           ogImageUrl: component.ogImageUrl,
+          showcaseImageUrls: component.showcaseImageUrls,
+          pricing: component.toolPricing ?? "free",
         }
       : undefined,
     componentType: componentTypeLabel(component.componentType) ?? undefined,
@@ -709,6 +711,8 @@ export interface MyComponent {
   siteUrl: string | null;
   siteDomain: string | null;
   previewImageUrl: string | null;
+  showcaseImageUrls: string[];
+  toolPricing: "free" | "freemium" | "paid" | null;
 }
 
 export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
@@ -780,6 +784,8 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
       siteUrl: row.component.siteUrl,
       siteDomain: row.component.siteDomain,
       previewImageUrl: row.component.previewImageUrl,
+      showcaseImageUrls: row.component.showcaseImageUrls,
+      toolPricing: row.component.toolPricing,
     }));
   },
 );
