@@ -29,6 +29,7 @@ import { confirmCheckout } from "@/lib/marketplace";
 import { BuyCollectionDialog } from "@/components/collection-view";
 
 import { LiveCardPreview } from "@/components/live-card-preview";
+import { ProfileThemeBoundary } from "@/components/profile-theme-boundary";
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -92,14 +93,25 @@ function Profile() {
   const joined = new Date(profile.joinedAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
+    <ProfileThemeBoundary
+      font={profile.customization.font}
+      lightTheme={profile.customization.lightTheme}
+      darkTheme={profile.customization.darkTheme}
+      backgroundImage={profile.customization.backgroundImage}
+      backgroundOverlay={profile.customization.backgroundOverlay}
+      backgroundOverlayOpacity={profile.customization.backgroundOverlayOpacity}
+      backgroundPositionX={profile.customization.backgroundPositionX}
+      backgroundPositionY={profile.customization.backgroundPositionY}
+    >
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <motion.header
         initial={{ opacity: 0, y: RISE.offsetY }}
         animate={{ opacity: stage >= 1 ? 1 : 0, y: stage >= 1 ? 0 : RISE.offsetY }}
         transition={RISE.spring}
-        className="flex flex-col gap-5 sm:flex-row sm:items-start"
+        className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm sm:flex sm:items-start sm:gap-5 sm:p-6"
       >
-        <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-secondary text-2xl font-semibold text-muted-foreground">
+        <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-primary/5 blur-3xl" />
+        <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-secondary text-2xl font-semibold text-muted-foreground shadow-sm">
           {profile.image ? (
             <img src={profile.image} alt={profile.name} className="size-full object-cover" />
           ) : (
@@ -107,8 +119,8 @@ function Profile() {
           )}
         </span>
 
-        <div className="min-w-0 flex-1">
-          <span className="flex items-center gap-2">
+        <div className="relative mt-4 min-w-0 flex-1 sm:mt-0">
+          <span className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">{profile.name || profile.username}</h1>
             {profile.isPlus ? (
               <span className="flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-400" title="Modulora Plus subscriber">
@@ -138,7 +150,7 @@ function Profile() {
           {profile.bio ? <p className="mt-3 max-w-2xl text-sm leading-relaxed">{profile.bio}</p> : null}
 
           <TooltipProvider delayDuration={150}>
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:gap-x-4">
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays className="size-3.5" /> Joined {joined}
             </span>
@@ -198,7 +210,7 @@ function Profile() {
           className="mt-10"
         >
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Collections</h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),22rem))] gap-4">
             {collections.map((collection) => (
               <CollectionCard key={collection.name} collection={collection} namespace={profile.username} />
             ))}
@@ -214,7 +226,7 @@ function Profile() {
           className="mt-10"
         >
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Lists · curated by @{profile.username}</h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),22rem))] gap-4">
             {publicLists.map((list) => (
               <div key={list.name} id={`list-${list.name}`} className="scroll-mt-20 rounded-xl border border-border/60 bg-card/40 p-4">
                 <p className="text-sm font-medium">{list.title}</p>
@@ -248,7 +260,7 @@ function Profile() {
             <p className="text-sm text-muted-foreground">No public components yet.</p>
           </motion.div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),22rem))] gap-4">
             {components.map((item, i) => (
               <motion.div
                 key={`${item.namespace}/${item.name}`}
@@ -263,6 +275,7 @@ function Profile() {
         )}
       </div> : null}
     </div>
+    </ProfileThemeBoundary>
   );
 }
 

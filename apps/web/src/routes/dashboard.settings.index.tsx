@@ -3,6 +3,7 @@ import { createFileRoute, Link, redirect, useNavigate, useRouter } from "@tansta
 import { HiCheckBadge as BadgeCheck, HiCheck as Check, HiDocumentDuplicate as Copy, HiGlobeAlt as Globe, HiArrowPath as Loader2, HiPlus as Plus, HiTrash as Trash2, HiXMark as X } from "react-icons/hi2";
 
 import { AvatarPicker } from "@/components/avatar-picker";
+import { ProfileCustomizationEditor } from "@/components/profile-customization-editor";
 import { GitHubIcon, XIcon } from "@/components/brand-icons";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
 
@@ -32,6 +33,8 @@ import { addDomain, discoverDomainConnect, listDomains, removeDomain, verifyDoma
 import { DnsRecordCard, OneClickSetup, type DnsRecordInfo } from "@/components/domain-verify";
 import { linkSocial } from "@/lib/auth-client";
 import { isRenderableImageUrl } from "@/lib/image-url";
+import { updateProfileCustomization } from "@/lib/profile-customization";
+import { serializeTweakcnTheme } from "@/lib/profile-theme";
 
 const PROFILE_SECTION_OPTIONS: {
   key: ProfileSectionKey;
@@ -130,7 +133,7 @@ function Settings() {
   }
 
   return (
-    <div className="flex w-full max-w-2xl flex-col gap-8">
+    <div className="flex w-full flex-col gap-8">
       <div>
         <DashboardPageHeader
           title="Profile"
@@ -300,6 +303,24 @@ function Settings() {
           </div>
         </div>
       </form>
+
+      <ProfileCustomizationEditor
+        isPlus={user.isPlus}
+        initialFont={user.profileCustomization.font}
+        initialThemeCss={serializeTweakcnTheme(user.profileCustomization.lightTheme, user.profileCustomization.darkTheme)}
+        initialLightTheme={user.profileCustomization.lightTheme}
+        initialDarkTheme={user.profileCustomization.darkTheme}
+        initialBackgroundImage={user.profileCustomization.backgroundImage}
+        initialBackgroundOverlay={user.profileCustomization.backgroundOverlay}
+        initialBackgroundOverlayOpacity={user.profileCustomization.backgroundOverlayOpacity}
+        initialBackgroundPositionX={user.profileCustomization.backgroundPositionX}
+        initialBackgroundPositionY={user.profileCustomization.backgroundPositionY}
+        onSave={async (input) => {
+          const result = await updateProfileCustomization({ data: input });
+          if (result.ok) await router.invalidate();
+          return result;
+        }}
+      />
 
       <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/40 p-6">
         <div>

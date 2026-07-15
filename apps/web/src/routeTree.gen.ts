@@ -42,6 +42,7 @@ import { Route as DashboardCollectionsRouteImport } from './routes/dashboard.col
 import { Route as DashboardBookmarksRouteImport } from './routes/dashboard.bookmarks'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as ApiUploadProfileBackgroundRouteImport } from './routes/api/upload-profile-background'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload-avatar'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiPublishRouteImport } from './routes/api/publish'
@@ -225,6 +226,12 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiUploadProfileBackgroundRoute =
+  ApiUploadProfileBackgroundRouteImport.update({
+    id: '/api/upload-profile-background',
+    path: '/api/upload-profile-background',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
   id: '/api/upload-avatar',
   path: '/api/upload-avatar',
@@ -332,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/api/publish': typeof ApiPublishRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/api/upload-profile-background': typeof ApiUploadProfileBackgroundRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -383,6 +391,7 @@ export interface FileRoutesByTo {
   '/api/publish': typeof ApiPublishRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/api/upload-profile-background': typeof ApiUploadProfileBackgroundRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -435,6 +444,7 @@ export interface FileRoutesById {
   '/api/publish': typeof ApiPublishRoute
   '/api/search': typeof ApiSearchRoute
   '/api/upload-avatar': typeof ApiUploadAvatarRoute
+  '/api/upload-profile-background': typeof ApiUploadProfileBackgroundRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/api/publish'
     | '/api/search'
     | '/api/upload-avatar'
+    | '/api/upload-profile-background'
     | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookmarks'
@@ -540,6 +551,7 @@ export interface FileRouteTypes {
     | '/api/publish'
     | '/api/search'
     | '/api/upload-avatar'
+    | '/api/upload-profile-background'
     | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookmarks'
@@ -591,6 +603,7 @@ export interface FileRouteTypes {
     | '/api/publish'
     | '/api/search'
     | '/api/upload-avatar'
+    | '/api/upload-profile-background'
     | '/dashboard/admin'
     | '/dashboard/analytics'
     | '/dashboard/bookmarks'
@@ -644,6 +657,7 @@ export interface RootRouteChildren {
   ApiPublishRoute: typeof ApiPublishRoute
   ApiSearchRoute: typeof ApiSearchRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
+  ApiUploadProfileBackgroundRoute: typeof ApiUploadProfileBackgroundRoute
   DocsSplatRoute: typeof DocsSplatRoute
   DocsChangelogRoute: typeof DocsChangelogRoute
   ISplatRoute: typeof ISplatRoute
@@ -891,6 +905,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/upload-profile-background': {
+      id: '/api/upload-profile-background'
+      path: '/api/upload-profile-background'
+      fullPath: '/api/upload-profile-background'
+      preLoaderRoute: typeof ApiUploadProfileBackgroundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/upload-avatar': {
       id: '/api/upload-avatar'
       path: '/api/upload-avatar'
@@ -1091,6 +1112,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublishRoute: ApiPublishRoute,
   ApiSearchRoute: ApiSearchRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
+  ApiUploadProfileBackgroundRoute: ApiUploadProfileBackgroundRoute,
   DocsSplatRoute: DocsSplatRoute,
   DocsChangelogRoute: DocsChangelogRoute,
   ISplatRoute: ISplatRoute,

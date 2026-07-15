@@ -23,6 +23,7 @@ import {
   visibleProfileItems,
   type ProfileSectionVisibility,
 } from "./profile-sections";
+import type { ProfileBackgroundOverlay, ProfileFontId, ProfileThemeVariables } from "./profile-theme";
 
 function db() {
   const url = process.env.DATABASE_URL;
@@ -474,6 +475,16 @@ export interface PublicProfile {
   websiteVerified: boolean;
   isPlus: boolean;
   badges: string[];
+  customization: {
+    font: ProfileFontId;
+    lightTheme: ProfileThemeVariables;
+    darkTheme: ProfileThemeVariables;
+    backgroundImage: string | null;
+    backgroundOverlay: ProfileBackgroundOverlay;
+    backgroundOverlayOpacity: number;
+    backgroundPositionX: number;
+    backgroundPositionY: number;
+  };
   joinedAt: string;
 }
 
@@ -628,6 +639,16 @@ export const fetchPublicProfile = createServerFn({ method: "GET" })
         websiteVerified,
         isPlus: user.isPlus,
         badges: badges.map((row) => row.badge),
+        customization: {
+          font: user.profileFont as ProfileFontId,
+          lightTheme: user.profileThemeLight,
+          darkTheme: user.profileThemeDark,
+          backgroundImage: user.profileBackgroundImage,
+          backgroundOverlay: user.profileBackgroundOverlay as ProfileBackgroundOverlay,
+          backgroundOverlayOpacity: user.profileBackgroundOverlayOpacity,
+          backgroundPositionX: user.profileBackgroundPositionX,
+          backgroundPositionY: user.profileBackgroundPositionY,
+        },
         joinedAt: user.createdAt.toISOString(),
       },
       components: visibleProfileItems(sections.components, componentItems),

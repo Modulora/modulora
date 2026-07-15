@@ -76,7 +76,7 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 has-[>[data-slot=profile-theme-boundary]]:max-w-none has-[>[data-slot=profile-theme-boundary]]:p-0 sm:px-6 sm:py-8">
         {children}
       </main>
 

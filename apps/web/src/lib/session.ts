@@ -14,6 +14,7 @@ import { getAuth } from "./auth";
 import { hasAcceptedInvitation } from "./invitation-core";
 
 import type { ProfileSectionVisibility } from "./profile-sections";
+import type { ProfileBackgroundOverlay, ProfileFontId, ProfileThemeVariables } from "./profile-theme";
 
 export interface CurrentUser {
   id: string;
@@ -28,6 +29,16 @@ export interface CurrentUser {
   xUrl: string | null;
   sponsorUrl: string | null;
   sections: ProfileSectionVisibility;
+  profileCustomization: {
+    font: ProfileFontId;
+    lightTheme: ProfileThemeVariables;
+    darkTheme: ProfileThemeVariables;
+    backgroundImage: string | null;
+    backgroundOverlay: ProfileBackgroundOverlay;
+    backgroundOverlayOpacity: number;
+    backgroundPositionX: number;
+    backgroundPositionY: number;
+  };
   githubUsername: string | null;
   xUsername: string | null;
   stripeAccountId: string | null;
@@ -83,6 +94,16 @@ export async function getCurrentUser(request: Request): Promise<CurrentUser | nu
       components: row.showProfileComponents,
       collections: row.showProfileCollections,
       publicLists: row.showProfilePublicLists,
+    },
+    profileCustomization: {
+      font: row.profileFont as ProfileFontId,
+      lightTheme: row.profileThemeLight,
+      darkTheme: row.profileThemeDark,
+      backgroundImage: row.profileBackgroundImage,
+      backgroundOverlay: row.profileBackgroundOverlay as ProfileBackgroundOverlay,
+      backgroundOverlayOpacity: row.profileBackgroundOverlayOpacity,
+      backgroundPositionX: row.profileBackgroundPositionX,
+      backgroundPositionY: row.profileBackgroundPositionY,
     },
     githubUsername: row.githubUsername,
     xUsername: row.xUsername,

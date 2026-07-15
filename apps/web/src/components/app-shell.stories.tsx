@@ -23,6 +23,7 @@ const mockUser: CurrentUser = {
   isPlus: true,
   sponsorUrl: null,
   sections: DEFAULT_PROFILE_SECTION_VISIBILITY,
+  profileCustomization: { font: "inter", lightTheme: {}, darkTheme: {}, backgroundImage: null, backgroundOverlay: "dark", backgroundOverlayOpacity: 35, backgroundPositionX: 50, backgroundPositionY: 50 },
   colorVisionMode: "standard",
 };
 

@@ -52,6 +52,16 @@ export const users = pgTable("user", {
   showProfileComponents: boolean("show_profile_components").notNull().default(true),
   showProfileCollections: boolean("show_profile_collections").notNull().default(true),
   showProfilePublicLists: boolean("show_profile_public_lists").notNull().default(true),
+  // Plus-editable public-profile presentation. Published values remain active
+  // if Plus lapses; only future edits are gated.
+  profileFont: text("profile_font").notNull().default("inter"),
+  profileThemeLight: jsonb("profile_theme_light").$type<Record<string, string>>().notNull().default({}),
+  profileThemeDark: jsonb("profile_theme_dark").$type<Record<string, string>>().notNull().default({}),
+  profileBackgroundImage: text("profile_background_image"),
+  profileBackgroundOverlay: text("profile_background_overlay").notNull().default("dark"),
+  profileBackgroundOverlayOpacity: integer("profile_background_overlay_opacity").notNull().default(35),
+  profileBackgroundPositionX: integer("profile_background_position_x").notNull().default(50),
+  profileBackgroundPositionY: integer("profile_background_position_y").notNull().default(50),
   // GitHub login proven via OAuth sign-in (verified identity). Null = not
   // connected; a hand-typed github_url that differs is treated as unverified.
   githubUsername: text("github_username"),

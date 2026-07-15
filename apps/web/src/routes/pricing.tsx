@@ -39,7 +39,7 @@ const PLUS = [
   { label: "Bookmarks — save any component", live: true },
   { label: "Component lists, public or private", live: true },
   { label: "Curated lists on your public profile", live: true },
-  { label: "Profile customization", live: false },
+  { label: "Public profile fonts and themes", live: true },
   { label: "Deeper analytics", live: false },
   { label: "Early access to new features (Labs)", live: true },
   { label: "Supports creators of free components — Plus revenue joins the profit-share pool", live: true },

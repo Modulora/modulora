@@ -1,0 +1,2 @@
+ALTER TABLE "user" ADD COLUMN "profile_background_overlay" text DEFAULT 'dark' NOT NULL;--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN "profile_background_overlay_opacity" integer DEFAULT 35 NOT NULL;
