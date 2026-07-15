@@ -2,9 +2,17 @@
  * Collections — group your components into installable kits. One install
  * command pulls every member, each digest-verified individually.
  */
-import { useState } from "react";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { HiSquare3Stack3D as Layers, HiArrowPath as Loader2, HiPlus as Plus, HiTrash as Trash2 } from "react-icons/hi2";
+import { useMemo, useState } from "react";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import {
+  HiArrowPath as Loader2,
+  HiArrowTopRightOnSquare as ExternalLink,
+  HiCheckCircle as CheckCircle,
+  HiMagnifyingGlass as Search,
+  HiPlus as Plus,
+  HiSquare3Stack3D as Layers,
+  HiTrash as Trash2,
+} from "react-icons/hi2";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,10 +23,13 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { deleteCollection, fetchMyCollections, saveCollection, type MyCollection } from "@/lib/collections";
 import { fetchMyComponents } from "@/lib/catalog-db";
 import { setCollectionExternalUrl, setCollectionPrice } from "@/lib/marketplace";
@@ -36,74 +47,188 @@ export const Route = createFileRoute("/dashboard/collections")({
   component: CollectionsPage,
 });
 
+type SaleFilter = "all" | "free" | "for-sale";
+
 function CollectionsPage() {
   const { collections, components, payouts } = Route.useLoaderData();
-  const eligible = components;
+  const { user } = Route.useRouteContext();
+  const username = user?.username ?? null;
+  const eligible = useMemo(() => components.map((component) => ({ name: component.name, title: component.title })), [components]);
+  const [query, setQuery] = useState("");
+  const [saleFilter, setSaleFilter] = useState<SaleFilter>("all");
+
+  const stats = useMemo(() => ({
+    collections: collections.length,
+    entries: collections.reduce((total, collection) => total + collection.items.length, 0),
+    live: collections.reduce((total, collection) => total + collection.items.filter((item) => item.reviewStatus === "approved").length, 0),
+    forSale: collections.filter((collection) => collection.price != null || collection.externalUrl).length,
+  }), [collections]);
+
+  const filteredCollections = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return collections.filter((collection) => {
+      const forSale = collection.price != null || Boolean(collection.externalUrl);
+      if (saleFilter === "free" && forSale) return false;
+      if (saleFilter === "for-sale" && !forSale) return false;
+      if (!normalizedQuery) return true;
+      return collection.title.toLowerCase().includes(normalizedQuery)
+        || collection.name.toLowerCase().includes(normalizedQuery)
+        || collection.description.toLowerCase().includes(normalizedQuery)
+        || collection.items.some((item) => item.title.toLowerCase().includes(normalizedQuery) || item.name.includes(normalizedQuery));
+    });
+  }, [collections, query, saleFilter]);
 
   return (
-    <div className="w-full max-w-3xl">
+    <div className="w-full">
       <DashboardPageHeader
         title="Collections"
-        description="Group your components into installable kits — one command installs every member, each digest-verified on its own. Only approved, public members serve."
-        action={<CollectionDialog eligible={eligible.map((c) => ({ name: c.name, title: c.title }))} />}
+        description="Compile your components into installable kits — one command installs every member, each digest-verified individually. For example, an entire shadcn registry may be compiled into a collection. Only approved, public members serve."
+        action={<CollectionDialog eligible={eligible} />}
       />
 
-      <div className="mt-8 flex flex-col gap-3">
-        {collections.length === 0 ? (
-          <EmptyState
-            icon={Layers}
-            title="No collections yet"
-            description="Bundle related components — a dashboard kit, a marketing set — and users install the whole thing with one command."
-          />
-        ) : (
-          collections.map((collection) => <CollectionRow key={collection.id} collection={collection} eligible={eligible.map((c) => ({ name: c.name, title: c.title }))} payoutsEnabled={payouts.payoutsEnabled} />)
-        )}
+      <section aria-label="Collection summary" className="mt-6 grid grid-cols-2 overflow-hidden rounded-xl border border-border/60 bg-card/35 lg:grid-cols-4">
+        <CollectionStat label="Collections" value={stats.collections} className="border-b border-r lg:border-b-0" />
+        <CollectionStat label="Component entries" value={stats.entries} className="border-b lg:border-b-0 lg:border-r" />
+        <CollectionStat label="Live entries" value={stats.live} className="border-r" />
+        <CollectionStat label="For sale" value={stats.forSale} />
+      </section>
+
+      <div className="mt-6 flex flex-col gap-3 rounded-xl border border-border/60 bg-card/30 p-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search collections and components" aria-label="Search collections and components" className="pl-9" />
+        </div>
+        <Select value={saleFilter} onValueChange={(value) => setSaleFilter(value as SaleFilter)}>
+          <SelectTrigger className="w-full sm:w-44" aria-label="Filter collections by sale status"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All collections</SelectItem>
+            <SelectItem value="free">Free</SelectItem>
+            <SelectItem value="for-sale">For sale</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="shrink-0 px-1 text-xs tabular-nums text-muted-foreground">{filteredCollections.length} {filteredCollections.length === 1 ? "collection" : "collections"} shown</span>
       </div>
+
+      {collections.length === 0 ? (
+        <EmptyState
+          icon={Layers}
+          title="Create your first collection"
+          description="Compile a dashboard kit, marketing system, or complete shadcn registry into one installable collection."
+          action={<CollectionDialog eligible={eligible} />}
+          className="mt-6 min-h-64"
+        />
+      ) : filteredCollections.length === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="No matching collections"
+          description="Try another search or sale-status filter."
+          action={<Button variant="outline" size="sm" onClick={() => { setQuery(""); setSaleFilter("all"); }}>Clear filters</Button>}
+          className="mt-6 min-h-48"
+        />
+      ) : (
+        <section aria-label="Your collections" className="mt-6 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+          {filteredCollections.map((collection) => (
+            <CollectionCard
+              key={collection.id}
+              collection={collection}
+              eligible={eligible}
+              payoutsEnabled={payouts.payoutsEnabled}
+              username={username}
+            />
+          ))}
+        </section>
+      )}
     </div>
   );
 }
 
-function CollectionRow({ collection, eligible, payoutsEnabled }: { collection: MyCollection; eligible: { name: string; title: string }[]; payoutsEnabled: boolean }) {
+function CollectionStat({ label, value, className = "" }: { label: string; value: number; className?: string }) {
+  return (
+    <div className={`border-border/60 p-4 ${className}`}>
+      <p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function CollectionCard({ collection, eligible, payoutsEnabled, username }: { collection: MyCollection; eligible: { name: string; title: string }[]; payoutsEnabled: boolean; username: string | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const liveCount = collection.items.filter((item) => item.reviewStatus === "approved").length;
+  const paid = collection.price != null || Boolean(collection.externalUrl);
+
+  async function onDelete() {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await deleteCollection({ data: { name: collection.name } });
+      if (!result.ok) { setError(result.error ?? "Could not delete this collection."); return; }
+      setDeleteOpen(false);
+      await router.invalidate();
+    } catch {
+      setError("Could not delete this collection. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/40 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="truncate font-medium">{collection.title}</h2>
-            <span className="rounded-full bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">
-              {collection.items.length} component{collection.items.length === 1 ? "" : "s"}
-            </span>
-          </div>
-          <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{collection.name}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <CollectionSellDialog collection={collection} payoutsEnabled={payoutsEnabled} />
-          <CollectionDialog eligible={eligible} existing={collection} />
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              await deleteCollection({ data: { name: collection.name } });
-              await router.invalidate();
-              setBusy(false);
-            }}
-          >
-            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-          </Button>
-        </div>
+    <article className="flex min-h-80 min-w-0 flex-col rounded-xl border border-border/60 bg-card/40 p-4 transition-[background-color,border-color,box-shadow] duration-150 hover:border-foreground/15 hover:bg-card/60 hover:shadow-sm motion-reduce:transition-none">
+      <div className="flex items-start justify-between gap-3">
+        <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-foreground"><Layers className="size-4" /></span>
+        <PriceSeal paid={paid} label={collection.price != null ? `$${collection.price / 100}` : collection.externalUrl ? "External" : undefined} />
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {collection.items.map((item) => (
-          <span key={item.componentId} className={`rounded-md border border-border/60 px-2 py-0.5 text-xs ${item.reviewStatus === "approved" ? "text-foreground" : "text-muted-foreground line-through decoration-border"}`} title={item.reviewStatus === "approved" ? undefined : "Not live — won't serve until approved"}>
-            {item.title}
-          </span>
-        ))}
+
+      <div className="mt-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="truncate text-base font-semibold">{collection.title}</h2>
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{collection.items.length} {collection.items.length === 1 ? "component" : "components"}</span>
+        </div>
+        <p className="mt-1 truncate font-mono text-xs text-muted-foreground">@{username ?? "you"}/{collection.name}</p>
+        {collection.description ? <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{collection.description}</p> : null}
       </div>
-    </div>
+
+      <div className="mt-5 flex flex-1 flex-col gap-1.5 rounded-lg border border-border/50 bg-background/25 p-2">
+        {collection.items.slice(0, 4).map((item) => {
+          const live = item.reviewStatus === "approved";
+          return (
+            <div key={item.componentId} className="flex items-center gap-2 rounded-md px-2.5 py-2">
+              <span className={`flex size-6 shrink-0 items-center justify-center rounded text-[10px] font-semibold uppercase ${live ? "bg-receipt/10 text-receipt" : "bg-secondary text-muted-foreground"}`}>{item.title.slice(0, 1)}</span>
+              <span className={`min-w-0 flex-1 truncate text-xs font-medium ${live ? "text-foreground" : "text-muted-foreground"}`}>{item.title}</span>
+              <span className={`flex shrink-0 items-center gap-1 text-[11px] ${live ? "text-receipt" : "text-muted-foreground"}`}>{live ? <CheckCircle className="size-3" /> : null}{live ? "Live" : "Not live"}</span>
+            </div>
+          );
+        })}
+        {collection.items.length > 4 ? <p className="px-2.5 py-1 text-[11px] text-muted-foreground">+{collection.items.length - 4} more</p> : null}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>{liveCount} of {collection.items.length} live</span>
+        <code className="truncate font-mono">npx modulora add @{username ?? "you"}/{collection.name}</code>
+      </div>
+      <div className="mt-4 flex items-center gap-1 border-t border-border/50 pt-3">
+        {username && liveCount > 0 ? (
+          <Button asChild variant="outline" size="sm" className="min-w-0 flex-1 gap-1.5"><Link to="/components/$namespace/$name" params={{ namespace: username, name: collection.name }}>View collection<ExternalLink className="size-3.5" /></Link></Button>
+        ) : (
+          <Button variant="outline" size="sm" className="min-w-0 flex-1" disabled>No live members yet</Button>
+        )}
+        <CollectionSellDialog collection={collection} payoutsEnabled={payoutsEnabled} />
+        <CollectionDialog eligible={eligible} existing={collection} />
+        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <Tooltip><TooltipTrigger asChild><DialogTrigger asChild><Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" aria-label={`Delete ${collection.title}`} disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <Trash2 />}</Button></DialogTrigger></TooltipTrigger><TooltipContent>Delete collection</TooltipContent></Tooltip>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle>Delete “{collection.title}”?</DialogTitle><DialogDescription>This removes the collection, not its component listings. This action cannot be undone.</DialogDescription></DialogHeader>
+            {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}
+            <DialogFooter>
+              <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+              <Button variant="destructive" size="sm" disabled={busy} onClick={() => void onDelete()}>{busy ? "Deleting…" : "Delete collection"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </article>
   );
 }
 
@@ -161,14 +286,14 @@ function CollectionDialog({ eligible, existing }: { eligible: { name: string; ti
             <Label htmlFor="col-desc">Description</Label>
             <Input id="col-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Everything you need for an admin dashboard." />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Components</Label>
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="text-sm font-medium">Components</legend>
             {eligible.length === 0 ? (
               <p className="text-xs text-muted-foreground">No free components available yet.</p>
             ) : (
               <div className="flex max-h-44 flex-col gap-1 overflow-y-auto rounded-lg border border-border/60 p-2">
                 {eligible.map((component) => (
-                  <label key={component.name} className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent/60">
+                  <label key={component.name} className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors duration-150 hover:bg-accent/60 motion-reduce:transition-none">
                     <input
                       type="checkbox"
                       checked={selected.includes(component.name)}
@@ -183,8 +308,8 @@ function CollectionDialog({ eligible, existing }: { eligible: { name: string; ti
                 ))}
               </div>
             )}
-          </div>
-          {error ? <p className="text-xs text-destructive">{error}</p> : null}
+          </fieldset>
+          {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}
           <Button onClick={onSave} disabled={pending || !name || !title || selected.length === 0}>
             {pending ? <Loader2 className="size-4 animate-spin" /> : null}
             {existing ? "Save changes" : "Create collection"}
@@ -239,15 +364,7 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          {DIRECT_MARKETPLACE_ENABLED && collection.price != null ? (
-            <PriceSeal paid label={`$${collection.price / 100}`} />
-          ) : collection.externalUrl ? (
-            <PriceSeal paid label="external" />
-          ) : (
-            "Sell"
-          )}
-        </Button>
+        <Button variant="ghost" size="sm">{collection.price != null || collection.externalUrl ? "Manage sale" : "Sell"}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -274,7 +391,7 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
         {mode === "external" ? (
           <div className="mt-4 flex flex-col gap-3">
             <Input value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} placeholder="https://you.dev/pro" className="h-9" />
-            {error ? <p className="text-xs text-destructive">{error}</p> : null}
+            {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}
             <div className="flex gap-2">
               <Button type="button" className="flex-1" disabled={pending || !/^https?:\/\//i.test(externalUrl.trim())} onClick={() => void saveExternal(externalUrl.trim())}>
                 {pending ? <Loader2 className="size-4 animate-spin" /> : null} Save listing
@@ -296,7 +413,7 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
             </div>
             <EarningsBreakdown dollars={dollars} />
             <LicensePicker template={licenseTemplate} setTemplate={setLicenseTemplate} text={licenseText} setText={setLicenseText} />
-            {error ? <p className="text-xs text-destructive">{error}</p> : null}
+            {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}
             <div className="flex gap-2">
               <Button type="button" className="flex-1" disabled={pending || !dollars} onClick={() => save(Math.round(parseFloat(dollars) * 100))}>
                 {pending ? <Loader2 className="size-4 animate-spin" /> : null} Save price
