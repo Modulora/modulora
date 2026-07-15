@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
-import { HiSquaresPlus as Blocks, HiArrowTopRightOnSquare as ExternalLink, HiArrowPath as Loader2, HiClipboardDocumentCheck as Review, HiGlobeAlt as Globe, HiMagnifyingGlass as Search, HiPencil as Pencil, HiPlus as Plus, HiSparkles as Sparkles, HiTag as Tag, HiTrash as Trash2 } from "react-icons/hi2";
+import { HiSquaresPlus as Blocks, HiArrowTopRightOnSquare as ExternalLink, HiArrowPath as Loader2, HiClipboardDocumentCheck as Review, HiMagnifyingGlass as Search, HiPencil as Pencil, HiPlus as Plus, HiSparkles as Sparkles, HiTag as Tag, HiTrash as Trash2 } from "react-icons/hi2";
 
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { deleteMyComponent, fetchMyComponents, type MyComponent } from "@/lib/ca
 import { confirmCheckout, setComponentPrice, startPromotion } from "@/lib/marketplace";
 import { EarningsBreakdown, LicensePicker, PriceSeal } from "@/components/money";
 import { LiveCardPreview } from "@/components/live-card-preview";
+import { ToolListingImage } from "@/components/tool-listing-image";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
@@ -72,7 +73,7 @@ function MyComponents() {
 
       {promoted ? (
         <div className="rounded-lg border border-receipt/30 bg-receipt/5 px-4 py-2.5 text-sm text-receipt">
-          Promotion active — your component is now featured on browse.
+          Boost active — your listing is now featured on browse.
         </div>
       ) : null}
 
@@ -233,7 +234,7 @@ function ComponentCard({ component, username, payoutsEnabled }: { component: MyC
     <article className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/45 shadow-sm transition-[background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:border-foreground/15 hover:bg-card/65 hover:shadow-md motion-reduce:transition-none">
       <div className="relative overflow-hidden border-b border-border/60 bg-secondary/20">
         {component.listingKind === "tool" ? (
-          <div className="flex aspect-[16/10] w-full items-center justify-center">{component.previewImageUrl ? <img src={component.previewImageUrl} alt="" className="size-full object-cover" /> : <Globe aria-hidden className="size-7 text-muted-foreground/45" />}</div>
+          <ToolListingImage src={component.previewImageUrl} domain={component.siteDomain} className="aspect-[16/10] w-full" />
         ) : <LiveCardPreview item={{ namespace: username, name: component.name, title: component.title, live: true }} className="w-full rounded-none border-0" />}
         <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
           <ReviewBadge status={component.reviewStatus} />
@@ -259,10 +260,10 @@ function ComponentCard({ component, username, payoutsEnabled }: { component: MyC
           <Link to="/components/$namespace/$name" params={{ namespace: username, name: component.name }}><ExternalLink className="size-3.5" /> Open</Link>
         </Button>
         {component.listingKind !== "tool" ? <Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon-sm"><Link to="/dashboard/edit/$name" params={{ name: component.name }} aria-label={`Edit ${component.title}`}><Pencil className="size-3.5" /></Link></Button></TooltipTrigger><TooltipContent>Edit component</TooltipContent></Tooltip> : null}
-        {component.reviewStatus === "approved" && component.listingKind !== "tool" ? (
+        {component.reviewStatus === "approved" ? (
           <>
-            {DIRECT_MARKETPLACE_ENABLED ? <PriceDialog component={component} payoutsEnabled={payoutsEnabled} /> : null}
-            <Tooltip><TooltipTrigger asChild><Button aria-label={`Promote ${component.title}`} variant="ghost" size="icon-sm" className="holographic-promote-button" disabled={promoting} onClick={onPromote}>{promoting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}</Button></TooltipTrigger><TooltipContent>Promote listing</TooltipContent></Tooltip>
+            {DIRECT_MARKETPLACE_ENABLED && component.listingKind !== "tool" ? <PriceDialog component={component} payoutsEnabled={payoutsEnabled} /> : null}
+            <Tooltip><TooltipTrigger asChild><Button aria-label={`Boost ${component.title}`} variant="ghost" size="icon-sm" className="holographic-promote-button" disabled={promoting} onClick={onPromote}>{promoting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}</Button></TooltipTrigger><TooltipContent>Boost listing</TooltipContent></Tooltip>
           </>
         ) : null}
         <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setConfirm(""); }}>

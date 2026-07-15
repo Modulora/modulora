@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { HiArrowTopRightOnSquare as External, HiGlobeAlt as Globe, HiPhoto as ImageIcon } from "react-icons/hi2";
 
+import { ToolListingImage } from "@/components/tool-listing-image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+function hostnameOf(url: string): string {
+  try { return new URL(url).hostname; }
+  catch { return "External tool"; }
+}
 
 export function ExternalSitePreview({
   url,
@@ -46,7 +52,7 @@ export function ExternalSitePreview({
           <div className="size-full bg-secondary/20" aria-hidden />
         )
       ) : imageUrl ? (
-        <img src={imageUrl} alt={imageAlt} referrerPolicy="no-referrer" className="size-full object-cover" />
+        <ToolListingImage src={imageUrl} domain={hostnameOf(url)} alt={imageAlt} className="size-full" />
       ) : (
         <div className="flex size-full flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground">
           <ImageIcon className="size-6" />

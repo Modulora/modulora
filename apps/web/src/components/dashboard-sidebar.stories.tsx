@@ -7,7 +7,7 @@ import { DashboardSidebar } from "./dashboard-sidebar";
 const summary: StudioSummary = {
   user: { name: "Maker", username: "maker", image: null },
   namespace: "maker",
-  counts: { components: 9, libraries: 0, verifiedInstalls: 42 },
+  counts: { listings: 9, libraries: 0, verifiedInstalls: 42 },
   roles: { curator: true, owner: true },
   journey: { published: true, approved: true, payouts: true, priced: true },
 };

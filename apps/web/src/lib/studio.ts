@@ -20,7 +20,7 @@ export interface StudioSummary {
   };
   namespace: string | null;
   counts: {
-    components: number;
+    listings: number;
     libraries: number;
     verifiedInstalls: number;
   };
@@ -48,7 +48,7 @@ export const fetchStudioSummary = createServerFn({ method: "GET" }).handler(
     const summary: StudioSummary = {
       user: { name: user.name, username: user.username, image: user.image },
       namespace: user.username,
-      counts: { components: 0, libraries: 0, verifiedInstalls: 0 },
+      counts: { listings: 0, libraries: 0, verifiedInstalls: 0 },
       roles: { curator: user.isCurator ?? false, owner: isOwnerUser(user.id) },
       journey: { published: false, approved: false, payouts: user.payoutsEnabled ?? false, priced: false },
     };
@@ -64,17 +64,14 @@ export const fetchStudioSummary = createServerFn({ method: "GET" }).handler(
         .where(eq(schema.namespaces.name, user.username))
         .limit(1);
       if (ns) {
+        // Count every listing kind. Components and tools/sites are the first
+        // kinds, and future kinds remain included without dashboard changes.
         const [row] = await db
           .select({ total: count() })
           .from(schema.components)
-          .where(
-            and(
-              eq(schema.components.namespaceId, ns.id),
-              eq(schema.components.framework, "react"),
-            ),
-          );
-        summary.counts.components = row?.total ?? 0;
-        summary.journey.published = summary.counts.components > 0;
+          .where(eq(schema.components.namespaceId, ns.id));
+        summary.counts.listings = row?.total ?? 0;
+        summary.journey.published = summary.counts.listings > 0;
 
         const [approved] = await db
           .select({ total: count() })

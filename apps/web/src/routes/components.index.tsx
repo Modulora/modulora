@@ -19,12 +19,14 @@ import {
 import { HiCheckBadge } from "react-icons/hi2";
 import { PriceSeal, PromotedBadge } from "@/components/money";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { HiCalendarDays as CalendarDays, HiClock as Clock3, HiCube as Component, HiFunnel as Filter, HiGift as Gift, HiSquares2X2 as Grid2X2, HiListBullet as List, HiPlus as Plus, HiMagnifyingGlass as Search, HiSparkles as Sparkles, HiTableCells as Table2, HiTag as Tag, HiUsers as Users, HiXMark as X } from "react-icons/hi2";
+import { HiCalendarDays as CalendarDays, HiClock as Clock3, HiCube as Component, HiFunnel as Filter, HiGift as Gift, HiGlobeAlt as Globe, HiSquares2X2 as Grid2X2, HiListBullet as List, HiPlus as Plus, HiMagnifyingGlass as Search, HiSparkles as Sparkles, HiTableCells as Table2, HiTag as Tag, HiUsers as Users, HiXMark as X } from "react-icons/hi2";
 
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LiveCardPreview } from "@/components/live-card-preview";
+import { ToolListingImage } from "@/components/tool-listing-image";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fetchCatalog, fetchFeatured } from "@/lib/catalog-db";
@@ -170,7 +172,7 @@ function Catalog() {
             <Input
               value={search.q}
               onChange={(event) => void setSearch({ q: event.target.value })}
-              placeholder="Search components, tools, and sites"
+              placeholder="Search listings"
               className="h-9 bg-secondary/50 pl-9"
             />
           </div>
@@ -252,7 +254,7 @@ function Catalog() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Components</span>
+            <span className="text-muted-foreground">Listings</span>
             <span className="text-border">/</span>
             <span className="capitalize">{search.view === "authors" ? "Top authors" : search.view}</span>
             {search.category ? <><span className="text-border">/</span><span>{search.category}</span></> : null}
@@ -266,9 +268,13 @@ function Catalog() {
               <LayoutButton label="Grid" active={search.layout === "grid"} onClick={() => void setSearch({ layout: "grid" })}><Grid2X2 /></LayoutButton>
               <LayoutButton label="List" active={search.layout === "list"} onClick={() => void setSearch({ layout: "list" })}><List /></LayoutButton>
             </div>
-            <Button asChild size="sm" className="gap-1.5">
-              <Link to="/dashboard/new"><Plus className="size-4" /> Add yours</Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button size="sm" className="gap-1.5"><Plus className="size-4" /> Add yours</Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild><Link to="/dashboard/new" className="min-h-11 gap-2"><Component className="size-4" />Component</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/dashboard/tools/new" className="min-h-11 gap-2"><Globe className="size-4" />Tool or site</Link></DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </motion.div>
 
@@ -331,7 +337,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
 function ToolCardPreview({ item, className }: { item: CatalogItem; className?: string }) {
   return (
     <div className={`relative aspect-[16/10] overflow-hidden rounded-lg border border-border/60 bg-secondary/30 ${className ?? ""}`}>
-      {item.site?.ogImageUrl ? <img src={item.site.ogImageUrl} alt="" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" /> : <div className="flex size-full items-center justify-center text-sm text-muted-foreground">{item.site?.domain ?? "External tool"}</div>}
+      <ToolListingImage src={item.site?.ogImageUrl} domain={item.site?.domain} className="size-full" imageClassName="transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none" />
       <span className="absolute bottom-2 left-2 rounded-md bg-background/85 px-2 py-1 text-[10px] font-medium backdrop-blur-sm">Live site · {item.site?.domain}</span>
     </div>
   );

@@ -25,7 +25,7 @@ import type { CurrentUser } from "@/lib/session";
 import { isRenderableImageUrl } from "@/lib/image-url";
 
 const NAV_LINKS = [
-  { label: "Components", to: "/components" as const },
+  { label: "Listings", to: "/components" as const },
   { label: "Docs", to: "/docs/$" as const, params: { _splat: "" } },
 ];
 
