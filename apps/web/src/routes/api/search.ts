@@ -73,7 +73,7 @@ async function handle({ request }: { request: Request }) {
     description: row.description,
     category: row.category,
     // Paid = marketplace price or external-commercial listing.
-    paid: (DIRECT_MARKETPLACE_ENABLED && row.price != null) || row.sourceModel !== "open-source",
+    paid: (DIRECT_MARKETPLACE_ENABLED && row.price != null) || (row.sourceModel !== "open-source" && row.sourceModel !== "external-site"),
     price: DIRECT_MARKETPLACE_ENABLED ? row.price : null,
     url: `https://modulora.dev/components/${row.namespace}/${row.name}`,
   }));

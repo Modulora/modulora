@@ -9,7 +9,8 @@ export type SourceModel =
   | "open-source"
   | "external-commercial"
   | "private-team"
-  | "hosted-commercial";
+  | "hosted-commercial"
+  | "external-site";
 
 export type EvidenceType =
   | "publisher-identity"
@@ -53,7 +54,7 @@ export interface CatalogItem {
   namespace: string;
   name: string;
   version: string;
-  framework: "react";
+  framework: "react" | "web";
   sourceModel: SourceModel;
   visibility: "public" | "unlisted" | "private";
   owner: { kind: "user" | "organization"; identifier: string };
@@ -67,6 +68,14 @@ export interface CatalogItem {
   title: string;
   description: string;
   category: string;
+  listingKind?: "component" | "tool";
+  site?: {
+    url: string;
+    domain: string;
+    ogTitle: string | null;
+    ogDescription: string | null;
+    ogImageUrl: string | null;
+  };
   distributionChannels?: DistributionChannel[];
   /** shadcn-style type label (Button, Dialog, …). */
   componentType?: string;
@@ -123,7 +132,7 @@ export function needsInteractionHint(files: ComponentFile[] | undefined): boolea
 
 /** Commerce display only; licensing and source-model copy remain separate. */
 export function isPaidCatalogItem(item: CatalogItem): boolean {
-  return item.sourceModel !== "open-source" || item.marketplacePrice != null || item.inPaidCollection === true;
+  return (item.sourceModel !== "open-source" && item.sourceModel !== "external-site") || item.marketplacePrice != null || item.inPaidCollection === true;
 }
 
 export const catalog: CatalogItem[] = [

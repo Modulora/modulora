@@ -3,6 +3,7 @@ import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-rout
 import { buyComponent, confirmCheckout } from "@/lib/marketplace";
 import { OwnedTray } from "@/components/owned";
 import { CollectionView } from "@/components/collection-view";
+import { ToolListingDetail } from "@/components/tool-listing-detail";
 import { fetchCollectionDetail } from "@/lib/catalog-db";
 import { PriceSeal } from "@/components/money";
 import { SaveMenu } from "@/components/save-menu";
@@ -94,6 +95,7 @@ const EVIDENCE_LABELS: Record<string, string> = {
 function ComponentDetail() {
   const data = Route.useLoaderData();
   if (data.kind === "collection") return <CollectionView collection={data.collection} />;
+  if (data.item.listingKind === "tool") return <ToolListingDetail item={data.item} />;
   return <ComponentDetailInner item={data.item} files={data.files} colorVisionMode={data.colorVisionMode} viewerPlus={data.viewerPlus} />;
 }
 

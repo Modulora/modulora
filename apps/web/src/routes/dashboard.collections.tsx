@@ -30,7 +30,7 @@ import { EXTERNAL_DOMAIN_VERIFICATION_REQUIRED } from "@/lib/flags";
 export const Route = createFileRoute("/dashboard/collections")({
   loader: async () => ({
     collections: await fetchMyCollections(),
-    components: await fetchMyComponents(),
+    components: (await fetchMyComponents()).filter((item) => item.listingKind === "component"),
     payouts: await getPayoutStatus(),
   }),
   component: CollectionsPage,

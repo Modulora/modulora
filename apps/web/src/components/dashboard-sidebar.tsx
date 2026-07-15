@@ -1,15 +1,17 @@
 /** Persistent desktop navigation with a compact, collapsible mobile variant. */
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { HiBanknotes as Banknote, HiChartBar as BarChart3, HiSquaresPlus as Blocks, HiBookmark as Bookmark, HiChevronDown as ChevronDown, HiClipboardDocumentCheck as ClipboardCheck, HiBeaker as FlaskConical, HiKey as KeyRound, HiSquares2X2 as LayoutDashboard, HiBuildingLibrary as Library, HiPlus as Plus, HiCog6Tooth as Settings, HiShieldExclamation as ShieldEllipsis, HiShoppingBag as ShoppingBag, HiSparkles as Sparkles, HiCommandLine as TerminalSquare, HiUserCircle as UserRound } from "react-icons/hi2";
+import { HiBanknotes as Banknote, HiChartBar as BarChart3, HiSquaresPlus as Blocks, HiBookmark as Bookmark, HiChevronDown as ChevronDown, HiClipboardDocumentCheck as ClipboardCheck, HiBeaker as FlaskConical, HiGlobeAlt as Globe, HiSquares2X2 as LayoutDashboard, HiBuildingLibrary as Library, HiPlus as Plus, HiCog6Tooth as Settings, HiShieldExclamation as ShieldEllipsis, HiShoppingBag as ShoppingBag, HiSparkles as Sparkles, HiCommandLine as TerminalSquare, HiUserCircle as UserRound } from "react-icons/hi2";
 
 
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { StudioSummary } from "@/lib/studio";
 import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 
 const sectionLabels = [
   ["/dashboard/components", "Components"],
+  ["/dashboard/tools", "List a tool"],
   ["/dashboard/lists", "Lists"],
   ["/dashboard/purchases", "Purchases"],
   ["/dashboard/collections", "Collections"],
@@ -68,9 +70,15 @@ function SidebarContent({ summary, mobile = false }: { summary: StudioSummary; m
   const itemClass = `flex items-center gap-2.5 rounded-md px-2 text-sm text-foreground transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&.active]:bg-accent ${mobile ? "min-h-11 py-2" : "py-1.5"}`;
   return (
     <div className="flex flex-col gap-6">
-      <Button asChild className={mobile ? "h-11 w-full" : "w-full"}>
-        <Link to="/dashboard/new"><Plus /> New component</Link>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button className={`${mobile ? "h-11" : ""} w-full justify-between`}><span className="flex items-center gap-2"><Plus /> New</span><ChevronDown className="size-4" /></Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+          <DropdownMenuItem asChild><Link to="/dashboard/new" className="min-h-11 gap-3"><Blocks className="size-4" /><span>New component</span></Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link to="/dashboard/tools/new" className="min-h-11 gap-3"><Globe className="size-4" /><span>List a tool/site</span></Link></DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <SidebarSection label="Library">
         <Link to="/dashboard" activeOptions={{ exact: true }} className={itemClass}><BarChart3 className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Overview</span></Link>
@@ -90,7 +98,6 @@ function SidebarContent({ summary, mobile = false }: { summary: StudioSummary; m
       </SidebarSection>
 
       <SidebarSection label="Tools">
-        <SidebarRow icon={KeyRound} label="API key" badge="Soon" mobile={mobile} />
         <SidebarRow icon={TerminalSquare} label="Modulora CLI" badge="Soon" mobile={mobile} />
         <Link to="/dashboard/labs" className={itemClass}><FlaskConical className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Labs</span></Link>
       </SidebarSection>

@@ -102,13 +102,13 @@ export const saveCollection = createServerFn({ method: "POST" })
       .from(schema.components)
       .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.name, data.name)))
       .limit(1);
-    if (clash) return { ok: false, error: `You already have a component named "${data.name}".` };
+    if (clash) return { ok: false, error: `You already have a listing named "${data.name}".` };
 
     // Members must be the creator's own components.
     const own = await db
       .select({ id: schema.components.id, name: schema.components.name })
       .from(schema.components)
-      .where(eq(schema.components.namespaceId, ns.id));
+      .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.listingKind, "component")));
     const byName = new Map(own.map((c) => [c.name, c.id]));
     const memberIds = data.componentNames.map((name) => byName.get(name)).filter((id): id is string => Boolean(id));
     if (memberIds.length !== data.componentNames.length) return { ok: false, error: "Collections can only contain your own components." };

@@ -40,6 +40,7 @@ const SOURCE_MODELS = [
   "external-commercial",
   "hosted-commercial",
   "private-team",
+  "external-site",
 ] as const satisfies readonly SourceModel[];
 const LICENSES = ["open", "commercial", "custom"] as const;
 const EVIDENCE_FILTERS = [
@@ -90,6 +91,7 @@ const SOURCE_OPTIONS: { value: (typeof SOURCE_MODELS)[number]; label: string }[]
   { value: "external-commercial", label: "External commercial" },
   { value: "hosted-commercial", label: "Hosted commercial" },
   { value: "private-team", label: "Private team" },
+  { value: "external-site", label: "Tools & sites" },
 ];
 const EVIDENCE_OPTIONS: { value: (typeof EVIDENCE_FILTERS)[number]; label: string }[] = [
   { value: "content-integrity", label: "Content integrity" },
@@ -168,7 +170,7 @@ function Catalog() {
             <Input
               value={search.q}
               onChange={(event) => void setSearch({ q: event.target.value })}
-              placeholder="Search components"
+              placeholder="Search components, tools, and sites"
               className="h-9 bg-secondary/50 pl-9"
             />
           </div>
@@ -293,7 +295,7 @@ function Catalog() {
         ) : (
           <EmptyState
             icon={Filter}
-            title="No components match"
+            title="No listings match"
             description="Try another category or clear the filters."
             action={<button type="button" onClick={clear} className="text-sm underline underline-offset-4">Clear filters</button>}
             className="min-h-[30rem] justify-center border-0"
@@ -311,7 +313,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
       params={{ namespace: item.namespace, name: item.name }}
       className={`group flex overflow-hidden rounded-xl border border-border/60 bg-card/40 transition-colors hover:border-foreground/20 hover:bg-card/70 ${list ? "items-center gap-5 p-3" : "flex-col p-3"}`}
     >
-      <LiveCardPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} />
+      {item.listingKind === "tool" ? <ToolCardPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} /> : <LiveCardPreview item={item} className={list ? "w-56 shrink-0" : "w-full"} />}
       <div className="flex min-w-0 flex-1 items-start justify-between gap-3 px-1 pb-1 pt-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
@@ -320,9 +322,18 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">by {item.namespace}{item.inCollection ? ` in ${item.inCollection}` : ""} · {item.category}</p>
         </div>
-        <PriceSeal paid={isPaidCatalogItem(item)} label={isPaidCatalogItem(item) ? item.purchase?.priceLabel ?? "Paid" : "Free"} />
+        {item.listingKind === "tool" ? <Badge variant="outline">Tool</Badge> : <PriceSeal paid={isPaidCatalogItem(item)} label={isPaidCatalogItem(item) ? item.purchase?.priceLabel ?? "Paid" : "Free"} />}
       </div>
     </Link>
+  );
+}
+
+function ToolCardPreview({ item, className }: { item: CatalogItem; className?: string }) {
+  return (
+    <div className={`relative aspect-[16/10] overflow-hidden rounded-lg border border-border/60 bg-secondary/30 ${className ?? ""}`}>
+      {item.site?.ogImageUrl ? <img src={item.site.ogImageUrl} alt="" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" /> : <div className="flex size-full items-center justify-center text-sm text-muted-foreground">{item.site?.domain ?? "External tool"}</div>}
+      <span className="absolute bottom-2 left-2 rounded-md bg-background/85 px-2 py-1 text-[10px] font-medium backdrop-blur-sm">Live site · {item.site?.domain}</span>
+    </div>
   );
 }
 

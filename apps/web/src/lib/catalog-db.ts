@@ -45,13 +45,13 @@ function toCatalogItem(
   files: CatalogItem["files"] = [],
   evidence: CatalogItem["evidence"] = [],
 ): CatalogItem {
-  const isPaid = component.sourceModel !== "open-source";
+  const isPaid = component.sourceModel !== "open-source" && component.sourceModel !== "external-site";
   return {
     schemaVersion: "0",
     namespace,
     name: component.name,
     version: version?.version ?? "0.0.0",
-    framework: "react",
+    framework: component.framework as CatalogItem["framework"],
     sourceModel: component.sourceModel as CatalogItem["sourceModel"],
     visibility: component.visibility as CatalogItem["visibility"],
     owner: { kind: "user", identifier: namespace },
@@ -61,7 +61,9 @@ function toCatalogItem(
     license:
       version?.licenseKind === "spdx"
         ? { kind: "spdx", spdxExpression: version.spdxExpression ?? "MIT" }
-        : { kind: "commercial", url: component.purchaseUrl ?? undefined },
+        : version?.licenseKind === "custom"
+          ? { kind: "custom", url: component.siteUrl ?? component.purchaseUrl ?? undefined }
+          : { kind: "commercial", url: component.purchaseUrl ?? undefined },
     purchase:
       isPaid && component.purchaseUrl
         ? { url: component.purchaseUrl, domain: domainOf(component.purchaseUrl) ?? "" }
@@ -69,6 +71,16 @@ function toCatalogItem(
     title: component.title,
     description: component.description,
     category: categoryLabel(component.category),
+    listingKind: component.listingKind as CatalogItem["listingKind"],
+    site: component.listingKind === "tool" && component.siteUrl && component.siteDomain
+      ? {
+          url: component.siteUrl,
+          domain: component.siteDomain,
+          ogTitle: component.ogTitle,
+          ogDescription: component.ogDescription,
+          ogImageUrl: component.ogImageUrl,
+        }
+      : undefined,
     componentType: componentTypeLabel(component.componentType) ?? undefined,
     distributionChannels: component.distributionChannels ?? undefined,
     creatorShadcnCommand: component.shadcnCommand ?? undefined,
@@ -693,6 +705,9 @@ export interface MyComponent {
   marketplacePrice: number | null;
   updatedAt: string;
   reviewHistory: CreatorReviewRecord[];
+  listingKind: "component" | "tool";
+  siteUrl: string | null;
+  previewImageUrl: string | null;
 }
 
 export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
@@ -760,6 +775,9 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
           limitations: record.limitations,
           createdAt: record.createdAt.toISOString(),
         })),
+      listingKind: row.component.listingKind,
+      siteUrl: row.component.siteUrl,
+      previewImageUrl: row.component.previewImageUrl,
     }));
   },
 );
@@ -807,7 +825,7 @@ export const fetchComponentForEdit = createServerFn({ method: "GET" })
           .orderBy(schema.componentFiles.orderIndex)
       : [];
 
-    const isPaid = row.component.sourceModel !== "open-source";
+    const isPaid = row.component.sourceModel !== "open-source" && row.component.sourceModel !== "external-site";
     return {
       name: row.component.name,
       title: row.component.title,

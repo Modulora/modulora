@@ -212,13 +212,14 @@ export const components = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     category: text("category").notNull(),
+    listingKind: text("listing_kind", { enum: ["component", "tool"] }).notNull().default("component"),
     // Optional shadcn-style type (button, dialog, data-table, …).
     componentType: text("component_type"),
-    framework: text("framework", { enum: ["react"] }).notNull(),
+    framework: text("framework", { enum: ["react", "web"] }).notNull(),
     // registry-item type per shadcn: registry:block | registry:component | ...
     itemType: text("item_type").notNull().default("registry:component"),
     sourceModel: text("source_model", {
-      enum: ["open-source", "external-commercial", "private-team", "hosted-commercial"],
+      enum: ["open-source", "external-commercial", "private-team", "hosted-commercial", "external-site"],
     }).notNull(),
     visibility: text("visibility", { enum: ["public", "unlisted", "private"] })
       .notNull()
@@ -240,6 +241,13 @@ export const components = pgTable(
     latestVersionId: uuid("latest_version_id"),
     // Presentation:
     previewImageUrl: text("preview_image_url"),
+    // Owner-authorized external tool/site listing metadata. The domain must
+    // exist in verified_domains for the owning user before submission.
+    siteUrl: text("site_url"),
+    siteDomain: text("site_domain"),
+    ogTitle: text("og_title"),
+    ogDescription: text("og_description"),
+    ogImageUrl: text("og_image_url"),
     // Closed-source / external redirect:
     purchaseUrl: text("purchase_url"),
     purchaseDomain: text("purchase_domain"),
