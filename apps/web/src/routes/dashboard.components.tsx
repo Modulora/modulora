@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
-import { HiSquaresPlus as Blocks, HiArrowTopRightOnSquare as ExternalLink, HiArrowPath as Loader2, HiPencil as Pencil, HiPlus as Plus, HiSparkles as Sparkles, HiTag as Tag, HiTrash as Trash2 } from "react-icons/hi2";
+import { HiSquaresPlus as Blocks, HiArrowTopRightOnSquare as ExternalLink, HiArrowPath as Loader2, HiClipboardDocumentCheck as Review, HiGlobeAlt as Globe, HiMagnifyingGlass as Search, HiPencil as Pencil, HiPlus as Plus, HiSparkles as Sparkles, HiTag as Tag, HiTrash as Trash2 } from "react-icons/hi2";
 
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ import { LiveCardPreview } from "@/components/live-card-preview";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardPageHeader } from "@/components/dashboard-page-header";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 import { REVIEW_CHECKS } from "@/lib/review-standard";
@@ -41,6 +43,12 @@ function MyComponents() {
   const { user } = Route.useRouteContext();
   const router = useRouter();
   const [promoted, setPromoted] = useState(false);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<"all" | MyComponent["reviewStatus"]>("all");
+  const visibleComponents = components.filter((component) => {
+    const matchesQuery = `${component.title} ${component.name} ${component.category}`.toLowerCase().includes(query.trim().toLowerCase());
+    return matchesQuery && (status === "all" || component.reviewStatus === status);
+  });
 
   // Confirm a returning promotion Checkout, then clean the URL.
   useEffect(() => {
@@ -55,10 +63,10 @@ function MyComponents() {
   }, [router]);
 
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <DashboardPageHeader
-        title="Components"
-        description={DIRECT_MARKETPLACE_ENABLED ? "Edit, price, promote, or remove what you've published." : "Edit, distribute, promote, or remove what you've published."}
+        title="Listings"
+        description={DIRECT_MARKETPLACE_ENABLED ? "Manage your components, tools, pricing, and review state." : "Manage your components, tools, distribution, and review state."}
         action={<Button asChild><Link to="/dashboard/new"><Plus /> New component</Link></Button>}
       />
 
@@ -71,17 +79,41 @@ function MyComponents() {
       {components.length === 0 ? (
         <EmptyState
           icon={Blocks}
-          title="No components yet"
-          description="Publish your first component to manage its review, pricing, and distribution here."
+          title="No listings yet"
+          description="Publish a component or list an owner-authorized tool to manage it here."
           action={<Button asChild size="sm"><Link to="/dashboard/new">New component</Link></Button>}
           className="min-h-64 justify-center"
         />
       ) : (
-        <div className="flex flex-col gap-2">
-          {components.map((component) => (
-            <ComponentRow key={component.name} component={component} username={user?.username ?? ""} payoutsEnabled={Boolean(user?.payoutsEnabled)} />
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/35 p-3 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1">
+              <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search listings" className="h-10 bg-background/60 pl-9" />
+            </div>
+            <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
+              <SelectTrigger className="h-10 w-full bg-background/60 sm:w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All states</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="pending">In review</SelectItem>
+                <SelectItem value="approved">Live</SelectItem>
+                <SelectItem value="rejected">Changes requested</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="px-1 text-xs tabular-nums text-muted-foreground">{visibleComponents.length} shown</span>
+          </div>
+
+          {visibleComponents.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {visibleComponents.map((component) => (
+                <ComponentCard key={component.name} component={component} username={user?.username ?? ""} payoutsEnabled={Boolean(user?.payoutsEnabled)} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState icon={Search} title="No listings match" description="Try another search or review state." className="min-h-64 justify-center" />
+          )}
+        </>
       )}
     </div>
   );
@@ -173,7 +205,7 @@ const REVIEW_DECISION_LABELS = {
   escalate: "Escalated",
 } as const;
 
-function ComponentRow({ component, username, payoutsEnabled }: { component: MyComponent; username: string; payoutsEnabled: boolean }) {
+function ComponentCard({ component, username, payoutsEnabled }: { component: MyComponent; username: string; payoutsEnabled: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState("");
@@ -198,66 +230,43 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
   }
 
   return (
-    <div className="flex flex-col items-stretch gap-3 rounded-xl border border-border/60 bg-card/40 p-4 sm:flex-row sm:items-center sm:gap-4">
-      {component.listingKind === "tool" ? (
-        <div className="hidden aspect-[16/10] w-28 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-secondary/30 sm:block">{component.previewImageUrl ? <img src={component.previewImageUrl} alt="" className="size-full object-cover" /> : null}</div>
-      ) : <LiveCardPreview item={{ namespace: username, name: component.name, title: component.title, live: true }} className="w-28 shrink-0 max-sm:hidden" />}
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="min-w-0 truncate font-medium">{component.title}</h2>
-          {component.listingKind === "tool" ? <Badge variant="outline">Tool</Badge> : <PriceSeal paid={component.sourceModel !== "open-source" || (DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null)} label={DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />}
+    <article className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/45 shadow-sm transition-[background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:border-foreground/15 hover:bg-card/65 hover:shadow-md motion-reduce:transition-none">
+      <div className="relative overflow-hidden border-b border-border/60 bg-secondary/20">
+        {component.listingKind === "tool" ? (
+          <div className="flex aspect-[16/10] w-full items-center justify-center">{component.previewImageUrl ? <img src={component.previewImageUrl} alt="" className="size-full object-cover" /> : <Globe aria-hidden className="size-7 text-muted-foreground/45" />}</div>
+        ) : <LiveCardPreview item={{ namespace: username, name: component.name, title: component.title, live: true }} className="w-full rounded-none border-0" />}
+        <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
           <ReviewBadge status={component.reviewStatus} />
+          {component.listingKind === "tool" ? <Badge variant="secondary">Tool</Badge> : <PriceSeal paid={component.sourceModel !== "open-source" || (DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null)} label={DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />}
         </div>
-        <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">@{username}/{component.name}@{component.version} · {component.category}</p>
-        {component.reviewStatus === "rejected" && component.reviewReason ? (
-          <p className="mt-1 line-clamp-2 text-xs text-destructive">Changes requested: {component.reviewReason}</p>
-        ) : null}
-        {component.reviewHistory.length > 0 ? (
-          <details className="mt-2 rounded-lg border border-border/50 bg-background/30 px-3 py-2 text-xs">
-            <summary className="min-h-11 cursor-pointer py-3 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
-              Review history ({component.reviewHistory.length})
-            </summary>
-            <ol className="flex flex-col gap-3 border-t border-border/40 py-3">
-              {component.reviewHistory.map((record) => (
-                <li key={record.id} className="rounded-md border border-border/40 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-medium">{REVIEW_DECISION_LABELS[record.decision]}</p>
-                    <p className="text-muted-foreground">{record.version ? `v${record.version} · ` : ""}{new Date(record.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p>
-                  </div>
-                  <p className="mt-2 leading-relaxed">{record.rationale}</p>
-                  <p className="mt-2 leading-relaxed text-muted-foreground">Scope: {record.limitations}</p>
-                  <p className="mt-2 font-medium">Checklist · {record.standardVersion}</p>
-                  <ul className="mt-1 grid gap-1 sm:grid-cols-2">
-                    {(record.standardVersion.startsWith("tool-") ? TOOL_REVIEW_CHECKS : REVIEW_CHECKS).map((check) => (
-                      <li key={check.id} className="flex justify-between gap-2 text-muted-foreground">
-                        <span>{check.title}</span>
-                        <span className="shrink-0 capitalize">{(record.checklist[check.id] ?? "not recorded").replace("-", " ")}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ol>
-          </details>
-        ) : null}
       </div>
-      <div className="flex flex-wrap items-center gap-1 border-t border-border/50 pt-2 sm:shrink-0 sm:border-0 sm:pt-0">
-        <Button asChild variant="ghost" size="sm" className="gap-1.5">
-          <Link to="/components/$namespace/$name" params={{ namespace: username, name: component.name }}><ExternalLink className="size-3.5" /> View</Link>
+
+      <div className="flex min-w-0 flex-1 flex-col p-4">
+        <div className="min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0"><h2 className="truncate text-base font-semibold">{component.title}</h2><p className="mt-0.5 truncate text-xs text-muted-foreground">{component.category}</p></div>
+            <span className="shrink-0 font-mono text-[11px] text-muted-foreground">v{component.version}</span>
+          </div>
+          <p className="mt-3 truncate font-mono text-xs text-muted-foreground">@{username}/{component.name}</p>
+        </div>
+        {component.reviewStatus === "rejected" && component.reviewReason ? (
+          <p className="mt-3 line-clamp-2 rounded-lg bg-destructive/8 px-3 py-2 text-xs leading-relaxed text-destructive">{component.reviewReason}</p>
+        ) : null}
+        {component.reviewHistory.length > 0 ? <ReviewHistoryDialog component={component} /> : <div className="min-h-9" />}
+
+        <div className="mt-auto flex items-center gap-1 border-t border-border/50 pt-3">
+        <Button asChild variant="outline" size="sm" className="flex-1 gap-1.5">
+          <Link to="/components/$namespace/$name" params={{ namespace: username, name: component.name }}><ExternalLink className="size-3.5" /> Open</Link>
         </Button>
-        {component.listingKind !== "tool" ? <Button asChild variant="ghost" size="sm" className="gap-1.5"><Link to="/dashboard/edit/$name" params={{ name: component.name }}><Pencil className="size-3.5" /> Edit</Link></Button> : null}
+        {component.listingKind !== "tool" ? <Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon-sm"><Link to="/dashboard/edit/$name" params={{ name: component.name }} aria-label={`Edit ${component.title}`}><Pencil className="size-3.5" /></Link></Button></TooltipTrigger><TooltipContent>Edit component</TooltipContent></Tooltip> : null}
         {component.reviewStatus === "approved" && component.listingKind !== "tool" ? (
           <>
             {DIRECT_MARKETPLACE_ENABLED ? <PriceDialog component={component} payoutsEnabled={payoutsEnabled} /> : null}
-            <Button variant="ghost" size="sm" className="gap-1.5" disabled={promoting} onClick={onPromote}>
-              {promoting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />} Promote
-            </Button>
+            <Tooltip><TooltipTrigger asChild><Button aria-label={`Promote ${component.title}`} variant="ghost" size="icon-sm" className="holographic-promote-button" disabled={promoting} onClick={onPromote}>{promoting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}</Button></TooltipTrigger><TooltipContent>Promote listing</TooltipContent></Tooltip>
           </>
         ) : null}
         <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setConfirm(""); }}>
-          <DialogTrigger asChild>
-            <Button aria-label={`Delete ${component.title}`} variant="ghost" size="icon-sm" className="ml-auto text-muted-foreground hover:text-destructive"><Trash2 /></Button>
-          </DialogTrigger>
+          <Tooltip><TooltipTrigger asChild><DialogTrigger asChild><Button aria-label={`Delete ${component.title}`} variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive"><Trash2 /></Button></DialogTrigger></TooltipTrigger><TooltipContent>Delete listing</TooltipContent></Tooltip>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Delete {component.title}?</DialogTitle>
@@ -271,7 +280,34 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
-    </div>
+    </article>
+  );
+}
+
+function ReviewHistoryDialog({ component }: { component: MyComponent }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild><Button variant="ghost" size="sm" className="mt-3 self-start gap-1.5 px-2"><Review className="size-3.5" /> Review history · {component.reviewHistory.length}</Button></DialogTrigger>
+      <DialogContent className="max-h-[80svh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader><DialogTitle>{component.title} review history</DialogTitle><DialogDescription>Append-only decisions and the published checklist used for each review.</DialogDescription></DialogHeader>
+        <ol className="mt-4 flex flex-col gap-3">
+          {component.reviewHistory.map((record) => (
+            <li key={record.id} className="rounded-lg border border-border/60 bg-card/40 p-4 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-medium">{REVIEW_DECISION_LABELS[record.decision]}</p><p className="text-xs text-muted-foreground">{record.version ? `v${record.version} · ` : ""}{new Date(record.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p></div>
+              <p className="mt-3 leading-relaxed">{record.rationale}</p>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Scope: {record.limitations}</p>
+              <p className="mt-4 text-xs font-medium">Checklist · {record.standardVersion}</p>
+              <ul className="mt-2 grid gap-2 sm:grid-cols-2">{(record.standardVersion.startsWith("tool-") ? TOOL_REVIEW_CHECKS : REVIEW_CHECKS).map((check) => {
+                const result = record.checklist[check.id] ?? "not recorded";
+                const resultClass = result === "pass" ? "text-receipt" : result === "fail" || result === "flag" ? "text-destructive" : "text-muted-foreground";
+                return <li key={check.id} className="flex justify-between gap-3 rounded-md bg-secondary/35 px-2.5 py-2 text-xs text-muted-foreground"><span>{check.title}</span><span className={`shrink-0 capitalize ${resultClass}`}>{result.replaceAll("-", " ")}</span></li>;
+              })}</ul>
+            </li>
+          ))}
+        </ol>
+      </DialogContent>
+    </Dialog>
   );
 }

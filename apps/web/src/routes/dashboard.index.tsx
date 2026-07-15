@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, getRouteApi, Link } from "@tanstack/react-router";
-import { HiArrowRight as ArrowRight, HiChartBar as BarChart3, HiSquaresPlus as Blocks, HiBuildingLibrary as Library, HiUserCircle as UserRound } from "react-icons/hi2";
+import { HiArrowRight as ArrowRight, HiChartBar as BarChart3, HiSquaresPlus as Blocks, HiBuildingLibrary as Library, HiGlobeAlt as Globe, HiShieldCheck as ShieldCheck, HiUserCircle as UserRound } from "react-icons/hi2";
 
 import type { StudioSummary } from "@/lib/studio";
 import { JourneyChecklist, journeyComplete } from "@/components/journey";
@@ -15,11 +16,13 @@ type ContentType = {
   label: string;
   icon: typeof Blocks;
   key: keyof StudioSummary["counts"];
+  receipt?: boolean;
 };
 
 const CONTENT_TYPES: ContentType[] = [
-  { label: "Components", icon: Blocks, key: "components" },
-  { label: "Libraries", icon: Library, key: "libraries" },
+  { label: "Listings", icon: Blocks, key: "components" },
+  { label: "Collections", icon: Library, key: "libraries" },
+  { label: "Verified installs", icon: ShieldCheck, key: "verifiedInstalls", receipt: true },
 ];
 
 function Dashboard() {
@@ -30,19 +33,17 @@ function Dashboard() {
     <div className="flex flex-col gap-8">
       <DashboardPageHeader
         title="Overview"
-        description={<>
-          Welcome back
-          {displayName ? (
-            <>
-              , <span className="text-foreground">{displayName}</span>
-            </>
-          ) : null}
-          . Your work at a glance.
-        </>}
+        description={<LocalGreeting name={displayName} />}
       />
 
+      <div className="grid w-full gap-4 sm:grid-cols-3">
+        {CONTENT_TYPES.map((type) => (
+          <StatCard key={type.label} icon={type.icon} label={type.label} value={summary.counts[type.key]} receipt={type.receipt} />
+        ))}
+      </div>
+
       {!journeyComplete(summary.journey) ? (
-        <div className="max-w-2xl">
+        <div className="w-full">
           <JourneyChecklist
             journey={summary.journey}
             renderLink={(href, children) => (
@@ -57,27 +58,27 @@ function Dashboard() {
         </div>
       ) : null}
 
-      <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
-        {CONTENT_TYPES.map((type) => (
-          <StatCard key={type.label} icon={type.icon} label={type.label} value={summary.counts[type.key]} />
-        ))}
-      </div>
-
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Publish">
+        <Panel title="Create">
           <ActionRow
             icon={Blocks}
-            title="New component"
-            description="Build with a live preview, then submit it for review."
+            title="Component"
+            description="Publish reusable UI source for curator review."
             to="/dashboard/new"
+          />
+          <ActionRow
+            icon={Globe}
+            title="Tool or site"
+            description="List an owner-authorized resource from a domain you control."
+            to="/dashboard/tools/new"
           />
         </Panel>
 
-        <Panel title="Track">
+        <Panel title="Reach">
           <ActionRow
             icon={BarChart3}
             title="Analytics"
-            description="Views and verified installs across your components."
+            description="See views and digest-verified installs."
             to="/dashboard/analytics"
           />
           <ActionRow
@@ -85,8 +86,8 @@ function Dashboard() {
             title="Public profile"
             description={
               summary.namespace
-                ? `Everything you publish, at modulora.dev/${summary.namespace}.`
-                : "Claim a namespace to get a public profile."
+                ? `Preview modulora.dev/${summary.namespace}.`
+                : "Claim a namespace and publish your profile."
             }
             to={summary.namespace ? "/$username" : undefined}
             params={summary.namespace ? { username: summary.namespace } : undefined}
@@ -97,14 +98,25 @@ function Dashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: typeof Blocks; label: string; value: number }) {
+function LocalGreeting({ name }: { name?: string | null }) {
+  const [greeting, setGreeting] = useState("Hey");
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    setGreeting(hour >= 5 && hour < 12 ? "Good morning" : hour >= 12 && hour < 18 ? "Good afternoon" : hour >= 18 && hour < 23 ? "Good evening" : "Hey");
+  }, []);
+
+  return <>{greeting}{name ? <>, <span className="text-foreground">{name}</span></> : null}.</>;
+}
+
+function StatCard({ icon: Icon, label, value, receipt = false }: { icon: typeof Blocks; label: string; value: number; receipt?: boolean }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/60 p-4">
+    <div className="flex min-h-32 flex-col justify-between rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{label}</span>
-        <Icon className="size-4 text-muted-foreground/60" />
+        <span className={`flex size-8 items-center justify-center rounded-lg ${receipt ? "bg-receipt/10 text-receipt" : "bg-secondary text-muted-foreground"}`}><Icon className="size-4" /></span>
       </div>
-      <span className="text-3xl font-bold tabular-nums tracking-tight">{value}</span>
+      <span className={`text-3xl font-bold tabular-nums tracking-tight ${receipt ? "text-receipt" : ""}`}>{value}</span>
     </div>
   );
 }
@@ -129,7 +141,7 @@ function ActionRow({
   icon: typeof Blocks;
   title: string;
   description: string;
-  to?: "/dashboard/new" | "/$username" | "/dashboard/analytics";
+  to?: "/dashboard/new" | "/dashboard/tools/new" | "/$username" | "/dashboard/analytics";
   params?: { username: string };
   disabled?: boolean;
 }) {
@@ -143,7 +155,7 @@ function ActionRow({
         <span className="text-xs text-muted-foreground">{description}</span>
       </span>
       {!disabled ? (
-        <ArrowRight className="size-4 text-muted-foreground" />
+        <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none" />
       ) : (
         <span className="rounded-full border border-border/60 px-1.5 py-0.5 text-xs uppercase tracking-wide text-muted-foreground">
           Soon
@@ -157,7 +169,7 @@ function ActionRow({
   }
 
   return (
-    <Link to={to} params={params as never} className="flex min-h-11 items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+    <Link to={to} params={params as never} className="group flex min-h-11 items-center gap-3 rounded-lg px-2 py-2.5 transition-[background-color,transform] [transition-duration:var(--motion-control-duration)] [transition-timing-function:var(--ease-out-exact)] hover:translate-x-0.5 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 motion-reduce:transform-none motion-reduce:transition-none">
       {inner}
     </Link>
   );

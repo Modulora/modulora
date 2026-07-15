@@ -65,6 +65,56 @@
   color-scheme: dark;
 }
 
+@keyframes holographic-orbit {
+  to { transform: rotate(1turn); }
+}
+
+.holographic-promote-button {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+  background: var(--background);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.16);
+}
+
+.holographic-promote-button::before {
+  animation: holographic-orbit 4.8s linear infinite;
+  background: conic-gradient(
+    from 90deg,
+    oklch(0.76 0.18 330),
+    oklch(0.76 0.15 250),
+    var(--receipt),
+    var(--ticket),
+    oklch(0.76 0.18 330)
+  );
+  content: "";
+  inset: -140%;
+  opacity: 0.68;
+  position: absolute;
+  transition: opacity var(--motion-control-duration) var(--ease-out-exact);
+  z-index: 0;
+}
+
+.holographic-promote-button::after {
+  background: color-mix(in oklch, var(--background) 88%, transparent);
+  border-radius: calc(var(--radius) - 3px);
+  content: "";
+  inset: 1px;
+  position: absolute;
+  z-index: 1;
+}
+
+.holographic-promote-button > svg { position: relative; z-index: 2; }
+
+.holographic-promote-button:hover::before,
+.holographic-promote-button:focus-visible::before {
+  opacity: 1;
+}
+
+@media (prefers-contrast: more) {
+  .holographic-promote-button::after { background: var(--background); }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
