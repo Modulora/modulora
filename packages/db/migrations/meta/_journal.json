@@ -204,6 +204,34 @@
       "when": 1784064846947,
       "tag": "0028_cool_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1784073676780,
+      "tag": "0029_milky_emma_frost",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1784076246557,
+      "tag": "0030_needy_hedge_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1784076868593,
+      "tag": "0031_rainy_dagger",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1784077448809,
+      "tag": "0032_red_zombie",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,2 @@
+ALTER TABLE "user" ADD COLUMN "profile_background_position_x" integer DEFAULT 50 NOT NULL;--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN "profile_background_position_y" integer DEFAULT 50 NOT NULL;
