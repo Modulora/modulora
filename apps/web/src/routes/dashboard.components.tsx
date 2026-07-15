@@ -171,7 +171,7 @@ function PriceDialog({ component, payoutsEnabled }: { component: MyComponent; pa
           <div className="mt-4 flex flex-col gap-3 rounded-lg border border-border/60 bg-secondary/30 p-4">
             <p className="text-sm text-foreground">Connect payouts first — it takes about two minutes, and you keep 90% of every sale.</p>
             <Button asChild size="sm" className="self-start">
-              <Link to="/dashboard/payouts">Set up payouts</Link>
+              <Link to="/dashboard/earnings" hash="payouts">Set up payouts</Link>
             </Button>
           </div>
         ) : (

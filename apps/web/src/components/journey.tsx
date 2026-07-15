@@ -46,7 +46,7 @@ export const JOURNEY_STEPS: JourneyStepDef[] = [
     key: "payouts",
     title: "Connect payouts",
     description: "Connect Stripe to receive creator profit-share distributions.",
-    href: "/dashboard/payouts",
+    href: "/dashboard/earnings#payouts",
     action: "Set up payouts",
   },
 ];

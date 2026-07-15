@@ -3,11 +3,23 @@
  * in Storybook with mock data and on the dashboard with live data.
  */
 import type { ReactNode } from "react";
-import { HiBanknotes as Banknote, HiChartPie as PieChart, HiShieldCheck as ShieldCheck, HiShoppingBag as ShoppingBag } from "react-icons/hi2";
+import {
+  HiArrowTopRightOnSquare as ArrowUpRight,
+  HiBanknotes as Banknote,
+  HiChartPie as PieChart,
+  HiCheck as Check,
+  HiClock as Clock,
+  HiArrowPath as Loader2,
+  HiShieldCheck as ShieldCheck,
+  HiShoppingBag as ShoppingBag,
+} from "react-icons/hi2";
 
 import type { EarningsData, EarningsSale } from "@/lib/earnings";
+import type { PayoutStatus } from "@/lib/payouts";
 import { PAYOUT_THRESHOLD_CENTS } from "@/lib/profit-share";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
+import { SparkChart } from "@/components/spark-chart";
 
 export function money(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
@@ -15,26 +27,85 @@ export function money(cents: number): string {
 
 export function EarningsSummary({ data, showSales = true }: { data: EarningsData; showSales?: boolean }) {
   const cards = [
-    ...(showSales ? [
-      { label: "Sales earnings", value: money(data.netAmount), sub: `${money(data.grossAmount)} gross − ${money(data.feeAmount)} fees`, icon: Banknote },
-      { label: "Sales", value: String(data.totalSales), sub: "one-time purchases", icon: ShoppingBag },
-    ] : []),
-    { label: "Profit share", value: money(data.profitShareDistributed), sub: "distributed to date", icon: PieChart },
+    { label: "Accrued share", value: money(data.profitSharePending), sub: "waiting for a distribution run", icon: Clock },
+    { label: "Distributed", value: money(data.profitShareDistributed), sub: "profit share paid to date", icon: PieChart },
     { label: "Verified installs", value: String(data.verifiedInstalls), sub: "digest-verified via the CLI", icon: ShieldCheck },
+    showSales
+      ? { label: "Sales earnings", value: money(data.netAmount), sub: `${money(data.grossAmount)} gross − ${money(data.feeAmount)} fees`, icon: ShoppingBag }
+      : { label: "Payout account", value: data.payoutsEnabled ? "Active" : "Setup needed", sub: data.payoutsEnabled ? "ready to receive transfers" : "connect through Stripe", icon: Banknote },
   ];
   return (
-    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${showSales ? "lg:grid-cols-4" : ""}`}>
-      {cards.map((card) => (
-        <div key={card.label} className="rounded-xl border border-border/60 bg-card/35 p-4">
+    <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-border/60 bg-card/35 lg:grid-cols-4">
+      {cards.map((card, index) => (
+        <div key={card.label} className={`border-border/60 p-4 ${index === 0 ? "border-b border-r lg:border-b-0" : index === 1 ? "border-b lg:border-b-0 lg:border-r" : index === 2 ? "border-r" : ""}`}>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <card.icon className="size-3.5" />
             {card.label}
           </div>
-          <p className="mt-2 text-2xl font-semibold tabular-nums">{card.value}</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">{card.sub}</p>
+          <p className="mt-2 text-xl font-semibold tabular-nums sm:text-2xl">{card.value}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{card.sub}</p>
         </div>
       ))}
     </div>
+  );
+}
+
+export function EarningsActivityCharts({ data, showSales = true }: { data: EarningsData; showSales?: boolean }) {
+  const moneyValue = (value: number) => money(value);
+  const chartClass = showSales ? "xl:grid-cols-3" : "xl:grid-cols-2";
+  return (
+    <section aria-labelledby="earnings-activity-title" className="rounded-xl border border-border/60 bg-card/20 p-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 id="earnings-activity-title" className="text-sm font-semibold">30-day activity</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Hover, touch, or focus a chart and use arrow keys to inspect each day.</p>
+        </div>
+        <span className="text-[11px] text-muted-foreground">UTC · trailing 30 days</span>
+      </div>
+      <div className={`mt-4 grid gap-3 ${chartClass}`}>
+        <SparkChart points={data.trend.map((point) => ({ date: point.date, value: point.verifiedInstalls }))} label="Verified installs" height={128} />
+        <SparkChart points={data.trend.map((point) => ({ date: point.date, value: point.profitShareAccrued }))} label="Profit share accrued" color="var(--ticket)" height={128} formatValue={moneyValue} />
+        {showSales ? <SparkChart points={data.trend.map((point) => ({ date: point.date, value: point.netSales }))} label="Net sales" color="var(--ticket)" height={128} formatValue={moneyValue} /> : null}
+      </div>
+    </section>
+  );
+}
+
+export function PayoutStatusPanel({ status, accrued, busy, onSetup, onManage }: { status: PayoutStatus; accrued: number; busy: boolean; onSetup: () => void; onManage: () => void }) {
+  const threshold = PAYOUT_THRESHOLD_CENTS;
+  const progress = threshold > 0 ? Math.min(100, (accrued / threshold) * 100) : 0;
+  return (
+    <section id="payouts" aria-labelledby="payout-account-title" className="rounded-xl border border-border/60 bg-card/35 p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2"><Banknote className="size-4 text-muted-foreground" /><h2 id="payout-account-title" className="text-sm font-semibold">Payout account</h2></div>
+        {status.payoutsEnabled ? <span className="flex items-center gap-1 text-xs text-receipt"><Check className="size-3.5" />Transfers ready</span> : null}
+      </div>
+
+      {!status.configured ? (
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">Payments are not enabled in this environment yet.</p>
+      ) : status.payoutsEnabled ? (
+        <>
+          <p className="mt-4 text-xs leading-relaxed text-muted-foreground">Stripe handles identity checks, banking details, tax information, and transfers.</p>
+          <Button type="button" variant="outline" size="sm" className="mt-4 w-full gap-1.5" disabled={busy} onClick={onManage}>{busy ? <Loader2 className="size-3.5 animate-spin" /> : null}Manage in Stripe<ArrowUpRight className="size-3.5" /></Button>
+        </>
+      ) : status.connected ? (
+        <>
+          <p className="mt-4 text-xs leading-relaxed text-muted-foreground">Your Stripe account exists, but onboarding must be completed before it can receive transfers.</p>
+          <Button type="button" size="sm" className="mt-4 w-full" disabled={busy} onClick={onSetup}>{busy ? <Loader2 className="size-3.5 animate-spin" /> : null}Finish setup</Button>
+        </>
+      ) : (
+        <>
+          <p className="mt-4 text-xs leading-relaxed text-muted-foreground">Connect Stripe once to receive creator profit-share distributions and marketplace earnings when enabled.</p>
+          <Button type="button" size="sm" className="mt-4 w-full gap-1.5" disabled={busy} onClick={onSetup}>{busy ? <Loader2 className="size-3.5 animate-spin" /> : <Banknote className="size-3.5" />}Set up payouts</Button>
+        </>
+      )}
+
+      <div className="mt-5 border-t border-border/50 pt-4">
+        <div className="flex items-end justify-between gap-3"><div><p className="text-xs text-muted-foreground">Accrued toward next payout</p><p className="mt-1 text-lg font-semibold tabular-nums">{money(accrued)}</p></div><span className="text-xs tabular-nums text-muted-foreground">{accrued >= threshold ? "Threshold reached" : `${money(Math.max(0, threshold - accrued))} remaining`}</span></div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-label="Payout threshold progress" aria-valuemin={0} aria-valuemax={threshold} aria-valuenow={Math.min(accrued, threshold)} aria-valuetext={`${money(accrued)} accrued toward ${money(threshold)}`}><div className="h-full rounded-full bg-ticket transition-[width] duration-150 motion-reduce:transition-none" style={{ width: `${progress}%` }} /></div>
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">Balances below {money(threshold)} roll over. Nothing is forfeited.</p>
+      </div>
+    </section>
   );
 }
 
@@ -72,8 +143,8 @@ export function ProfitSharePanel({ data, learnMore }: { data: EarningsData; lear
 export function SalesList({ sales }: { sales: EarningsSale[] }) {
   if (sales.length === 0) return null;
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-xl border border-border/60">
+      <table className="min-w-[42rem] w-full text-sm">
         <thead>
           <tr className="border-b border-border/60 bg-card/35 text-left text-xs text-muted-foreground">
             <th className="px-4 py-2.5 font-medium">Component</th>
