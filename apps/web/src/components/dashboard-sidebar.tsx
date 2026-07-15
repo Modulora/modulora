@@ -1,7 +1,7 @@
 /** Persistent desktop navigation with a compact, collapsible mobile variant. */
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { HiBanknotes as Banknote, HiChartBar as BarChart3, HiSquaresPlus as Blocks, HiBookmark as Bookmark, HiChevronDown as ChevronDown, HiClipboardDocumentCheck as ClipboardCheck, HiBeaker as FlaskConical, HiGlobeAlt as Globe, HiSquares2X2 as LayoutDashboard, HiBuildingLibrary as Library, HiPlus as Plus, HiCog6Tooth as Settings, HiShieldExclamation as ShieldEllipsis, HiShoppingBag as ShoppingBag, HiSparkles as Sparkles, HiCommandLine as TerminalSquare, HiUserCircle as UserRound } from "react-icons/hi2";
+import { HiChartBar as BarChart3, HiSquaresPlus as Blocks, HiBookmark as Bookmark, HiChevronDown as ChevronDown, HiClipboardDocumentCheck as ClipboardCheck, HiBeaker as FlaskConical, HiGlobeAlt as Globe, HiSquares2X2 as LayoutDashboard, HiBuildingLibrary as Library, HiPlus as Plus, HiCog6Tooth as Settings, HiShieldExclamation as ShieldEllipsis, HiShoppingBag as ShoppingBag, HiSparkles as Sparkles, HiCommandLine as TerminalSquare, HiUserCircle as UserRound } from "react-icons/hi2";
 
 
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,8 @@ const sectionLabels = [
   ["/dashboard/lists", "Lists"],
   ["/dashboard/purchases", "Purchases"],
   ["/dashboard/collections", "Collections"],
-  ["/dashboard/earnings", "Earnings"],
-  ["/dashboard/payouts", "Payouts"],
+  ["/dashboard/earnings", "Earnings & payouts"],
+  ["/dashboard/payouts", "Earnings & payouts"],
   ["/dashboard/analytics", "Analytics"],
   ["/dashboard/labs", "Labs"],
   ["/dashboard/review", "Review queue"],
@@ -89,8 +89,7 @@ function SidebarContent({ summary, mobile = false }: { summary: StudioSummary; m
       </SidebarSection>
 
       <SidebarSection label="Creator">
-        <Link to="/dashboard/earnings" className={itemClass}><Sparkles className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Earnings</span></Link>
-        <Link to="/dashboard/payouts" className={itemClass}><Banknote className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Payouts</span></Link>
+        <Link to="/dashboard/earnings" className={itemClass}><Sparkles className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Earnings & payouts</span></Link>
         <Link to="/dashboard/analytics" className={itemClass}><BarChart3 className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Analytics</span></Link>
         {summary.namespace ? (
           <Link to="/$username" params={{ username: summary.namespace }} className={itemClass}><UserRound className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Public profile</span></Link>

@@ -286,7 +286,7 @@ function CollectionSellDialog({ collection, payoutsEnabled }: { collection: MyCo
           </div>
         ) : !payoutsEnabled ? (
           <div className="mt-4 rounded-lg border border-border/60 bg-secondary/30 p-4 text-sm text-foreground">
-            Connect payouts first — see the Payouts page.
+            Connect payouts first — see the payout account section on Earnings.
           </div>
         ) : (
           <div className="mt-4 flex flex-col gap-3">

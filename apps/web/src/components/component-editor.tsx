@@ -854,7 +854,7 @@ function DetailsStep(props: {
               <FieldError show={p.price.length > 0} error={p.errors.price} />
               {p.payoutsEnabled === false ? (
                 <p className="mt-1 text-[11px] text-amber-500">
-                  Connect payouts first — see the Payouts page in your dashboard.
+                  Connect payouts first — see the payout account section on your Earnings page.
                 </p>
               ) : null}
               <EarningsBreakdown dollars={p.price} />
