@@ -1,4 +1,4 @@
-export const TOOL_REVIEW_STANDARD_VERSION = "tool-alpha-1";
+export const TOOL_REVIEW_STANDARD_VERSION = "tool-alpha-2";
 
 export const TOOL_REVIEW_LIMITATIONS =
   "Approval means the tool/site was useful and relevant enough for Modulora's catalog at review time. It is not a security, privacy, legal, accessibility, ownership, or ongoing availability certification.";
@@ -8,7 +8,7 @@ export const TOOL_REVIEW_CHECKS = [
   { id: "working-experience", title: "Working experience", description: "The live preview or direct site loads and presents a functioning tool, resource, or service." },
   { id: "useful-outcome", title: "Useful outcome", description: "A visitor can identify a concrete task, workflow, reference, or outcome the listing helps them accomplish." },
   { id: "catalog-relevance", title: "Catalog relevance", description: "The listing is meaningfully relevant to UI creation, development, design systems, component work, or adjacent creator workflows." },
-  { id: "accurate-presentation", title: "Accurate presentation", description: "The submitted title, description, category, and mirrored Open Graph image fairly represent the live site." },
+  { id: "accurate-presentation", title: "Accurate presentation", description: "The submitted title, description, category, pricing label, and creator-uploaded site thumbnails fairly represent the live site." },
   { id: "obvious-harm", title: "No obvious deception or harm", description: "A reasonable inspection found no obvious impersonation, malware prompt, credential harvesting, or materially deceptive behavior." },
 ] as const;
 

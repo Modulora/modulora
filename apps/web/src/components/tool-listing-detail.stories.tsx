@@ -22,7 +22,7 @@ const meta = {
       description: "A focused visual tool for comparing interface colors and checking readable combinations.",
       category: "Utilities",
       listingKind: "tool",
-      site: { url: "https://example.com", domain: "example.com", ogTitle: "Contrast Workbench", ogDescription: "Compare interface colors.", ogImageUrl: null },
+      site: { url: "https://example.com", domain: "example.com", ogTitle: "Contrast Workbench", ogDescription: "Compare interface colors.", ogImageUrl: null, showcaseImageUrls: [], pricing: "freemium" },
       evidence: [{ type: "domain-verified", status: "passed", issuer: "modulora-platform", timestamp: new Date().toISOString() }],
     },
   },
