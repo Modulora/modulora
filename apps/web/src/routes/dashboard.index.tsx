@@ -20,7 +20,7 @@ type ContentType = {
 };
 
 const CONTENT_TYPES: ContentType[] = [
-  { label: "Listings", icon: Blocks, key: "components" },
+  { label: "Listings", icon: Blocks, key: "listings" },
   { label: "Collections", icon: Library, key: "libraries" },
   { label: "Verified installs", icon: ShieldCheck, key: "verifiedInstalls", receipt: true },
 ];

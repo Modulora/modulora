@@ -54,8 +54,8 @@ export const startPromotion = createServerFn({ method: "POST" })
       .from(schema.components)
       .where(and(eq(schema.components.namespaceId, ns.id), eq(schema.components.name, data.name)))
       .limit(1);
-    if (!component) return { ok: false, error: "Component not found." };
-    if (component.reviewStatus !== "approved") return { ok: false, error: "Only listed components can be promoted." };
+    if (!component) return { ok: false, error: "Listing not found." };
+    if (component.reviewStatus !== "approved") return { ok: false, error: "Only approved listings can be boosted." };
 
     const [promo] = await db
       .insert(schema.promotions)

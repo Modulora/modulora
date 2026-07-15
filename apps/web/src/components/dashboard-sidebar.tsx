@@ -82,7 +82,7 @@ function SidebarContent({ summary, mobile = false }: { summary: StudioSummary; m
 
       <SidebarSection label="Library">
         <Link to="/dashboard" activeOptions={{ exact: true }} className={itemClass}><BarChart3 className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Overview</span></Link>
-        <Link to="/dashboard/components" className={itemClass}><Blocks className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Listings</span><span className="text-xs tabular-nums text-muted-foreground">{summary.counts.components}</span></Link>
+        <Link to="/dashboard/components" className={itemClass}><Blocks className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Listings</span><span className="text-xs tabular-nums text-muted-foreground">{summary.counts.listings}</span></Link>
         <Link to="/dashboard/lists" className={itemClass}><Bookmark className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Lists</span><SidebarBadge>Plus</SidebarBadge></Link>
         {DIRECT_MARKETPLACE_ENABLED ? <Link to="/dashboard/purchases" className={itemClass}><ShoppingBag className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Purchases</span></Link> : null}
         <Link to="/dashboard/collections" className={itemClass}><Library className="size-4 shrink-0 opacity-70" /><span className="flex-1 truncate">Collections</span></Link>

@@ -18,6 +18,16 @@ export interface ToolListingPreview {
   imageUrl: string | null;
 }
 
+function normalizeHttpsUrl(value: string): string | null {
+  try {
+    const trimmed = value.trim();
+    const url = new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export interface ToolListingEditorProps {
   onInspect: (siteUrl: string) => Promise<{ ok: boolean; error?: string; metadata?: ToolListingPreview; verificationDomain?: string }>;
   onSubmit: (input: ToolListingInput) => Promise<{ ok: boolean; error?: string }>;
@@ -45,7 +55,10 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
 
   async function inspect() {
     setInspecting(true); setError(""); setPreview(null);
-    const result = await onInspect(siteUrl);
+    const normalizedUrl = normalizeHttpsUrl(siteUrl);
+    if (!normalizedUrl) { setInspecting(false); setError("Enter a valid HTTPS site URL."); return; }
+    setSiteUrl(normalizedUrl);
+    const result = await onInspect(normalizedUrl);
     setInspecting(false);
     if (!result.ok) {
       if (result.verificationDomain) {
@@ -92,7 +105,10 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setSubmitting(true); setError("");
-    const result = await onSubmit({ siteUrl, name, title, description, category });
+    const normalizedUrl = normalizeHttpsUrl(siteUrl);
+    if (!normalizedUrl) { setSubmitting(false); setError("Enter a valid HTTPS site URL."); return; }
+    setSiteUrl(normalizedUrl);
+    const result = await onSubmit({ siteUrl: normalizedUrl, name, title, description, category });
     setSubmitting(false);
     if (!result.ok) { setError(result.error ?? "Could not submit the listing."); return; }
     await onSubmitted();

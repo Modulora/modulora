@@ -169,7 +169,7 @@ export const fetchCatalog = createServerFn({ method: "GET" }).handler(
   },
 );
 
-/** Components with an active paid promotion (clearly labeled on browse). */
+/** Listings with an active paid boost (clearly labeled on browse). */
 export const fetchFeatured = createServerFn({ method: "GET" }).handler(
   async (): Promise<CatalogItem[]> => {
     const database = db();
@@ -707,6 +707,7 @@ export interface MyComponent {
   reviewHistory: CreatorReviewRecord[];
   listingKind: "component" | "tool";
   siteUrl: string | null;
+  siteDomain: string | null;
   previewImageUrl: string | null;
 }
 
@@ -777,6 +778,7 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
         })),
       listingKind: row.component.listingKind,
       siteUrl: row.component.siteUrl,
+      siteDomain: row.component.siteDomain,
       previewImageUrl: row.component.previewImageUrl,
     }));
   },
