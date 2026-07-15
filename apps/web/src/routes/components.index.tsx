@@ -336,7 +336,7 @@ function GalleryItem({ item, list }: { item: CatalogItem; list: boolean }) {
 
 function ToolCardPreview({ item, className }: { item: CatalogItem; className?: string }) {
   return (
-    <div className={`relative aspect-[16/10] overflow-hidden rounded-lg border border-border/60 bg-secondary/30 ${className ?? ""}`}>
+    <div className={`relative aspect-[4/3] overflow-hidden rounded-lg border border-border/60 bg-secondary/30 ${className ?? ""}`}>
       <ToolListingImage src={item.site?.ogImageUrl} domain={item.site?.domain} className="size-full" imageClassName="transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none" />
       <span className="absolute bottom-2 left-2 rounded-md bg-background/85 px-2 py-1 text-[10px] font-medium backdrop-blur-sm">Live site · {item.site?.domain}</span>
     </div>
