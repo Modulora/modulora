@@ -161,8 +161,8 @@ export const verifyDomain = createServerFn({ method: "POST" })
  * Real discovery per the Domain Connect spec: resolve the domain's
  * `_domainconnect` TXT record, fetch the provider's settings, then check
  * whether Modulora's template is onboarded with that DNS provider. The
- * one-click UI renders only when this returns supported=true — today that
- * is never, because our template isn't in the registry yet. No fake buttons.
+ * one-click UI renders only when this returns supported=true. Provider
+ * adoption is independent, so manual DNS remains the reliable fallback.
  */
 const DC_PROVIDER_ID = "modulora.dev";
 const DC_SERVICE_ID = "domain-verification";
@@ -174,7 +174,7 @@ export interface DomainConnectInfo {
 }
 
 export const discoverDomainConnect = createServerFn({ method: "POST" })
-  .inputValidator((data: { domain: string }) => data)
+  .validator((data: { domain: string }) => data)
   .handler(async ({ data }): Promise<DomainConnectInfo> => {
     const request = getRequest();
     const user = request ? await getCurrentUser(request) : null;
@@ -227,13 +227,12 @@ export const discoverDomainConnect = createServerFn({ method: "POST" })
       //    provider verifies it against the public key at _dck1.modulora.dev.
       const params = new URLSearchParams({ domain, code: row.token });
       const pem = process.env.DOMAIN_CONNECT_SIGNING_KEY?.replace(/\\n/g, "\n");
-      if (pem) {
-        const { createSign } = await import("node:crypto");
-        const signer = createSign("RSA-SHA256");
-        signer.update(params.toString());
-        params.set("sig", signer.sign(pem, "base64"));
-        params.set("key", "_dck1");
-      }
+      if (!pem) return { supported: false, provider };
+      const { createSign } = await import("node:crypto");
+      const signer = createSign("RSA-SHA256");
+      signer.update(params.toString());
+      params.set("sig", signer.sign(pem, "base64"));
+      params.set("key", "_dck1");
       const applyUrl = `${settings.urlSyncUX}/v2/domainTemplates/providers/${DC_PROVIDER_ID}/services/${DC_SERVICE_ID}/apply?${params}`;
       return { supported: true, provider, applyUrl };
     } catch {

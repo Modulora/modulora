@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { HiArrowTopRightOnSquare as External, HiGlobeAlt as Globe, HiArrowPath as Loader } from "react-icons/hi2";
 
 import { Button } from "@/components/ui/button";
@@ -40,13 +40,17 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
   const [domainRecord, setDomainRecord] = useState<{ domain: string; token: string; verified: boolean } | null>(null);
   const [domainConnect, setDomainConnect] = useState<{ supported: boolean; provider?: string; applyUrl?: string } | null>(null);
   const [domainBusy, setDomainBusy] = useState(false);
+  const verificationAttempt = useRef(0);
 
   async function inspect() {
     setInspecting(true); setError(""); setPreview(null);
     const result = await onInspect(siteUrl);
     setInspecting(false);
     if (!result.ok) {
-      if (result.verificationDomain) { setVerificationDomain(result.verificationDomain); setDomainRecord(null); setDomainConnect(null); setError(""); }
+      if (result.verificationDomain) {
+        setVerificationDomain(result.verificationDomain); setDomainRecord(null); setDomainConnect(null); setError("");
+        void prepareVerification(result.verificationDomain);
+      }
       else setError(result.error ?? "Could not inspect the site.");
       return;
     }
@@ -57,14 +61,22 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
     if (!name) setName((metadata.title || new URL(metadata.canonicalUrl).hostname).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 64));
   }
 
-  async function startVerification() {
-    if (!verificationDomain) return;
+  async function prepareVerification(domain: string) {
+    const attempt = ++verificationAttempt.current;
     setDomainBusy(true); setError("");
-    const result = await onCreateDomain(verificationDomain);
-    if (!result.ok || !result.record) { setDomainBusy(false); setError(result.error ?? "Could not start domain verification."); return; }
+    const result = await onCreateDomain(domain);
+    if (attempt !== verificationAttempt.current) return;
+    if (!result.ok || !result.record) { setDomainBusy(false); setError(result.error ?? "Could not prepare domain verification."); return; }
     setDomainRecord(result.record);
-    setDomainConnect(await onDiscoverDomainConnect(verificationDomain));
+    const discovery = await onDiscoverDomainConnect(domain);
+    if (attempt !== verificationAttempt.current) return;
+    setDomainConnect(discovery);
     setDomainBusy(false);
+  }
+
+  function closeVerification() {
+    verificationAttempt.current += 1;
+    setVerificationDomain(null); setDomainRecord(null); setDomainConnect(null); setDomainBusy(false); setError("");
   }
 
   async function checkVerification() {
@@ -73,7 +85,7 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
     const result = await onVerifyDomain(verificationDomain);
     setDomainBusy(false);
     if (!result.ok || !result.verified) { setError(result.error ?? "TXT record not found yet."); return; }
-    setVerificationDomain(null); setDomainRecord(null); setDomainConnect(null);
+    closeVerification();
     await inspect();
   }
 
@@ -123,20 +135,21 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
         ) : <div className="flex h-full min-h-[34rem] flex-col items-center justify-center gap-3 p-8 text-center text-muted-foreground"><Globe className="size-8" /><p className="text-sm font-medium text-foreground">Inspect a verified site</p><p className="max-w-sm text-xs">Modulora will fetch its Open Graph metadata, mirror the preview image, and prepare the isolated live preview.</p></div>}
       </div>
 
-      <Dialog open={Boolean(verificationDomain)} onOpenChange={(open) => { if (!open) { setVerificationDomain(null); setDomainRecord(null); setDomainConnect(null); setError(""); } }}>
+      <Dialog open={Boolean(verificationDomain)} onOpenChange={(open) => { if (!open) closeVerification(); }}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader><DialogTitle>Verify {verificationDomain}</DialogTitle><DialogDescription>Prove control of this domain before Modulora fetches its metadata or creates a listing.</DialogDescription></DialogHeader>
           <div className="flex flex-col gap-4">
-            {!domainRecord ? <Button type="button" disabled={domainBusy} onClick={startVerification}>{domainBusy ? <Loader className="size-4 animate-spin" /> : null} Start verification</Button> : (
+            {!domainRecord ? domainBusy ? <div className="flex min-h-24 items-center justify-center gap-2 rounded-lg border border-border/60 bg-secondary/20 text-sm text-muted-foreground"><Loader className="size-4 animate-spin" /> Preparing verification options…</div> : <Button type="button" variant="outline" onClick={() => verificationDomain && void prepareVerification(verificationDomain)}>Retry verification setup</Button> : (
               <>
                 {domainConnect?.supported && domainConnect.provider && domainConnect.applyUrl ? <OneClickSetup domain={verificationDomain ?? ""} provider={domainConnect.provider} onConnect={() => { window.location.href = domainConnect.applyUrl!; }} /> : null}
+                {domainConnect && !domainConnect.supported ? <p className="text-xs leading-relaxed text-muted-foreground">Your DNS provider does not currently advertise Modulora&apos;s Domain Connect template. Use the TXT record below instead.</p> : null}
                 <DnsRecordCard record={{ type: "TXT", name: `_modulora.${domainRecord.domain}`, value: `modulora-verify=${domainRecord.token}`, status: "pending" }} />
                 <Button type="button" disabled={domainBusy} onClick={checkVerification}>{domainBusy ? <Loader className="size-4 animate-spin" /> : null} Check DNS record</Button>
               </>
             )}
             {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
           </div>
-          <DialogFooter><Button type="button" variant="outline" onClick={() => setVerificationDomain(null)}>Cancel</Button></DialogFooter>
+          <DialogFooter><Button type="button" variant="outline" onClick={closeVerification}>Cancel</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </form>
