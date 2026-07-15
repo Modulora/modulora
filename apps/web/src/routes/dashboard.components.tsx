@@ -4,6 +4,7 @@ import { HiSquaresPlus as Blocks, HiArrowTopRightOnSquare as ExternalLink, HiArr
 
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import { DashboardPageHeader } from "@/components/dashboard-page-header";
 
 import { DIRECT_MARKETPLACE_ENABLED } from "@/lib/flags";
 import { REVIEW_CHECKS } from "@/lib/review-standard";
+import { TOOL_REVIEW_CHECKS } from "@/lib/tool-review-standard";
 
 export const Route = createFileRoute("/dashboard/components")({
   beforeLoad: ({ context }) => {
@@ -197,14 +199,13 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
 
   return (
     <div className="flex flex-col items-stretch gap-3 rounded-xl border border-border/60 bg-card/40 p-4 sm:flex-row sm:items-center sm:gap-4">
-      <LiveCardPreview
-        item={{ namespace: username, name: component.name, title: component.title, live: true }}
-        className="w-28 shrink-0 max-sm:hidden"
-      />
+      {component.listingKind === "tool" ? (
+        <div className="hidden aspect-[16/10] w-28 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-secondary/30 sm:block">{component.previewImageUrl ? <img src={component.previewImageUrl} alt="" className="size-full object-cover" /> : null}</div>
+      ) : <LiveCardPreview item={{ namespace: username, name: component.name, title: component.title, live: true }} className="w-28 shrink-0 max-sm:hidden" />}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="min-w-0 truncate font-medium">{component.title}</h2>
-          <PriceSeal paid={component.sourceModel !== "open-source" || (DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null)} label={DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />
+          {component.listingKind === "tool" ? <Badge variant="outline">Tool</Badge> : <PriceSeal paid={component.sourceModel !== "open-source" || (DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null)} label={DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />}
           <ReviewBadge status={component.reviewStatus} />
         </div>
         <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">@{username}/{component.name}@{component.version} · {component.category}</p>
@@ -227,7 +228,7 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
                   <p className="mt-2 leading-relaxed text-muted-foreground">Scope: {record.limitations}</p>
                   <p className="mt-2 font-medium">Checklist · {record.standardVersion}</p>
                   <ul className="mt-1 grid gap-1 sm:grid-cols-2">
-                    {REVIEW_CHECKS.map((check) => (
+                    {(record.standardVersion.startsWith("tool-") ? TOOL_REVIEW_CHECKS : REVIEW_CHECKS).map((check) => (
                       <li key={check.id} className="flex justify-between gap-2 text-muted-foreground">
                         <span>{check.title}</span>
                         <span className="shrink-0 capitalize">{(record.checklist[check.id] ?? "not recorded").replace("-", " ")}</span>
@@ -244,10 +245,8 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
         <Button asChild variant="ghost" size="sm" className="gap-1.5">
           <Link to="/components/$namespace/$name" params={{ namespace: username, name: component.name }}><ExternalLink className="size-3.5" /> View</Link>
         </Button>
-        <Button asChild variant="ghost" size="sm" className="gap-1.5">
-          <Link to="/dashboard/edit/$name" params={{ name: component.name }}><Pencil className="size-3.5" /> Edit</Link>
-        </Button>
-        {component.reviewStatus === "approved" ? (
+        {component.listingKind !== "tool" ? <Button asChild variant="ghost" size="sm" className="gap-1.5"><Link to="/dashboard/edit/$name" params={{ name: component.name }}><Pencil className="size-3.5" /> Edit</Link></Button> : null}
+        {component.reviewStatus === "approved" && component.listingKind !== "tool" ? (
           <>
             {DIRECT_MARKETPLACE_ENABLED ? <PriceDialog component={component} payoutsEnabled={payoutsEnabled} /> : null}
             <Button variant="ghost" size="sm" className="gap-1.5" disabled={promoting} onClick={onPromote}>
@@ -262,12 +261,12 @@ function ComponentRow({ component, username, payoutsEnabled }: { component: MyCo
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Delete {component.title}?</DialogTitle>
-              <DialogDescription>This permanently removes @{username}/{component.name} and all its versions. This cannot be undone.</DialogDescription>
+              <DialogDescription>This permanently removes the {component.listingKind === "tool" ? "tool/site listing" : "component"} @{username}/{component.name} and all its versions. This cannot be undone.</DialogDescription>
             </DialogHeader>
             <div className="mt-5 flex flex-col gap-3">
               <input value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={component.name} autoComplete="off" className="h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" />
               <Button type="button" variant="destructive" disabled={!matches || pending} onClick={onDelete}>
-                {pending ? <Loader2 className="size-4 animate-spin" /> : null} Delete component
+                {pending ? <Loader2 className="size-4 animate-spin" /> : null} Delete listing
               </Button>
             </div>
           </DialogContent>

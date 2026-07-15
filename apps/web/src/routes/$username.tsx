@@ -320,14 +320,14 @@ function ProfileCard({ item }: { item: CatalogItem }) {
       params={{ namespace: item.namespace, name: item.name }}
       className="group flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40 p-3 transition-colors hover:border-foreground/20 hover:bg-card/70"
     >
-      <LiveCardPreview item={item} className="w-full" />
+      {item.listingKind === "tool" ? <div className="relative aspect-[16/10] overflow-hidden rounded-lg border border-border/60 bg-secondary/30">{item.site?.ogImageUrl ? <img src={item.site.ogImageUrl} alt="" className="size-full object-cover" /> : null}<span className="absolute bottom-2 left-2 rounded-md bg-background/85 px-2 py-1 text-[10px] backdrop-blur-sm">{item.site?.domain}</span></div> : <LiveCardPreview item={item} className="w-full" />}
       <div className="flex items-start justify-between gap-3 px-1 pb-1 pt-3">
         <div className="min-w-0">
           <h2 className="truncate text-sm font-medium">{item.title}</h2>
           <p className="mt-1 truncate text-xs text-muted-foreground">{item.category}</p>
         </div>
         <Badge variant={isPaidCatalogItem(item) ? "outline" : "secondary"} className="shrink-0">
-          {isPaidCatalogItem(item) ? item.purchase?.priceLabel ?? "Paid" : "Free"}
+          {item.listingKind === "tool" ? "Tool" : isPaidCatalogItem(item) ? item.purchase?.priceLabel ?? "Paid" : "Free"}
         </Badge>
       </div>
     </Link>

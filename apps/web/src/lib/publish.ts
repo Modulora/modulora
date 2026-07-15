@@ -499,6 +499,7 @@ export async function publishCore(data: PublishInput, request: Request): Promise
       name,
       category: data.category,
       paid: isPaid,
+      listingKind: "component",
       origin,
     });
 

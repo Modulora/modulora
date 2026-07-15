@@ -44,10 +44,25 @@ The manifest lists your files (contents load from disk); paths under
 Publishing requires accepting the [publishing policy](/publishing-policy) —
 interactively, or with `--accept-policy` in CI.
 
+## List an external tool or site
+
+Use **Dashboard → New → List a tool/site** for an owner-authorized external
+resource. You must verify the site's exact domain before Modulora fetches its
+metadata or accepts the submission.
+
+Modulora fetches the page server-side, mirrors a valid Open Graph image into
+its media storage, and prepares an isolated iframe preview. The iframe uses an
+opaque sandbox without same-origin access. Sites that block embedding retain
+the mirrored Open Graph image as a fallback.
+
+Tool and site listings are not installable components. Their detail pages show
+the live preview, description, category, scoped domain-control evidence, and a
+link to the verified site.
+
 ## Review
 
 Every submission goes through curator review before it lists publicly.
-You'll see the status on your components: **In review**, **Live**, or
+You'll see the status on your listings: **In review**, **Live**, or
 **Changes requested** (with the reason). Review checks the listing is what it
 claims to be; it is not a safety guarantee.
 

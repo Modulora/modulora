@@ -35,11 +35,12 @@ export async function fireReviewWebhook(input: {
   name: string;
   category: string;
   paid: boolean;
+  listingKind: "component" | "tool";
   origin: string;
 }): Promise<void> {
   const webhookUrl = process.env.REVIEW_WEBHOOK_URL;
   if (!webhookUrl) return;
-  const reviewUrl = `${input.origin}/review/${input.componentId}`;
+  const reviewUrl = `${input.origin}/${input.listingKind === "tool" ? "dashboard/review-tool" : "review"}/${input.componentId}`;
   try {
     await fetch(webhookUrl, {
       method: "POST",
@@ -47,13 +48,13 @@ export async function fireReviewWebhook(input: {
       body: JSON.stringify({
         embeds: [
           {
-            title: "New component awaiting review",
+            title: `New ${input.listingKind === "tool" ? "tool/site" : "component"} awaiting review`,
             url: reviewUrl,
             description: `**${input.title}** by @${input.username}`,
             color: 0x6366f1,
             fields: [
               { name: "Category", value: input.category, inline: true },
-              { name: "Pricing", value: input.paid ? "Paid" : "Free", inline: true },
+              { name: "Type", value: input.listingKind === "tool" ? "External tool/site" : input.paid ? "Paid component" : "Free component", inline: true },
               { name: "Review", value: `[Open review page](${reviewUrl})` },
             ],
             timestamp: new Date().toISOString(),
@@ -74,6 +75,7 @@ export interface ReviewListItem {
   namespace: string;
   category: string;
   paid: boolean;
+  listingKind: "component" | "tool";
   status: "draft" | "pending" | "approved" | "rejected";
   submittedAt: string;
 }
@@ -96,6 +98,7 @@ export const fetchReviewQueue = createServerFn({ method: "GET" }).handler(
         namespace: schema.namespaces.name,
         category: schema.components.category,
         sourceModel: schema.components.sourceModel,
+        listingKind: schema.components.listingKind,
         status: schema.components.reviewStatus,
         submittedAt: schema.components.submittedAt,
       })
@@ -114,7 +117,8 @@ export const fetchReviewQueue = createServerFn({ method: "GET" }).handler(
         name: row.name,
         namespace: row.namespace,
         category: row.category,
-        paid: row.sourceModel !== "open-source",
+        paid: row.sourceModel !== "open-source" && row.sourceModel !== "external-site",
+        listingKind: row.listingKind,
         status: row.status,
         submittedAt: row.submittedAt.toISOString(),
       })),

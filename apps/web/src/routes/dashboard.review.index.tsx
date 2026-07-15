@@ -49,7 +49,7 @@ function ReviewQueue() {
       <DashboardPageHeader
         title="Review queue"
         icon={ClipboardCheck}
-        description={`${items.length} component${items.length === 1 ? "" : "s"} awaiting a listing decision.`}
+        description={`${items.length} submission${items.length === 1 ? "" : "s"} awaiting a listing decision.`}
         className="mb-8"
       />
 
@@ -66,14 +66,14 @@ function ReviewQueue() {
           {items.map((item: ReviewListItem) => (
             <li key={item.id}>
               <Link
-                to="/dashboard/review/$id"
-                params={{ id: item.id }}
+                to={item.listingKind === "tool" ? "/dashboard/review-tool/$id" : "/dashboard/review/$id"}
+                params={{ id: item.id } as never}
                 className="flex min-h-14 items-center gap-4 px-5 py-4 transition-colors hover:bg-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{item.title}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {item.namespace} · {item.category} · {item.paid ? "Paid" : "Free"}
+                    {item.namespace} · {item.category} · {item.listingKind === "tool" ? "Tool / site" : item.paid ? "Paid" : "Free"}
                   </p>
                 </div>
                 <span className="flex items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">

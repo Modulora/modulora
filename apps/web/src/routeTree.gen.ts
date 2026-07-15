@@ -50,10 +50,12 @@ import { Route as ApiInstallReceiptRouteImport } from './routes/api/install-rece
 import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard.settings.index'
 import { Route as DashboardReviewIndexRouteImport } from './routes/dashboard.review.index'
 import { Route as PreviewNamespaceNameRouteImport } from './routes/preview.$namespace.$name'
+import { Route as DashboardToolsNewRouteImport } from './routes/dashboard.tools.new'
 import { Route as DashboardSettingsSecurityRouteImport } from './routes/dashboard.settings.security'
 import { Route as DashboardSettingsDangerRouteImport } from './routes/dashboard.settings.danger'
 import { Route as DashboardSettingsAppearanceRouteImport } from './routes/dashboard.settings.appearance'
 import { Route as DashboardReviewIdRouteImport } from './routes/dashboard.review.$id'
+import { Route as DashboardReviewToolIdRouteImport } from './routes/dashboard.review-tool.$id'
 import { Route as DashboardEditNameRouteImport } from './routes/dashboard.edit.$name'
 import { Route as ComponentsNamespaceNameRouteImport } from './routes/components.$namespace.$name'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
@@ -267,6 +269,11 @@ const PreviewNamespaceNameRoute = PreviewNamespaceNameRouteImport.update({
   path: '/preview/$namespace/$name',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardToolsNewRoute = DashboardToolsNewRouteImport.update({
+  id: '/tools/new',
+  path: '/tools/new',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSettingsSecurityRoute =
   DashboardSettingsSecurityRouteImport.update({
     id: '/security',
@@ -287,6 +294,11 @@ const DashboardSettingsAppearanceRoute =
 const DashboardReviewIdRoute = DashboardReviewIdRouteImport.update({
   id: '/review/$id',
   path: '/review/$id',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardReviewToolIdRoute = DashboardReviewToolIdRouteImport.update({
+  id: '/review-tool/$id',
+  path: '/review-tool/$id',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardEditNameRoute = DashboardEditNameRouteImport.update({
@@ -365,10 +377,12 @@ export interface FileRoutesByFullPath {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review-tool/$id': typeof DashboardReviewToolIdRoute
   '/dashboard/review/$id': typeof DashboardReviewIdRoute
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/tools/new': typeof DashboardToolsNewRoute
   '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review/': typeof DashboardReviewIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
@@ -416,10 +430,12 @@ export interface FileRoutesByTo {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review-tool/$id': typeof DashboardReviewToolIdRoute
   '/dashboard/review/$id': typeof DashboardReviewIdRoute
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/tools/new': typeof DashboardToolsNewRoute
   '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review': typeof DashboardReviewIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
@@ -470,10 +486,12 @@ export interface FileRoutesById {
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/components/$namespace/$name': typeof ComponentsNamespaceNameRoute
   '/dashboard/edit/$name': typeof DashboardEditNameRoute
+  '/dashboard/review-tool/$id': typeof DashboardReviewToolIdRoute
   '/dashboard/review/$id': typeof DashboardReviewIdRoute
   '/dashboard/settings/appearance': typeof DashboardSettingsAppearanceRoute
   '/dashboard/settings/danger': typeof DashboardSettingsDangerRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
+  '/dashboard/tools/new': typeof DashboardToolsNewRoute
   '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review/': typeof DashboardReviewIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
@@ -525,10 +543,12 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/review-tool/$id'
     | '/dashboard/review/$id'
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/dashboard/tools/new'
     | '/preview/$namespace/$name'
     | '/dashboard/review/'
     | '/dashboard/settings/'
@@ -576,10 +596,12 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/review-tool/$id'
     | '/dashboard/review/$id'
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/dashboard/tools/new'
     | '/preview/$namespace/$name'
     | '/dashboard/review'
     | '/dashboard/settings'
@@ -629,10 +651,12 @@ export interface FileRouteTypes {
     | '/api/stripe/webhook'
     | '/components/$namespace/$name'
     | '/dashboard/edit/$name'
+    | '/dashboard/review-tool/$id'
     | '/dashboard/review/$id'
     | '/dashboard/settings/appearance'
     | '/dashboard/settings/danger'
     | '/dashboard/settings/security'
+    | '/dashboard/tools/new'
     | '/preview/$namespace/$name'
     | '/dashboard/review/'
     | '/dashboard/settings/'
@@ -961,6 +985,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PreviewNamespaceNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/tools/new': {
+      id: '/dashboard/tools/new'
+      path: '/tools/new'
+      fullPath: '/dashboard/tools/new'
+      preLoaderRoute: typeof DashboardToolsNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings/security': {
       id: '/dashboard/settings/security'
       path: '/security'
@@ -987,6 +1018,13 @@ declare module '@tanstack/react-router' {
       path: '/review/$id'
       fullPath: '/dashboard/review/$id'
       preLoaderRoute: typeof DashboardReviewIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/review-tool/$id': {
+      id: '/dashboard/review-tool/$id'
+      path: '/review-tool/$id'
+      fullPath: '/dashboard/review-tool/$id'
+      preLoaderRoute: typeof DashboardReviewToolIdRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/edit/$name': {
@@ -1066,7 +1104,9 @@ interface DashboardRouteChildren {
   DashboardSettingsRoute: typeof DashboardSettingsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardEditNameRoute: typeof DashboardEditNameRoute
+  DashboardReviewToolIdRoute: typeof DashboardReviewToolIdRoute
   DashboardReviewIdRoute: typeof DashboardReviewIdRoute
+  DashboardToolsNewRoute: typeof DashboardToolsNewRoute
   DashboardReviewIndexRoute: typeof DashboardReviewIndexRoute
 }
 
@@ -1085,7 +1125,9 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardSettingsRoute: DashboardSettingsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardEditNameRoute: DashboardEditNameRoute,
+  DashboardReviewToolIdRoute: DashboardReviewToolIdRoute,
   DashboardReviewIdRoute: DashboardReviewIdRoute,
+  DashboardToolsNewRoute: DashboardToolsNewRoute,
   DashboardReviewIndexRoute: DashboardReviewIndexRoute,
 }
 

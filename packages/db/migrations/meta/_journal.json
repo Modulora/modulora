@@ -232,6 +232,13 @@
       "when": 1784077448809,
       "tag": "0032_red_zombie",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1784081310193,
+      "tag": "0033_mute_power_pack",
+      "breakpoints": true
     }
   ]
 }
