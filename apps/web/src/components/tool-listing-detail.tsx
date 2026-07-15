@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { HiArrowTopRightOnSquare as External, HiCheckBadge as Check, HiGlobeAlt as Globe } from "react-icons/hi2";
+import { ExternalSitePreview } from "@/components/external-site-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { CatalogItem } from "@/data/catalog";
@@ -21,11 +22,13 @@ export function ToolListingDetail({ item }: { item: CatalogItem }) {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
-        <div className="relative aspect-[16/9] min-h-[28rem] bg-secondary/20">
-          {site.ogImageUrl ? <img src={site.ogImageUrl} alt="" className="absolute inset-0 size-full object-cover opacity-30" /> : null}
-          <iframe src={site.url} title={`Live preview of ${item.title}`} sandbox="allow-scripts" referrerPolicy="no-referrer" className="relative size-full bg-white" />
-          <span className="absolute bottom-3 left-3 rounded-md bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur-sm">Isolated live preview · some sites may block embedding</span>
-        </div>
+        <ExternalSitePreview
+          url={site.url}
+          title={`Live preview of ${item.title}`}
+          imageUrl={site.ogImageUrl}
+          imageAlt={`Open Graph preview for ${item.title}`}
+          className="aspect-[16/9] min-h-[28rem]"
+        />
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
