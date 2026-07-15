@@ -27,11 +27,7 @@ export function ToolListingDetail({ item }: { item: CatalogItem }) {
         <Button asChild><a href={site.url} target="_blank" rel="noreferrer"><External className="size-4" /> Visit {site.domain}</a></Button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
-        <ToolImageCarousel images={images} domain={site.domain} title={item.title} className="aspect-[16/9] min-h-[28rem]" />
-      </div>
-
-      <div className="mt-6">
+      <div>
         <h2 className="mb-3 text-sm font-semibold">Live site preview</h2>
         <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
         <ExternalSitePreview
@@ -41,6 +37,13 @@ export function ToolListingDetail({ item }: { item: CatalogItem }) {
           imageAlt={`Open Graph preview for ${item.title}`}
           className="aspect-[16/9] min-h-[28rem]"
         />
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h2 className="mb-3 text-sm font-semibold">Site thumbnails</h2>
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+          <ToolImageCarousel images={images} domain={site.domain} title={item.title} className="aspect-[16/9] min-h-[28rem]" />
         </div>
       </div>
 
