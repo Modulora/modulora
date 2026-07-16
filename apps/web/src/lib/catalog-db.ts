@@ -71,7 +71,7 @@ function toCatalogItem(
     title: component.title,
     description: component.description,
     category: categoryLabel(component.category),
-    listedAt: (component.reviewedAt ?? component.submittedAt ?? component.createdAt).toISOString(),
+    listedAt: component.createdAt.toISOString(),
     listingKind: component.listingKind as CatalogItem["listingKind"],
     site: component.listingKind === "tool" && component.siteUrl && component.siteDomain
       ? {
@@ -714,6 +714,8 @@ export interface MyComponent {
   previewImageUrl: string | null;
   showcaseImageUrls: string[];
   toolPricing: "free" | "freemium" | "paid" | null;
+  editStatus: "pending" | "changes-requested" | "rejected" | null;
+  editReviewReason: string | null;
 }
 
 export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
@@ -758,8 +760,14 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
           .where(inArray(schema.reviewRecords.componentId, componentIds))
           .orderBy(desc(schema.reviewRecords.createdAt))
       : [];
+    const drafts = componentIds.length > 0
+      ? await database.select({ componentId: schema.toolListingDrafts.componentId, status: schema.toolListingDrafts.status, reviewReason: schema.toolListingDrafts.reviewReason }).from(schema.toolListingDrafts).where(inArray(schema.toolListingDrafts.componentId, componentIds))
+      : [];
+    const draftByComponent = new Map(drafts.map((draft) => [draft.componentId, draft]));
 
-    return rows.map((row) => ({
+    return rows.map((row) => {
+      const draft = draftByComponent.get(row.component.id);
+      return {
       name: row.component.name,
       title: row.component.title,
       category: categoryLabel(row.component.category),
@@ -787,7 +795,10 @@ export const fetchMyComponents = createServerFn({ method: "GET" }).handler(
       previewImageUrl: row.component.previewImageUrl,
       showcaseImageUrls: row.component.showcaseImageUrls,
       toolPricing: row.component.toolPricing,
-    }));
+      editStatus: draft?.status ?? null,
+      editReviewReason: draft?.reviewReason ?? null,
+    };
+    });
   },
 );
 

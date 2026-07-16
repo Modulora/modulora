@@ -63,6 +63,7 @@ import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhoo
 import { Route as ApiReportContactVerifyRouteImport } from './routes/api/report-contact/verify'
 import { Route as ApiInvitationsPrepareRouteImport } from './routes/api/invitations/prepare'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as DashboardToolsEditNameRouteImport } from './routes/dashboard.tools.edit.$name'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -337,6 +338,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardToolsEditNameRoute = DashboardToolsEditNameRouteImport.update({
+  id: '/tools/edit/$name',
+  path: '/tools/edit/$name',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -393,6 +399,7 @@ export interface FileRoutesByFullPath {
   '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review/': typeof DashboardReviewIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
+  '/dashboard/tools/edit/$name': typeof DashboardToolsEditNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -447,6 +454,7 @@ export interface FileRoutesByTo {
   '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review': typeof DashboardReviewIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
+  '/dashboard/tools/edit/$name': typeof DashboardToolsEditNameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -504,6 +512,7 @@ export interface FileRoutesById {
   '/preview/$namespace/$name': typeof PreviewNamespaceNameRoute
   '/dashboard/review/': typeof DashboardReviewIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
+  '/dashboard/tools/edit/$name': typeof DashboardToolsEditNameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -562,6 +571,7 @@ export interface FileRouteTypes {
     | '/preview/$namespace/$name'
     | '/dashboard/review/'
     | '/dashboard/settings/'
+    | '/dashboard/tools/edit/$name'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -616,6 +626,7 @@ export interface FileRouteTypes {
     | '/preview/$namespace/$name'
     | '/dashboard/review'
     | '/dashboard/settings'
+    | '/dashboard/tools/edit/$name'
   id:
     | '__root__'
     | '/'
@@ -672,6 +683,7 @@ export interface FileRouteTypes {
     | '/preview/$namespace/$name'
     | '/dashboard/review/'
     | '/dashboard/settings/'
+    | '/dashboard/tools/edit/$name'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1089,6 +1101,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/tools/edit/$name': {
+      id: '/dashboard/tools/edit/$name'
+      path: '/tools/edit/$name'
+      fullPath: '/dashboard/tools/edit/$name'
+      preLoaderRoute: typeof DashboardToolsEditNameRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
@@ -1128,6 +1147,7 @@ interface DashboardRouteChildren {
   DashboardReviewIdRoute: typeof DashboardReviewIdRoute
   DashboardToolsNewRoute: typeof DashboardToolsNewRoute
   DashboardReviewIndexRoute: typeof DashboardReviewIndexRoute
+  DashboardToolsEditNameRoute: typeof DashboardToolsEditNameRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -1149,6 +1169,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardReviewIdRoute: DashboardReviewIdRoute,
   DashboardToolsNewRoute: DashboardToolsNewRoute,
   DashboardReviewIndexRoute: DashboardReviewIndexRoute,
+  DashboardToolsEditNameRoute: DashboardToolsEditNameRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

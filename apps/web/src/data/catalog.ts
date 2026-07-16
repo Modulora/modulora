@@ -68,7 +68,7 @@ export interface CatalogItem {
   title: string;
   description: string;
   category: string;
-  /** First public listing decision, or submission time when not yet reviewed. */
+  /** Stable initial listing creation date. */
   listedAt?: string;
   listingKind?: "component" | "tool";
   site?: {

@@ -32,3 +32,21 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const Editing: Story = {
+  args: {
+    mode: "edit",
+    initial: {
+      name: "shieldcn-beautiful-readme-badges",
+      title: "Shieldcn — Beautiful README Badges",
+      description: "Beautiful GitHub README badges and charts styled as shadcn/ui, plus a visual README builder.",
+      category: "utilities",
+      siteUrl: "https://shieldcn.dev/",
+      showcaseImageUrls: [previewImage],
+      pricing: "free",
+      preview: { canonicalUrl: "https://shieldcn.dev/", title: "Shieldcn", description: "Beautiful README badges.", imageUrl: previewImage },
+      editStatus: "changes-requested",
+      reviewReason: "Update the first screenshot so it matches the current landing page.",
+    },
+  },
+};
