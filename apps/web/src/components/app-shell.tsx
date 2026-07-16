@@ -199,10 +199,10 @@ function UserMenu({ user }: { user: CurrentUser }) {
         busy={feedbackBusy}
         done={feedbackDone}
         error={feedbackError}
-        onSubmit={(message) => {
+        onSubmit={({ message, category, element }) => {
           setFeedbackBusy(true);
           setFeedbackError(null);
-          void submitFeedback({ data: { message, page: window.location.pathname } }).then((res) => {
+          void submitFeedback({ data: { message, category, element, page: window.location.pathname } }).then((res) => {
             setFeedbackBusy(false);
             if (!res.ok) {
               setFeedbackError(res.error ?? "Could not send.");

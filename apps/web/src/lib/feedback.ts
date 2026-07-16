@@ -7,10 +7,25 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { getCurrentUser } from "./session";
 
+const CATEGORIES = new Map([
+  ["bug", "Bug"],
+  ["idea", "Idea"],
+  ["ui", "UI issue"],
+  ["other", "Other"],
+]);
+
 export const submitFeedback = createServerFn({ method: "POST" })
-  .validator((data: { message: string; page: string }) => ({
+  .validator((data: { message: string; page: string; category?: string; element?: { selector?: string; text?: string; rect?: string } | null }) => ({
     message: String(data.message ?? "").trim().slice(0, 2000),
     page: String(data.page ?? "").trim().slice(0, 200),
+    category: CATEGORIES.has(String(data.category)) ? String(data.category) : "other",
+    element: data.element
+      ? {
+          selector: String(data.element.selector ?? "").trim().slice(0, 300),
+          text: String(data.element.text ?? "").trim().slice(0, 120),
+          rect: String(data.element.rect ?? "").trim().slice(0, 60),
+        }
+      : null,
   }))
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
     if (data.message.length < 4) return { ok: false, error: "Say a little more." };
@@ -24,12 +39,16 @@ export const submitFeedback = createServerFn({ method: "POST" })
       content: null,
       embeds: [
         {
-          title: "Feedback",
+          title: `Feedback — ${CATEGORIES.get(data.category) ?? "Other"}`,
           description: data.message,
           color: 0xf5a623,
           fields: [
             { name: "From", value: `@${user.username ?? user.email}`, inline: true },
             { name: "Page", value: data.page || "unknown", inline: true },
+            { name: "Category", value: CATEGORIES.get(data.category) ?? "Other", inline: true },
+            ...(data.element?.selector
+              ? [{ name: "Element", value: `\`${data.element.selector}\`${data.element.text ? `\n“${data.element.text}”` : ""}${data.element.rect ? `\n${data.element.rect}` : ""}`.slice(0, 1024) }]
+              : []),
           ],
           timestamp: new Date().toISOString(),
         },
