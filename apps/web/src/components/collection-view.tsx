@@ -132,19 +132,7 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
         </nav>
 
         <div className={`overflow-hidden rounded-xl border border-border/60 ${pageTheme === "dark" ? "bg-[#0d0d0d]" : "bg-[#f5f5f3]"}`}>
-          {member.locked ? (
-            <div className="flex h-[32rem] flex-col items-center justify-center gap-3 text-center">
-              <span className="flex size-11 items-center justify-center rounded-full border border-white/15 bg-black/60">
-                <FileLock2 className="size-5" />
-              </span>
-              <div>
-                <p className="font-semibold">Purchase to preview</p>
-                <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                  {member.title} is a paid component — buying the collection unlocks it.
-                </p>
-              </div>
-            </div>
-          ) : (
+          {(member.files ?? []).length > 0 ? (
             <ComponentSandbox
               key={member.name}
               files={(member.files ?? []).map((f) => ({ path: f.path, content: f.content }))}
@@ -152,13 +140,29 @@ export function CollectionView({ collection }: { collection: CollectionDetail })
               theme={pageTheme}
               className="h-[32rem]"
             />
+          ) : (
+            <div className="flex h-[32rem] flex-col items-center justify-center gap-3 text-center">
+              <span className="flex size-11 items-center justify-center rounded-full border border-white/15 bg-black/60">
+                <FileLock2 className="size-5" />
+              </span>
+              <div>
+                <p className="font-semibold">Preview unavailable</p>
+                <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+                  {member.title} could not be previewed — buying the collection unlocks the source and install.
+                </p>
+              </div>
+            </div>
           )}
-          {!member.locked ? (
+          {member.locked ? (
+            <div className="flex items-center gap-2 border-t border-border/60 px-4 py-2.5 text-xs text-muted-foreground">
+              <FileLock2 className="size-3.5 shrink-0" /> Live preview only — buying the collection unlocks the readable source and install.
+            </div>
+          ) : (
             <div className="flex items-center justify-between gap-3 border-t border-border/60 px-4 py-2.5">
               <code className="truncate font-mono text-xs text-muted-foreground">{memberCommand}</code>
               <CopyChip label="Copy" text={memberCommand} icon={TerminalSquare} />
             </div>
-          ) : null}
+          )}
         </div>
       </div>
     </div>

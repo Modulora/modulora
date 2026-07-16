@@ -17,6 +17,7 @@ import { normalizeDomain } from "./domains";
 import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
 import { DIRECT_MARKETPLACE_ENABLED } from "./flags";
 import { licenseTemplate, resolveLicenseText } from "./license";
+import { obfuscatePreviewFiles } from "./preview-obfuscate";
 import { publicListsFor } from "./lists";
 import {
   visibleProfileContent,
@@ -310,12 +311,15 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       : [];
     const evidence = row.version ? await loadEvidence(database, row.version.id) : [];
 
+    // Never send paid source to a viewer who hasn't purchased it. Unentitled
+    // viewers get a compiled preview artifact (or nothing if compilation fails).
+    const readable = files.map((file) => ({ path: file.path, content: file.content ?? "" }));
+    const shippedFiles = entitled ? readable : (await obfuscatePreviewFiles(readable)) ?? [];
     const item = toCatalogItem(
       row.namespace,
       row.component,
       row.version,
-      // Never send paid source to a viewer who hasn't purchased it.
-      entitled ? files.map((file) => ({ path: file.path, content: file.content ?? "" })) : [],
+      shippedFiles,
       evidence,
     );
     // Record the view: approved + public only, never the owner's own visits.
@@ -966,15 +970,17 @@ export const fetchCollectionDetail = createServerFn({ method: "GET" })
       const entitled = !memberPrice
         ? true
         : owned || (await hasEntitlement(member.component.id, viewer?.id ?? null, row.ownerUserId));
-      const files = entitled
-        ? await database
-            .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
-            .from(schema.componentFiles)
-            .where(eq(schema.componentFiles.componentVersionId, member.version.id))
-            .orderBy(schema.componentFiles.orderIndex)
-        : [];
+      const files = await database
+        .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
+        .from(schema.componentFiles)
+        .where(eq(schema.componentFiles.componentVersionId, member.version.id))
+        .orderBy(schema.componentFiles.orderIndex);
+      // Paid members still render a live preview: unentitled viewers get the
+      // compiled artifact, never the readable source (nothing on failure).
+      const readableMemberFiles = files.map((f) => ({ path: f.path, content: f.content ?? "" }));
+      const shippedMemberFiles = entitled ? readableMemberFiles : (await obfuscatePreviewFiles(readableMemberFiles)) ?? [];
       members.push({
-        ...toCatalogItem(data.namespace, member.component, member.version, files.map((f) => ({ path: f.path, content: f.content ?? "" }))),
+        ...toCatalogItem(data.namespace, member.component, member.version, shippedMemberFiles),
         locked: !entitled,
       });
     }
