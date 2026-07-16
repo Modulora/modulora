@@ -25,6 +25,7 @@ const SCRIPT_EXTENSIONS = /\.(tsx|ts|jsx|js|mjs)$/i;
 
 async function compileOne(file: PreviewFile): Promise<PreviewFile> {
   if (!SCRIPT_EXTENSIONS.test(file.path)) return file;
+  if (file.content.startsWith(BANNER)) return file;
   const stripped = transform(file.content, {
     transforms: ["typescript", "jsx"],
     jsxRuntime: "automatic",

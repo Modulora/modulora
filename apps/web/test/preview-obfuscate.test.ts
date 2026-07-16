@@ -48,4 +48,10 @@ describe("preview obfuscation", () => {
     ]);
     expect(result).toBeNull();
   });
+
+  it("does not transform an already compiled paid preview again", async () => {
+    const first = await obfuscatePreviewFiles([{ path: "component.tsx", content: component }]);
+    const second = await obfuscatePreviewFiles(first!);
+    expect(second).toEqual(first);
+  });
 });
