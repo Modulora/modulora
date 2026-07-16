@@ -71,6 +71,7 @@ function toCatalogItem(
     title: component.title,
     description: component.description,
     category: categoryLabel(component.category),
+    listedAt: (component.reviewedAt ?? component.submittedAt ?? component.createdAt).toISOString(),
     listingKind: component.listingKind as CatalogItem["listingKind"],
     site: component.listingKind === "tool" && component.siteUrl && component.siteDomain
       ? {

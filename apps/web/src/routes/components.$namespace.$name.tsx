@@ -42,7 +42,7 @@ import {
 import { HiCheckBadge } from "react-icons/hi2";
 import { reportComponent, REPORT_REASONS } from "@/lib/report";
 import { fetchCatalogDetail } from "@/lib/catalog-db";
-import { isPaidCatalogItem, needsInteractionHint, type CatalogItem, type EvidenceRecord } from "../data/catalog";
+import { formatListingDate, isPaidCatalogItem, needsInteractionHint, type CatalogItem, type EvidenceRecord } from "../data/catalog";
 import { ComponentDetailError, ComponentDetailLoading } from "@/components/component-detail-state";
 import { externalDomainDisclosure } from "@/lib/external-sales";
 
@@ -100,6 +100,7 @@ function ComponentDetail() {
 }
 
 function ComponentDetailInner({ item, files, colorVisionMode, viewerPlus }: { item: NonNullable<Awaited<ReturnType<typeof fetchCatalogDetail>>>; files: HighlightedFile[]; colorVisionMode: ColorVisionMode; viewerPlus: boolean }) {
+  const listedDate = formatListingDate(item.listedAt);
   const [workspaceTab, setWorkspaceTab] = useState("preview");
   const [installTab, setInstallTab] = useState(
     item.distributionChannels?.includes("shadcn")
@@ -184,7 +185,7 @@ function ComponentDetailInner({ item, files, colorVisionMode, viewerPlus }: { it
         ) : null}
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>
-            by <Link to="/$username" params={{ username: item.namespace }} className="rounded-sm text-foreground/80 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">{item.namespace}</Link>
+            Listed by <Link to="/$username" params={{ username: item.namespace }} className="rounded-sm text-foreground/80 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">@{item.namespace}</Link>{listedDate ? <> on <time dateTime={item.listedAt}>{listedDate}</time></> : null}
             {item.memberOf?.length ? (
               <>
                 {" "}in <Link to="/$username" params={{ username: item.namespace }} className="text-foreground/80 hover:text-foreground">{item.memberOf[0]!.title}</Link>

@@ -5,12 +5,13 @@ import { ToolImageCarousel } from "@/components/tool-image-carousel";
 import { ToolListingImage } from "@/components/tool-listing-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { CatalogItem } from "@/data/catalog";
+import { formatListingDate, type CatalogItem } from "@/data/catalog";
 
 export function ToolListingDetail({ item }: { item: CatalogItem }) {
   const site = item.site;
   if (!site) return null;
   const images = site.showcaseImageUrls.length ? site.showcaseImageUrls : site.ogImageUrl ? [site.ogImageUrl] : [];
+  const listedDate = formatListingDate(item.listedAt);
   const domainEvidence = item.evidence.find((record) => record.type === "domain-verified" && record.status === "passed");
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
@@ -22,7 +23,7 @@ export function ToolListingDetail({ item }: { item: CatalogItem }) {
           <div className="mb-2 flex flex-wrap items-center gap-2"><Badge variant="outline">Tool</Badge><Badge variant="secondary">{site.pricing === "freemium" ? "Freemium" : site.pricing === "paid" ? "Paid" : "Free"}</Badge><Badge variant="secondary">{item.category}</Badge></div>
           <h1 className="text-3xl font-bold tracking-tight">{item.title}</h1>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-          <p className="mt-3 text-xs text-muted-foreground">Listed by <Link to="/$username" params={{ username: item.namespace }} className="underline underline-offset-2">@{item.namespace}</Link></p>
+          <p className="mt-3 text-xs text-muted-foreground">Listed by <Link to="/$username" params={{ username: item.namespace }} className="underline underline-offset-2">@{item.namespace}</Link>{listedDate ? <> on <time dateTime={item.listedAt}>{listedDate}</time></> : null}</p>
         </div>
         <Button asChild><a href={site.url} target="_blank" rel="noreferrer"><External className="size-4" /> Visit {site.domain}</a></Button>
       </div>
