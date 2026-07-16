@@ -21,6 +21,7 @@ const meta = {
       title: "Contrast Workbench",
       description: "A focused visual tool for comparing interface colors and checking readable combinations.",
       category: "Utilities",
+      listedAt: "2026-07-15T18:00:00.000Z",
       listingKind: "tool",
       site: { url: "https://example.com", domain: "example.com", ogTitle: "Contrast Workbench", ogDescription: "Compare interface colors.", ogImageUrl: null, showcaseImageUrls: [], pricing: "freemium" },
       evidence: [{ type: "domain-verified", status: "passed", issuer: "modulora-platform", timestamp: new Date().toISOString() }],

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { catalog, findItem } from "../src/data/catalog";
+import { catalog, findItem, formatListingDate } from "../src/data/catalog";
 
 describe("catalog seed", () => {
   it("contains creator-authorized items", () => {
@@ -29,5 +29,11 @@ describe("catalog seed", () => {
   it("resolves items by namespace and name", () => {
     expect(findItem("northstar", "calendar")?.title).toBe("Calendar");
     expect(findItem("northstar", "missing")).toBeUndefined();
+  });
+
+  it("formats listing dates consistently", () => {
+    expect(formatListingDate("2026-07-15T23:30:00.000Z")).toBe("Jul 15, 2026");
+    expect(formatListingDate("not-a-date")).toBeNull();
+    expect(formatListingDate()).toBeNull();
   });
 });

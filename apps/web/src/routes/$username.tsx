@@ -156,7 +156,7 @@ function Profile() {
             </span>
             {profile.sections.components ? (
               <span className="inline-flex items-center gap-1.5">
-                <Blocks className="size-3.5" /> {components.length} component{components.length === 1 ? "" : "s"}
+                <Blocks className="size-3.5" /> {components.length} Listing{components.length === 1 ? "" : "s"}
               </span>
             ) : null}
             {profile.websiteUrl ? (
@@ -257,7 +257,7 @@ function Profile() {
             className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 text-center"
           >
             <Blocks className="size-5 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No public components yet.</p>
+            <p className="text-sm text-muted-foreground">No public listings yet.</p>
           </motion.div>
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),22rem))] gap-4">

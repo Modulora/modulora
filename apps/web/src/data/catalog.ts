@@ -68,6 +68,8 @@ export interface CatalogItem {
   title: string;
   description: string;
   category: string;
+  /** First public listing decision, or submission time when not yet reviewed. */
+  listedAt?: string;
   listingKind?: "component" | "tool";
   site?: {
     url: string;
@@ -135,6 +137,18 @@ export function needsInteractionHint(files: ComponentFile[] | undefined): boolea
 /** Commerce display only; licensing and source-model copy remain separate. */
 export function isPaidCatalogItem(item: CatalogItem): boolean {
   return (item.sourceModel !== "open-source" && item.sourceModel !== "external-site") || item.marketplacePrice != null || item.inPaidCollection === true;
+}
+
+export function formatListingDate(value?: string): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 export const catalog: CatalogItem[] = [
