@@ -30,15 +30,15 @@ function ToolReviewPage() {
   async function decide(decision: ToolReviewDecision) {
     if (!complete) { setError("Complete every usefulness check first."); setStep(1); return; }
     setBusy(true); setError("");
-    const result = await decideToolReview({ data: { componentId: item.id, decision, rationale, checklist: checklist as ToolReviewChecklist } });
+    const result = await decideToolReview({ data: { componentId: item.id, componentVersionId: item.componentVersionId, decision, rationale, checklist: checklist as ToolReviewChecklist } });
     setBusy(false);
-    if (!result.ok) { setError(result.error); return; }
+    if (!result.ok) { setError(result.error ?? "Could not record the review decision."); return; }
     await navigate({ to: "/dashboard/review" });
   }
 
   return (
     <div className="w-full max-w-7xl">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="mb-2 flex gap-2"><Badge variant="outline">Tool</Badge><Badge variant="secondary">{item.pricing === "freemium" ? "Freemium" : item.pricing === "paid" ? "Paid" : "Free"}</Badge><Badge variant="secondary">Usefulness review</Badge></div><h1 className="text-2xl font-bold tracking-tight">{item.title}</h1><p className="mt-1 text-sm text-muted-foreground">@{item.namespace} · {item.siteDomain} · {item.category}</p></div><Button asChild variant="outline"><a href={item.siteUrl} target="_blank" rel="noreferrer"><External className="size-4" /> Open site</a></Button></div>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="mb-2 flex gap-2"><Badge variant="outline">Tool</Badge>{item.isEdit ? <Badge variant="outline">Pending edit</Badge> : null}<Badge variant="secondary">{item.pricing === "freemium" ? "Freemium" : item.pricing === "paid" ? "Paid" : "Free"}</Badge><Badge variant="secondary">Usefulness review</Badge></div><h1 className="text-2xl font-bold tracking-tight">{item.title}</h1><p className="mt-1 text-sm text-muted-foreground">@{item.namespace} · {item.siteDomain} · {item.category}</p>{item.isEdit ? <p className="mt-2 text-xs text-muted-foreground">Approving replaces the public tool listing with this complete edit. Until then, the approved version remains public.</p> : null}</div><Button asChild variant="outline"><a href={item.siteUrl} target="_blank" rel="noreferrer"><External className="size-4" /> Open site</a></Button></div>
 
       <ol className="mb-6 grid grid-cols-3 overflow-hidden rounded-xl border border-border/60 bg-card/40">{STEPS.map((label, index) => <li key={label}><button type="button" onClick={() => setStep(index)} className={`flex min-h-12 w-full items-center justify-center gap-2 border-r border-border/60 px-3 text-sm last:border-0 ${step === index ? "bg-secondary font-medium" : "text-muted-foreground"}`}><span className="text-xs tabular-nums">{index + 1}</span>{label}</button></li>)}</ol>
 

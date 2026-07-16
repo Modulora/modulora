@@ -435,6 +435,43 @@ export const componentVersions = pgTable(
   (t) => [uniqueIndex("component_versions_unique").on(t.componentId, t.version)],
 );
 
+export interface ToolListingDraftPayload {
+  title: string;
+  description: string;
+  category: string;
+  siteUrl: string;
+  siteDomain: string;
+  ogTitle: string | null;
+  ogDescription: string | null;
+  ogImageUrl: string | null;
+  showcaseImageUrls: string[];
+  pricing: "free" | "freemium" | "paid";
+}
+
+/**
+ * A pending edit to an already-approved tool listing. The approved component
+ * row remains unchanged and public until a curator approves this payload.
+ */
+export const toolListingDrafts = pgTable(
+  "tool_listing_drafts",
+  {
+    componentId: uuid("component_id")
+      .primaryKey()
+      .references(() => components.id, { onDelete: "cascade" }),
+    componentVersionId: uuid("component_version_id")
+      .notNull()
+      .references(() => componentVersions.id, { onDelete: "cascade" }),
+    payload: jsonb("payload").$type<ToolListingDraftPayload>().notNull(),
+    status: text("status", { enum: ["pending", "changes-requested", "rejected"] })
+      .notNull()
+      .default("pending"),
+    reviewReason: text("review_reason"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("tool_listing_drafts_status").on(t.status)],
+);
+
 /**
  * Uploaded source files for a version. Small text lives in Postgres; large
  * binary assets (preview media) move to R2 later via `storageKey`.

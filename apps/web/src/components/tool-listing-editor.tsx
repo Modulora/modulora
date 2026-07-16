@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES } from "@/lib/taxonomy";
-import type { ToolListingInput } from "@/lib/tool-listings";
+import type { EditableToolListing, ToolListingInput } from "@/lib/tool-listings";
 
 export interface ToolListingPreview {
   canonicalUrl: string;
@@ -31,6 +31,8 @@ function normalizeHttpsUrl(value: string): string | null {
 }
 
 export interface ToolListingEditorProps {
+  mode?: "create" | "edit";
+  initial?: EditableToolListing;
   onInspect: (siteUrl: string) => Promise<{ ok: boolean; error?: string; metadata?: ToolListingPreview; verificationDomain?: string }>;
   onSubmit: (input: ToolListingInput) => Promise<{ ok: boolean; error?: string }>;
   onSubmitted: () => Promise<void> | void;
@@ -39,15 +41,16 @@ export interface ToolListingEditorProps {
   onDiscoverDomainConnect: (domain: string) => Promise<{ supported: boolean; provider?: string; applyUrl?: string }>;
 }
 
-export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDomain, onVerifyDomain, onDiscoverDomainConnect }: ToolListingEditorProps) {
-  const [siteUrl, setSiteUrl] = useState("");
-  const [name, setName] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<string>(CATEGORIES[0].id);
-  const [pricing, setPricing] = useState<ToolListingInput["pricing"]>("free");
-  const [showcaseImageUrls, setShowcaseImageUrls] = useState<string[]>([]);
-  const [preview, setPreview] = useState<ToolListingPreview | null>(null);
+export function ToolListingEditor({ mode = "create", initial, onInspect, onSubmit, onSubmitted, onCreateDomain, onVerifyDomain, onDiscoverDomainConnect }: ToolListingEditorProps) {
+  const editing = mode === "edit";
+  const [siteUrl, setSiteUrl] = useState(initial?.siteUrl ?? "");
+  const [name, setName] = useState(initial?.name ?? "");
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [category, setCategory] = useState<string>(initial?.category ?? CATEGORIES[0].id);
+  const [pricing, setPricing] = useState<ToolListingInput["pricing"]>(initial?.pricing ?? "free");
+  const [showcaseImageUrls, setShowcaseImageUrls] = useState<string[]>(initial?.showcaseImageUrls ?? []);
+  const [preview, setPreview] = useState<ToolListingPreview | null>(initial?.preview ?? null);
   const [inspecting, setInspecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -158,9 +161,10 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
     <form onSubmit={submit} className="grid w-full gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(28rem,1.2fr)]">
       <div className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card/40 p-6">
         <div>
-          <h2 className="text-sm font-semibold">Tool or site details</h2>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Only owner-authorized sites on a domain verified in Settings may be submitted.</p>
+          <h2 className="text-sm font-semibold">{editing ? "Edit tool or site" : "Tool or site details"}</h2>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Only owner-authorized sites on a domain verified in Settings may be submitted. {editing ? "Every saved edit returns to curator review while the approved version stays public." : null}</p>
         </div>
+        {initial?.editStatus ? <div className="rounded-lg border border-border/60 bg-secondary/25 px-3 py-2 text-xs leading-relaxed"><span className="font-medium">Edit {initial.editStatus === "pending" ? "in review" : initial.editStatus.replace("-", " ")}.</span>{initial.reviewReason ? ` ${initial.reviewReason}` : " You can revise and resubmit this draft."}</div> : null}
         <div className="flex flex-col gap-2">
           <Label htmlFor="tool-url">Verified HTTPS URL</Label>
           <div className="flex gap-2">
@@ -169,7 +173,7 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
           </div>
         </div>
         <div className="flex flex-col gap-2"><Label htmlFor="tool-title">Title</Label><Input id="tool-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} required /></div>
-        <div className="flex flex-col gap-2"><Label htmlFor="tool-slug">Listing slug</Label><Input id="tool-slug" value={name} onChange={(event) => setName(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} maxLength={64} required /><p className="text-xs text-muted-foreground">Used in the Modulora detail URL.</p></div>
+        <div className="flex flex-col gap-2"><Label htmlFor="tool-slug">Listing slug</Label><Input id="tool-slug" value={name} disabled={editing} onChange={(event) => setName(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} maxLength={64} required /><p className="text-xs text-muted-foreground">{editing ? "The public listing URL stays fixed." : "Used in the Modulora detail URL."}</p></div>
         <div className="flex flex-col gap-2"><Label htmlFor="tool-description">Description</Label><textarea id="tool-description" value={description} onChange={(event) => setDescription(event.target.value)} rows={5} minLength={24} maxLength={500} required className="resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" /></div>
         <div className="flex flex-col gap-2"><Label htmlFor="tool-category">Category</Label><Select value={category} onValueChange={setCategory}><SelectTrigger id="tool-category"><SelectValue /></SelectTrigger><SelectContent>{CATEGORIES.map((item) => <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>)}</SelectContent></Select></div>
         <div className="flex flex-col gap-2"><Label htmlFor="tool-pricing">Pricing</Label><Select value={pricing} onValueChange={(value) => setPricing(value as ToolListingInput["pricing"])}><SelectTrigger id="tool-pricing"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="free">Free</SelectItem><SelectItem value="freemium">Freemium</SelectItem><SelectItem value="paid">Paid</SelectItem></SelectContent></Select><p className="text-xs text-muted-foreground">Describes pricing on your site. Checkout remains external.</p></div>
@@ -195,7 +199,7 @@ export function ToolListingEditor({ onInspect, onSubmit, onSubmitted, onCreateDo
           {showcaseImageUrls.length < 6 ? <label htmlFor="tool-images" className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground"><Photo className="size-4" />{uploading ? "Uploading…" : showcaseImageUrls.length ? "Add images" : "Upload site thumbnails"}<input id="tool-images" type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={uploading} className="sr-only" onChange={(event) => { void uploadImages(event.currentTarget.files); event.currentTarget.value = ""; }} /></label> : null}
         </div>
         {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
-        <Button type="submit" disabled={submitting || inspecting || uploading || !preview || showcaseImageUrls.length === 0}>{submitting ? <Loader className="size-4 animate-spin" /> : null} Submit for usefulness review</Button>
+        <Button type="submit" disabled={submitting || inspecting || uploading || !preview || showcaseImageUrls.length === 0}>{submitting ? <Loader className="size-4 animate-spin" /> : null} {editing ? "Submit changes for review" : "Submit for usefulness review"}</Button>
         <p className="text-xs leading-relaxed text-muted-foreground">Submission enters the curator queue. Approval evaluates usefulness and catalog relevance; it is not a security or legal certification.</p>
       </div>
 

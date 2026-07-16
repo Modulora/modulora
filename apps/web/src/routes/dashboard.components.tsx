@@ -237,7 +237,7 @@ function ComponentCard({ component, username, payoutsEnabled }: { component: MyC
           <ToolImageCarousel images={component.showcaseImageUrls.length ? component.showcaseImageUrls : component.previewImageUrl ? [component.previewImageUrl] : []} domain={component.siteDomain ?? "External tool"} title={component.title} className="aspect-[4/3] w-full" />
         ) : <LiveCardPreview item={{ namespace: username, name: component.name, title: component.title, live: true }} className="w-full rounded-none border-0" />}
         <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-          <ReviewBadge status={component.reviewStatus} />
+          <div className="flex flex-wrap gap-1.5"><ReviewBadge status={component.reviewStatus} />{component.editStatus ? <span className={`rounded-full px-2 py-0.5 text-xs ${component.editStatus === "pending" ? "bg-secondary text-foreground" : "bg-destructive/10 text-destructive"}`}>{component.editStatus === "pending" ? "Edit in review" : component.editStatus === "changes-requested" ? "Edit changes requested" : "Edit rejected"}</span> : null}</div>
           {component.listingKind === "tool" ? <div className="flex gap-1.5"><Badge variant="secondary">{component.toolPricing === "freemium" ? "Freemium" : component.toolPricing === "paid" ? "Paid" : "Free"}</Badge><Badge variant="secondary">Tool</Badge></div> : <PriceSeal paid={component.sourceModel !== "open-source" || (DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null)} label={DIRECT_MARKETPLACE_ENABLED && component.marketplacePrice != null ? `$${component.marketplacePrice / 100}` : undefined} />}
         </div>
       </div>
@@ -253,13 +253,14 @@ function ComponentCard({ component, username, payoutsEnabled }: { component: MyC
         {component.reviewStatus === "rejected" && component.reviewReason ? (
           <p className="mt-3 line-clamp-2 rounded-lg bg-destructive/8 px-3 py-2 text-xs leading-relaxed text-destructive">{component.reviewReason}</p>
         ) : null}
+        {component.editReviewReason ? <p className="mt-3 line-clamp-2 rounded-lg bg-destructive/8 px-3 py-2 text-xs leading-relaxed text-destructive">{component.editReviewReason}</p> : null}
         {component.reviewHistory.length > 0 ? <ReviewHistoryDialog component={component} /> : <div className="min-h-9" />}
 
         <div className="mt-auto flex items-center gap-1 border-t border-border/50 pt-3">
         <Button asChild variant="outline" size="sm" className="flex-1 gap-1.5">
           <Link to="/components/$namespace/$name" params={{ namespace: username, name: component.name }}><ExternalLink className="size-3.5" /> Open</Link>
         </Button>
-        {component.listingKind !== "tool" ? <Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon-sm"><Link to="/dashboard/edit/$name" params={{ name: component.name }} aria-label={`Edit ${component.title}`}><Pencil className="size-3.5" /></Link></Button></TooltipTrigger><TooltipContent>Edit component</TooltipContent></Tooltip> : null}
+        {component.listingKind === "tool" ? <Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon-sm"><Link to="/dashboard/tools/edit/$name" params={{ name: component.name }} aria-label={`Edit ${component.title}`}><Pencil className="size-3.5" /></Link></Button></TooltipTrigger><TooltipContent>Edit listing</TooltipContent></Tooltip> : <Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon-sm"><Link to="/dashboard/edit/$name" params={{ name: component.name }} aria-label={`Edit ${component.title}`}><Pencil className="size-3.5" /></Link></Button></TooltipTrigger><TooltipContent>Edit component</TooltipContent></Tooltip>}
         {component.reviewStatus === "approved" ? (
           <>
             {DIRECT_MARKETPLACE_ENABLED && component.listingKind !== "tool" ? <PriceDialog component={component} payoutsEnabled={payoutsEnabled} /> : null}

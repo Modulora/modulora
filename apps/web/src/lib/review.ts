@@ -36,6 +36,7 @@ export async function fireReviewWebhook(input: {
   category: string;
   paid: boolean;
   listingKind: "component" | "tool";
+  submissionKind?: "new" | "edit";
   origin: string;
 }): Promise<void> {
   const webhookUrl = process.env.REVIEW_WEBHOOK_URL;
@@ -48,7 +49,7 @@ export async function fireReviewWebhook(input: {
       body: JSON.stringify({
         embeds: [
           {
-            title: `New ${input.listingKind === "tool" ? "tool/site" : "component"} awaiting review`,
+            title: `${input.submissionKind === "edit" ? "Edited" : "New"} ${input.listingKind === "tool" ? "tool/site" : "component"} awaiting review`,
             url: reviewUrl,
             description: `**${input.title}** by @${input.username}`,
             color: 0x6366f1,
@@ -108,10 +109,25 @@ export const fetchReviewQueue = createServerFn({ method: "GET" }).handler(
       .orderBy(desc(schema.components.submittedAt))
       .limit(100);
 
+    const editRows = await db
+      .select({
+        id: schema.components.id,
+        name: schema.components.name,
+        namespace: schema.namespaces.name,
+        payload: schema.toolListingDrafts.payload,
+        submittedAt: schema.toolListingDrafts.submittedAt,
+      })
+      .from(schema.toolListingDrafts)
+      .innerJoin(schema.components, eq(schema.components.id, schema.toolListingDrafts.componentId))
+      .innerJoin(schema.namespaces, eq(schema.namespaces.id, schema.components.namespaceId))
+      .where(eq(schema.toolListingDrafts.status, "pending"))
+      .orderBy(desc(schema.toolListingDrafts.submittedAt))
+      .limit(100);
+
     return {
       ok: true,
       isCurator: true,
-      items: rows.map((row) => ({
+      items: [...rows.map((row) => ({
         id: row.id,
         title: row.title,
         name: row.name,
@@ -121,7 +137,19 @@ export const fetchReviewQueue = createServerFn({ method: "GET" }).handler(
         listingKind: row.listingKind,
         status: row.status,
         submittedAt: row.submittedAt.toISOString(),
-      })),
+      })), ...editRows.map((row) => ({
+        id: row.id,
+        title: row.payload.title,
+        name: row.name,
+        namespace: row.namespace,
+        category: row.payload.category,
+        paid: false,
+        listingKind: "tool" as const,
+        status: "pending" as const,
+        submittedAt: row.submittedAt.toISOString(),
+      }))]
+        .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+        .slice(0, 100),
     };
   },
 );
