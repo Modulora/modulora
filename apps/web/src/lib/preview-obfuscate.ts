@@ -15,6 +15,11 @@ export interface PreviewFile {
   content: string;
 }
 
+/** Paid external source and unentitled hosted source are preview-only. */
+export function requiresCompiledPreview(sourceModel: string, entitled: boolean): boolean {
+  return sourceModel !== "open-source" || !entitled;
+}
+
 const BANNER = "/* Modulora preview build — purchase unlocks the readable source. */\n";
 const SCRIPT_EXTENSIONS = /\.(tsx|ts|jsx|js|mjs)$/i;
 

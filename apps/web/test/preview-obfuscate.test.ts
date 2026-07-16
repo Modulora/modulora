@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { obfuscatePreviewFiles } from "../src/lib/preview-obfuscate";
+import { obfuscatePreviewFiles, requiresCompiledPreview } from "../src/lib/preview-obfuscate";
 
 const component = `// secret implementation notes
 import { useState } from "react";
@@ -16,6 +16,16 @@ export function Counter({ initialCount }: CounterProps) {
 `;
 
 describe("preview obfuscation", () => {
+  it("compiles external paid and unentitled hosted components", () => {
+    const paidExternalComponent = { sourceModel: "external-commercial", entitled: true };
+    const unpaidHostedComponent = { sourceModel: "open-source", entitled: false };
+    const freeComponent = { sourceModel: "open-source", entitled: true };
+
+    expect(requiresCompiledPreview(paidExternalComponent.sourceModel, paidExternalComponent.entitled)).toBe(true);
+    expect(requiresCompiledPreview(unpaidHostedComponent.sourceModel, unpaidHostedComponent.entitled)).toBe(true);
+    expect(requiresCompiledPreview(freeComponent.sourceModel, freeComponent.entitled)).toBe(false);
+  });
+
   it("destroys comments, types, and local names while preserving the module contract", async () => {
     const result = await obfuscatePreviewFiles([
       { path: "components/ui/counter.tsx", content: component },
