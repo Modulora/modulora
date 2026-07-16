@@ -17,6 +17,7 @@ import { normalizeDomain } from "./domains";
 import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
 import { DIRECT_MARKETPLACE_ENABLED } from "./flags";
 import { licenseTemplate, resolveLicenseText } from "./license";
+import { obfuscatePreviewFiles, requiresCompiledPreview } from "./preview-obfuscate";
 import { publicListsFor } from "./lists";
 import {
   visibleProfileContent,
@@ -246,29 +247,28 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       if (!isOwner && !viewer?.isCurator) return null;
     }
 
-    // Marketplace pricing: an active price gates the source behind purchase.
-    const price = DIRECT_MARKETPLACE_ENABLED
-      ? (await database
-          .select({
-            unitAmount: schema.componentPrices.unitAmount,
-            licenseTemplate: schema.componentPrices.licenseTemplate,
-            licenseText: schema.componentPrices.licenseText,
-          })
-          .from(schema.componentPrices)
-          .where(and(eq(schema.componentPrices.componentId, row.component.id), eq(schema.componentPrices.active, true)))
-          .limit(1))[0]
-      : undefined;
-    const marketplacePrice = price?.unitAmount ?? null;
-    const marketplaceLicense = price
+    // An active price protects source regardless of whether direct checkout is
+    // enabled. The feature flag controls commerce UI, never access control.
+    const protectionPrice = (await database
+      .select({
+        unitAmount: schema.componentPrices.unitAmount,
+        licenseTemplate: schema.componentPrices.licenseTemplate,
+        licenseText: schema.componentPrices.licenseText,
+      })
+      .from(schema.componentPrices)
+      .where(and(eq(schema.componentPrices.componentId, row.component.id), eq(schema.componentPrices.active, true)))
+      .limit(1))[0];
+    const marketplacePrice = DIRECT_MARKETPLACE_ENABLED ? (protectionPrice?.unitAmount ?? null) : null;
+    const marketplaceLicense = DIRECT_MARKETPLACE_ENABLED && protectionPrice
       ? {
-          name: licenseTemplate(price.licenseTemplate).name,
-          text: resolveLicenseText(price.licenseTemplate, price.licenseText),
+          name: licenseTemplate(protectionPrice.licenseTemplate).name,
+          text: resolveLicenseText(protectionPrice.licenseTemplate, protectionPrice.licenseText),
         }
       : null;
 
     // The viewer's own purchase (buyer side): powers the "You own this" tray.
     let ownedPurchase: import("./purchases").OwnedComponent | null = null;
-    if (marketplacePrice !== null && viewer) {
+    if (protectionPrice && viewer) {
       const [p] = await database
         .select({
           id: schema.purchases.id,
@@ -296,10 +296,9 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
         };
       }
     }
-    const entitled =
-      marketplacePrice === null
-        ? true
-        : await hasEntitlement(row.component.id, viewer?.id ?? null, row.ownerUserId ?? null);
+    const entitled = !protectionPrice
+      ? true
+      : await hasEntitlement(row.component.id, viewer?.id ?? null, row.ownerUserId ?? null);
 
     const files = row.version
       ? await database
@@ -310,12 +309,16 @@ export const fetchCatalogDetail = createServerFn({ method: "GET" })
       : [];
     const evidence = row.version ? await loadEvidence(database, row.version.id) : [];
 
+    // Never send paid source to a viewer who hasn't purchased it. Unentitled
+    // viewers get a compiled preview artifact (or nothing if compilation fails).
+    const readable = files.map((file) => ({ path: file.path, content: file.content ?? "" }));
+    const previewOnly = requiresCompiledPreview(row.component.sourceModel, entitled);
+    const shippedFiles = previewOnly ? (await obfuscatePreviewFiles(readable)) ?? [] : readable;
     const item = toCatalogItem(
       row.namespace,
       row.component,
       row.version,
-      // Never send paid source to a viewer who hasn't purchased it.
-      entitled ? files.map((file) => ({ path: file.path, content: file.content ?? "" })) : [],
+      shippedFiles,
       evidence,
     );
     // Record the view: approved + public only, never the owner's own visits.
@@ -921,14 +924,13 @@ export const fetchCollectionDetail = createServerFn({ method: "GET" })
     const request = getRequest();
     const viewer = request ? await getCurrentUser(request) : null;
 
-    const price = DIRECT_MARKETPLACE_ENABLED
-      ? (await database
-          .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
-          .from(schema.collectionPrices)
-          .where(and(eq(schema.collectionPrices.collectionId, row.collection.id), eq(schema.collectionPrices.active, true)))
-          .limit(1))[0]
-      : undefined;
-    const owned = price
+    const protectionPrice = (await database
+      .select({ unitAmount: schema.collectionPrices.unitAmount, licenseTemplate: schema.collectionPrices.licenseTemplate, licenseText: schema.collectionPrices.licenseText })
+      .from(schema.collectionPrices)
+      .where(and(eq(schema.collectionPrices.collectionId, row.collection.id), eq(schema.collectionPrices.active, true)))
+      .limit(1))[0];
+    const price = DIRECT_MARKETPLACE_ENABLED ? protectionPrice : undefined;
+    const owned = protectionPrice
       ? await hasCollectionEntitlement(row.collection.id, viewer?.id ?? null, row.ownerUserId)
       : false;
     const externalDomain = row.collection.externalUrl ? domainOf(row.collection.externalUrl) : null;
@@ -956,25 +958,28 @@ export const fetchCollectionDetail = createServerFn({ method: "GET" })
     const members: (CatalogItem & { locked: boolean })[] = [];
     for (const member of memberRows) {
       if (member.component.visibility !== "public" || member.component.reviewStatus !== "approved" || !member.version) continue;
-      const memberPrice = DIRECT_MARKETPLACE_ENABLED
-        ? (await database
-            .select({ id: schema.componentPrices.id })
-            .from(schema.componentPrices)
-            .where(and(eq(schema.componentPrices.componentId, member.component.id), eq(schema.componentPrices.active, true)))
-            .limit(1))[0]
-        : undefined;
+      const memberPrice = (await database
+        .select({ id: schema.componentPrices.id })
+        .from(schema.componentPrices)
+        .where(and(eq(schema.componentPrices.componentId, member.component.id), eq(schema.componentPrices.active, true)))
+        .limit(1))[0];
       const entitled = !memberPrice
         ? true
         : owned || (await hasEntitlement(member.component.id, viewer?.id ?? null, row.ownerUserId));
-      const files = entitled
-        ? await database
-            .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
-            .from(schema.componentFiles)
-            .where(eq(schema.componentFiles.componentVersionId, member.version.id))
-            .orderBy(schema.componentFiles.orderIndex)
-        : [];
+      const files = await database
+        .select({ path: schema.componentFiles.path, content: schema.componentFiles.content })
+        .from(schema.componentFiles)
+        .where(eq(schema.componentFiles.componentVersionId, member.version.id))
+        .orderBy(schema.componentFiles.orderIndex);
+      // Paid members still render a live preview: unentitled viewers get the
+      // compiled artifact, never the readable source (nothing on failure).
+      const readableMemberFiles = files.map((f) => ({ path: f.path, content: f.content ?? "" }));
+      const previewOnly = requiresCompiledPreview(member.component.sourceModel, entitled);
+      const shippedMemberFiles = previewOnly
+        ? (await obfuscatePreviewFiles(readableMemberFiles)) ?? []
+        : readableMemberFiles;
       members.push({
-        ...toCatalogItem(data.namespace, member.component, member.version, files.map((f) => ({ path: f.path, content: f.content ?? "" }))),
+        ...toCatalogItem(data.namespace, member.component, member.version, shippedMemberFiles),
         locked: !entitled,
       });
     }

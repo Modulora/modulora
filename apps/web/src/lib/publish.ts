@@ -22,6 +22,7 @@ import { POLICY_VERSION } from "./publishing-policy";
 import { roleFor } from "./scaffold";
 import { stripSrc } from "./registry";
 import { contentDigest } from "./digest";
+import { obfuscatePreviewFiles } from "./preview-obfuscate";
 
 const NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 const ALLOWED_EXTENSIONS = new Set(["tsx", "ts", "jsx", "js", "css", "json"]);
@@ -176,6 +177,10 @@ export async function publishCore(data: PublishInput, request: Request): Promise
     }
 
     const isPaid = data.pricing === "paid";
+    // Paid external listings keep only a lossy compiled preview artifact.
+    // Readable paid source must never be persisted by Modulora.
+    const previewFiles = isPaid ? await obfuscatePreviewFiles(files) : files;
+    if (!previewFiles) return { ok: false, error: "Could not build the paid preview. Check the component and demo files." };
     const purchaseUrl = String(data.purchaseUrl ?? "").trim();
     let purchaseDomain: string | null = null;
     let purchaseDomainVerified = false;
@@ -346,19 +351,17 @@ export async function publishCore(data: PublishInput, request: Request): Promise
       })
       .returning({ id: schema.componentVersions.id });
 
-    if (!isPaid) {
-      await db.insert(schema.componentFiles).values(
-        files.map((file, index) => ({
-          componentVersionId: createdVersion!.id,
-          path: file.path.trim(),
-          fileType: "registry:component",
-          role: roleFor(file.path.trim()),
-          content: file.content,
-          sizeBytes: new TextEncoder().encode(file.content).length,
-          orderIndex: index,
-        })),
-      );
-    }
+    await db.insert(schema.componentFiles).values(
+      previewFiles.map((file, index) => ({
+        componentVersionId: createdVersion!.id,
+        path: file.path.trim(),
+        fileType: "registry:component",
+        role: roleFor(file.path.trim()),
+        content: file.content,
+        sizeBytes: new TextEncoder().encode(file.content).length,
+        orderIndex: index,
+      })),
+    );
 
     // Record honest, scoped evidence for this exact release. Every record is
     // something we can actually prove — no fabricated "signed"/"verified" badges.

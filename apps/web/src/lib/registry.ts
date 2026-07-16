@@ -13,7 +13,6 @@ import { and, eq } from "drizzle-orm";
 import { schema } from "@modulora/db";
 import { getCurrentUser } from "./session";
 import { hasCollectionEntitlement, hasEntitlement } from "./marketplace";
-import { DIRECT_MARKETPLACE_ENABLED } from "./flags";
 
 export interface ParsedRegistryPath {
   namespace: string;
@@ -94,13 +93,11 @@ async function resolveCollection(
 
   // A priced collection is a product: the whole bundle requires the bundle
   // entitlement (buying it also snapshots per-member entitlements).
-  const bundlePrice = DIRECT_MARKETPLACE_ENABLED
-    ? (await db
-        .select({ unitAmount: schema.collectionPrices.unitAmount, currency: schema.collectionPrices.currency })
-        .from(schema.collectionPrices)
-        .where(and(eq(schema.collectionPrices.collectionId, collection.collection.id), eq(schema.collectionPrices.active, true)))
-        .limit(1))[0]
-    : undefined;
+  const bundlePrice = (await db
+    .select({ unitAmount: schema.collectionPrices.unitAmount, currency: schema.collectionPrices.currency })
+    .from(schema.collectionPrices)
+    .where(and(eq(schema.collectionPrices.collectionId, collection.collection.id), eq(schema.collectionPrices.active, true)))
+    .limit(1))[0];
   if (bundlePrice) {
     const bundleViewer = request ? await getCurrentUser(request) : null;
     const [bundleOwner] = await db
@@ -147,13 +144,11 @@ async function resolveCollection(
 
   for (const member of servable) {
     const channels = member.component.distributionChannels ?? [];
-    const price = DIRECT_MARKETPLACE_ENABLED
-      ? (await db
-          .select({ id: schema.componentPrices.id })
-          .from(schema.componentPrices)
-          .where(and(eq(schema.componentPrices.componentId, member.component.id), eq(schema.componentPrices.active, true)))
-          .limit(1))[0]
-      : undefined;
+    const price = (await db
+      .select({ id: schema.componentPrices.id })
+      .from(schema.componentPrices)
+      .where(and(eq(schema.componentPrices.componentId, member.component.id), eq(schema.componentPrices.active, true)))
+      .limit(1))[0];
     const paid = Boolean(price);
     const entitled = !paid || (await hasEntitlement(member.component.id, viewer?.id ?? null, owner?.ownerUserId ?? null));
     if (!entitled) {
@@ -253,13 +248,11 @@ export async function resolveRegistryItem(
 
   // Marketplace-priced components require an entitlement: the buyer (or the
   // owner), authenticated via session cookie or a CLI bearer token.
-  const price = DIRECT_MARKETPLACE_ENABLED
-    ? (await db
-        .select({ unitAmount: schema.componentPrices.unitAmount, currency: schema.componentPrices.currency })
-        .from(schema.componentPrices)
-        .where(and(eq(schema.componentPrices.componentId, c.id), eq(schema.componentPrices.active, true)))
-        .limit(1))[0]
-    : undefined;
+  const price = (await db
+    .select({ unitAmount: schema.componentPrices.unitAmount, currency: schema.componentPrices.currency })
+    .from(schema.componentPrices)
+    .where(and(eq(schema.componentPrices.componentId, c.id), eq(schema.componentPrices.active, true)))
+    .limit(1))[0];
   if (price) {
     const viewer = request ? await getCurrentUser(request) : null;
     const entitled = await hasEntitlement(c.id, viewer?.id ?? null, row.ownerUserId ?? null);

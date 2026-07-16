@@ -27,10 +27,10 @@ function PreviewPage() {
   const demoPath = files.find((f) => f.path.startsWith("src/demos/"))?.path ?? "src/demos/default.tsx";
 
   if (files.length === 0) {
-    // Paid without entitlement (or no source): a quiet locked tile.
+    // No source, or a paid preview build could not be produced (fail closed).
     return (
       <div className="flex h-svh items-center justify-center bg-[#0d0d0d] text-xs text-muted-foreground">
-        Purchase to preview
+        Preview unavailable
       </div>
     );
   }

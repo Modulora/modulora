@@ -136,7 +136,8 @@ function ComponentDetailInner({ item, files, colorVisionMode, viewerPlus }: { it
   const isCommercialSource = item.sourceModel !== "open-source";
   // Marketplace-priced: an open component sold on Modulora, source gated behind
   // purchase until the viewer owns it.
-  const locked = item.marketplacePrice != null && item.entitled === false;
+  // Entitlement protects source even while direct checkout UI is disabled.
+  const locked = item.entitled === false;
   const router = useRouter();
 
   // Confirm a returning purchase Checkout, then reload with the entitlement.
